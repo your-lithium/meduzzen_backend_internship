@@ -2,4 +2,6 @@
 
 Start the application by running `main.py`.
 
-You can access the healthcheck endpoint by navigating to http://localhost:800 once the app is running.
+You can access the healthcheck endpoint by navigating to http://localhost:8000 once the app is running.
+
+Navigate to `/tests` to run tests. You can use `pytest` for it.

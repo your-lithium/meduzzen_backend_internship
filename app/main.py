@@ -1,9 +1,15 @@
-from dotenv import load_dotenv
-import os
+from fastapi import FastAPI
+from routers import health_check
+from core.config import AppConfig
 
-load_dotenv()
+secret_key = AppConfig.SECRET_KEY
+database_url = AppConfig.DATABASE_URL
+port = AppConfig.PORT
 
-# secret_key = os.getenv("SECRET_KEY")
-# database_url = os.getenv("DATABASE_URL")
-# port = os.getenv("PORT")
+app = FastAPI()
 
+app.include_router(health_check.router)
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="localhost", port=8000, reload=True)
