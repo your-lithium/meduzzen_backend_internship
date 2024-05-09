@@ -1,16 +1,12 @@
 from fastapi import FastAPI
-from routers import health_check
-from core.config import AppConfig
+import uvicorn
 
-config = AppConfig()
+from routers import health_check
+from core.config import config
 
 app = FastAPI()
 
 app.include_router(health_check.router)
 
 if __name__ == "__main__":
-    host = config.HOST
-    port = int(config.PORT)
-    secret_key = config.SECRET_KEY
-    import uvicorn
-    uvicorn.run("main:app", host=host, port=port, reload=True)
+    uvicorn.run("main:app", host=config.host, port=config.port, reload=True)
