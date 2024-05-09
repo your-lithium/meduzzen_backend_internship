@@ -1,5 +1,4 @@
 from pydantic_settings import BaseSettings
-import os
 
 
 class AppConfig(BaseSettings):
@@ -7,8 +6,7 @@ class AppConfig(BaseSettings):
     host: str
 
     class Config:
-        env_file = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                                '../../.env')
+        env_file = '.env'
 
 
 config = AppConfig()
