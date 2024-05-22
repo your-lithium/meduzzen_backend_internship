@@ -1,5 +1,5 @@
 from pydantic_settings import BaseSettings
-from pydantic import Field, model_validator
+from pydantic import Field, PrivateAttr
 from typing import Optional
 
 
@@ -12,21 +12,20 @@ class AppConfig(BaseSettings):
     postgres_user: str
     postgres_password: str
     postgres_name: str
-    postgres_url: Optional[str] = Field(default=None)
+    _postgres_url: Optional[str] = PrivateAttr(default=None)
 
     redis_host: str
     redis_port: int
     redis_password: str
 
-    @model_validator(mode="after")
-    def assemble_postgres_url(cls, values):
-        if all(getattr(values, field) for field in
-               ['postgres_user', 'postgres_password', 'postgres_host', 'postgres_port', 'postgres_name']):
-            values.postgres_url = (
-                f"postgresql+asyncpg://{values.postgres_user}:{values.postgres_password}@"
-                f"{values.postgres_host}:{values.postgres_port}/{values.postgres_name}"
+    @property
+    def postgres_url(self) -> str:
+        if self._postgres_url is None:
+            self._postgres_url = (
+                f"postgresql+asyncpg://{self.postgres_user}:{self.postgres_password}@"
+                f"{self.postgres_host}:{self.postgres_port}/{self.postgres_name}"
             )
-        return values
+        return self._postgres_url
 
     class Config:
         env_file = '.env'
