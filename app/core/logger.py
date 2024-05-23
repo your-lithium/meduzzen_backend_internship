@@ -3,27 +3,27 @@ from loguru import logger as base_logger
 
 class Logger:
     def __init__(self):
-        self.logger = base_logger
+        self._logger = base_logger
 
-        self.logger.remove()
+        self._logger.remove()
         log_file = f"{__name__}.log"
         log_format = "{time} {level} {message}"
         log_level = "INFO"
-        self.logger.add(log_file, format=log_format, level=log_level, rotation="10 MB")
+        self._logger.add(log_file, format=log_format, level=log_level, rotation="10 MB")
 
-        self.logger.add("file.log")
+        self._logger.add("file.log")
 
     def info(self, message):
-        self.logger.info(message)
+        self._logger.info(message)
 
     def warning(self, message):
-        self.logger.warning(message)
+        self._logger.warning(message)
 
     def error(self, message):
-        self.logger.error(message)
+        self._logger.error(message)
 
     def debug(self, message):
-        self.logger.debug(message)
+        self._logger.debug(message)
 
 
 logger = Logger()

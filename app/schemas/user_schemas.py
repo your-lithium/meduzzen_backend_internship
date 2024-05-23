@@ -3,22 +3,20 @@ from typing import Optional, List
 
 
 class User(BaseModel):
-    id: int
-    name: str = 'John Doe'
+    uid: int
+    name: str
     username: str
     email: EmailStr
     password: str
 
 
 class SignInRequest(BaseModel):
-    username: Optional[str] = None
-    email: Optional[EmailStr] = None
+    email: EmailStr
     password: str
 
 
 class SignUpRequest(BaseModel):
-    id: int
-    name: str = 'John Doe'
+    name: str
     username: str
     email: EmailStr
     password: str
@@ -36,7 +34,7 @@ class UsersListResponse(BaseModel):
 
 
 class UserDetailResponse(BaseModel):
-    id: int
+    uid: int
     name: str
     username: str
     email: EmailStr
