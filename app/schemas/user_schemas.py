@@ -3,7 +3,7 @@ from typing import Optional, List
 
 
 class User(BaseModel):
-    uid: int
+    id: int
     name: str
     username: str
     email: EmailStr
@@ -34,7 +34,7 @@ class UsersListResponse(BaseModel):
 
 
 class UserDetailResponse(BaseModel):
-    uid: int
+    id: int
     name: str
     username: str
     email: EmailStr

@@ -2,7 +2,7 @@
 
 Revision ID: 0001
 Revises: 
-Create Date: 2024-05-23 22:49:28.935177
+Create Date: 2024-05-24 22:38:29.548410
 
 """
 from typing import Sequence, Union
@@ -25,8 +25,8 @@ def upgrade() -> None:
     sa.Column('username', sa.String(length=25), nullable=False),
     sa.Column('email', sa.String(), nullable=False),
     sa.Column('password', sa.String(), nullable=False),
-    sa.Column('uid', sa.Integer(), autoincrement=True, nullable=False),
-    sa.PrimaryKeyConstraint('uid'),
+    sa.Column('id', sa.UUID(), nullable=False),
+    sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('email'),
     sa.UniqueConstraint('username')
     )
