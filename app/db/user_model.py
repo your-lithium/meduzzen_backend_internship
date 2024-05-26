@@ -20,4 +20,4 @@ class User(BaseId):
     name: Mapped[str] = mapped_column(String, nullable=False, unique=False)
     username: Mapped[str] = mapped_column(String(25), nullable=False, unique=True)
     email: Mapped[str] = mapped_column(String, nullable=False, unique=True)
-    password: Mapped[str] = mapped_column(String, nullable=False)
+    password_hash: Mapped[str] = mapped_column(String, nullable=False)

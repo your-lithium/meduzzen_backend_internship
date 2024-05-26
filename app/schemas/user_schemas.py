@@ -1,13 +1,17 @@
 from pydantic import BaseModel, EmailStr
 from typing import Optional, List
+from uuid import UUID
 
 
-class User(BaseModel):
-    id: int
+class UserResponse(BaseModel):
+    id: UUID
     name: str
     username: str
     email: EmailStr
-    password: str
+    password_hash: str
+    
+    class Config:
+        from_attributes = True
 
 
 class SignInRequest(BaseModel):
@@ -30,11 +34,11 @@ class UserUpdateRequest(BaseModel):
 
 
 class UsersListResponse(BaseModel):
-    users: List[User]
+    users: List[UserResponse]
 
 
 class UserDetailResponse(BaseModel):
-    id: int
+    id: UUID
     name: str
     username: str
     email: EmailStr

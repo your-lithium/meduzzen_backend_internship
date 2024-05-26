@@ -1,5 +1,5 @@
 from pydantic_settings import BaseSettings
-from pydantic import Field, PrivateAttr
+from pydantic import Field, PrivateAttr, ConfigDict
 from typing import Optional
 
 
@@ -27,8 +27,6 @@ class AppConfig(BaseSettings):
             )
         return self._postgres_url
 
-    class Config:
-        env_file = '.env'
-
+    model_config = ConfigDict(env_file='.env')
 
 config = AppConfig()
