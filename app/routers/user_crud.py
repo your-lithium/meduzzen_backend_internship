@@ -4,7 +4,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.exc import IntegrityError
 from fastapi.exceptions import RequestValidationError
-from app.core.logger import logger
 from uuid import UUID
 
 from app.db.database import get_session
