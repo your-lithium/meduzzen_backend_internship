@@ -1,5 +1,5 @@
 from pydantic import BaseModel, EmailStr
-from typing import Optional, List
+from typing import List
 from uuid import UUID
 
 
@@ -27,10 +27,10 @@ class SignUpRequest(BaseModel):
 
 
 class UserUpdateRequest(BaseModel):
-    name: Optional[str] = None
-    username: Optional[str] = None
-    email: Optional[EmailStr] = None
-    password: Optional[str] = None
+    name: str | None = None
+    username: str | None = None
+    email: str | None = None
+    password: str | None = None
 
 
 class UsersListResponse(BaseModel):
