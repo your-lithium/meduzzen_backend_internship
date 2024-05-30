@@ -7,12 +7,17 @@ class BaseError(Exception):
 
 class ObjectNotFoundError(BaseError):
     def __init__(self, identifier: Any, model_name: str) -> None:
+        self.identifier = identifier
+        self.model_name = model_name
         super().__init__(f"{model_name} with given identifier - {identifier} not found")
 
 
 class UserNotFoundError(ObjectNotFoundError):
     def __init__(self, identifier: Any, model_name: str = "user"):
         super().__init__(identifier, model_name)
+    
+    def errors(self):
+        return f"{self.model_name} with given identifier - {self.identifier} not found"
         
 
 class ValidationError(BaseError):
@@ -31,4 +36,7 @@ class ValidationError(BaseError):
 class UserAlreadyExistsError(BaseError):
     def __init__(self) -> None:
         super().__init__(f"User with the same username or email already exists")
+    
+    def errors(self):
+        return "User with the same username or email already exists"
         
