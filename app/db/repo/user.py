@@ -9,11 +9,23 @@ from app.core.logger import logger
 
 
 class UserRepo:
+    """Represents a repository pattern to perform CRUD on User model.
+    """
+    
     async def get_all_users(
         self,
         limit: int | None = None,
         offset: int | None = None,
     ) -> list[User]:
+        """Get a list of users.
+
+        Args:
+            limit (int | None, optional): How much users to get. Defaults to None.
+            offset (int | None, optional): Where to start getting users. Defaults to None.
+
+        Returns:
+            list[User]: The list of users.
+        """
         query = select(User)
 
         if limit is not None:
@@ -31,6 +43,14 @@ class UserRepo:
         self,
         user_id: UUID
     ) -> User | None:
+        """Get details for one user.
+
+        Args:
+            user_id (UUID): The user's ID.
+
+        Returns:
+            User | None: User details.
+        """
         async for session in get_session():
             result = await session.execute(select(User).where(User.id == user_id))
             user = result.scalars().first()
@@ -41,6 +61,14 @@ class UserRepo:
         self,
         user: SignUpRequest
     ) -> User | None:
+        """Create a new user.
+
+        Args:
+            user (SignUpRequest): Details for creating a new user.
+
+        Returns:
+            User | None: Details of the new user.
+        """
         logger.info(f"Received a signup request")
     
         hashed_password = bcrypt.hashpw(user.password.encode('utf-8'), bcrypt.gensalt())
@@ -73,6 +101,15 @@ class UserRepo:
         user_id: UUID,
         user_update: UserUpdateRequest,
     ) -> User | None:
+        """Update an existing user.
+
+        Args:
+            user_id (UUID): The user's ID.
+            user_update (UserUpdateRequest): The details which to update in a user.
+
+        Returns:
+            User | None: Details of the updated user.
+        """
         logger.info(f"Received request to update user with ID {user_id}")
 
         async for session in get_session():
@@ -103,6 +140,14 @@ class UserRepo:
         self,
         user_id: UUID
     ) -> UUID | None:
+        """Delete a user.
+
+        Args:
+            user_id (UUID): The user's ID.
+
+        Returns:
+            UUID | None: ID of the deleted user.
+        """
         logger.info(f"Received request to delete user with ID {user_id}")
 
         async for session in get_session():
@@ -121,7 +166,15 @@ class UserRepo:
     async def check_unique_fields(
         self,
         user_update: UserUpdateRequest,
-    ) -> User | None:
+    ) -> bool:
+        """Check if the values for unique fields have already been used.
+
+        Args:
+            user_update (UserUpdateRequest): The details which to check.
+
+        Returns:
+            bool: Whether or not details have already been taken.
+        """
         async for session in get_session():
             existing_user_query = await session.execute(
             select(User).where((User.username == user_update.username) | (User.email == user_update.email))
