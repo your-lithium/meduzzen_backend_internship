@@ -1,0 +1,146 @@
+from uuid import UUID
+from sqlalchemy.ext.asyncio import AsyncSession
+from fastapi import Depends
+
+from app.db.user_model import User
+from app.schemas.user_schemas import UserUpdateRequest, SignUpRequest
+from app.db.repo.user import UserRepo
+from app.services.exceptions import UserNotFoundError, EmailAlreadyExistsError, UsernameAlreadyExistsError
+from app.db.database import get_session
+
+
+user_repo = UserRepo()
+
+class UserService:
+    """Represents a service for handling requests to User model.
+    """
+    
+    async def get_all_users(
+        self,
+        limit: int = 10,
+        offset: int = 0,
+        session: AsyncSession = Depends(get_session)
+    ) -> list[User]:
+        """Get a list of users.
+
+        Args:
+            limit (int, optional): How much users to get. Defaults to 10.
+            offset (int, optional): Where to start getting users. Defaults to 0.
+            session (AsyncSession, optional): The database session used for querying users.
+                Defaults to the session obtained through get_session.
+
+        Returns:
+            list[User]: The list of users.
+        """
+        users: list[User] = await user_repo.get_all_users(limit=limit, offset=offset, session=session)
+        
+        return users
+    
+    async def get_user_by_id(
+        self,
+        user_id: UUID,
+        session: AsyncSession = Depends(get_session)
+    ) -> User:
+        """Get details for one user.
+
+        Args:
+            user_id (UUID): The user's ID.
+            session (AsyncSession, optional): The database session used for querying users.
+                Defaults to the session obtained through get_session.
+
+        Raises:
+            UserNotFoundError: If the requested user does not exist.
+
+        Returns:
+            User: User details.
+        """
+        user: User | None = await user_repo.get_user_by_id(user_id=user_id, session=session)
+        
+        if user is None:
+            raise UserNotFoundError(user_id)
+        
+        return user
+    
+    async def create_user(
+        self,
+        user: SignUpRequest,
+        session: AsyncSession = Depends(get_session)
+    ) -> User:
+        """Creates a new user from details provided.
+
+        Args:
+            user (SignUpRequest): Details for the new user
+            session (AsyncSession, optional): The database session used for querying users.
+                Defaults to the session obtained through get_session.
+
+        Returns:
+            User: The created user.
+        """        
+        check_email: User | None = await user_repo.get_user_by_email(user_email=user.email, session=session)
+        if check_email is not None:
+            raise EmailAlreadyExistsError(object_value=user.email)
+        
+        check_username: User | None = await user_repo.get_user_by_username(user_username=user.username, session=session)
+        if check_username is not None:
+            raise UsernameAlreadyExistsError(object_value=user.username)
+        
+        user: User | None = await user_repo.create_user(user=user, session=session)
+        
+        return user
+    
+    async def update_user(
+        self,
+        user_id: UUID,
+        user_update: UserUpdateRequest,
+        session: AsyncSession = Depends(get_session)
+    ) -> User:
+        """Update an existing user.
+
+        Args:
+            user_id (UUID): The user's ID.
+            user_update (UserUpdateRequest): The details which to update in a user.
+            session (AsyncSession, optional): The database session used for querying users.
+                Defaults to the session obtained through get_session.
+
+        Raises:
+            UserNotFoundError: If the requested user does not exist.
+            EmailAlreadyExistsError: If the email provided has already been used.
+            UsernameAlreadyExistsError: If the username provided has already been used.
+
+        Returns:
+            User: Details of the updated user.
+        """
+        existing_user: User = await self.get_user_by_id(user_id=user_id, session=session)
+        
+        check_email: User | None = await user_repo.get_user_by_email(user_email=user_update.email, session=session)
+        if check_email is not None:
+            raise EmailAlreadyExistsError(object_value=user_update.email)
+        
+        check_username: User | None = await user_repo.get_user_by_username(user_username=user_update.username, session=session)
+        if check_username is not None:
+            raise UsernameAlreadyExistsError(object_value=user_update.username)
+        
+        updated_user: User = await user_repo.update_user(existing_user=existing_user, user_update=user_update, session=session)
+            
+        return updated_user
+    
+    async def delete_user(
+        self,
+        user_id: UUID,
+        session: AsyncSession = Depends(get_session)
+    ) -> None:
+        """Delete a user.
+
+        Args:
+            user_id (UUID): The user's ID.
+            session (AsyncSession, optional): The database session used for querying users.
+                Defaults to the session obtained through get_session.
+
+        Raises:
+            UserNotFoundError: If the requested user does not exist.
+        """
+        user: User = await self.get_user_by_id(user_id=user_id, session=session)
+        
+        await user_repo.delete_user(user=user, session=session)
+                
+        return None

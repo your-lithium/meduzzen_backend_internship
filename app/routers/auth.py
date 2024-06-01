@@ -1,21 +1,25 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.schemas.user_schemas import SignUpRequest, UserDetailResponse
-from app.services.controllers.auth import AuthService
+from app.services.user import UserService
+from app.db.database import get_session
+from app.db.user_model import User
 
 
 router = APIRouter(prefix="/auth")
-auth_service = AuthService()
+
+
+def get_user_service():
+    return UserService()
+
 
 @router.post("/signup", response_model=UserDetailResponse)
 async def create_user(
-    user: SignUpRequest
+    user: SignUpRequest,
+    session: AsyncSession = Depends(get_session),
+    user_service: UserService = Depends(get_user_service)
     ):
-    user = await auth_service.create_user(user=user)
+    user = await user_service.create_user(user=user, session=session)
     
-    return UserDetailResponse(
-        id=user.id,
-        name=user.name,
-        username=user.username, 
-        email=user.email
-        )
+    return user

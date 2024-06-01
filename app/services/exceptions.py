@@ -1,4 +1,5 @@
 from typing import Any
+from pydantic import EmailStr
 
 
 class BaseError(Exception):
@@ -18,25 +19,24 @@ class UserNotFoundError(ObjectNotFoundError):
     
     def errors(self):
         return f"{self.model_name} with given identifier - {self.identifier} not found"
-        
+         
 
-class ValidationError(BaseError):
-    def __init__(self, message: str, field_errors: dict[str, Any] = None) -> None:
-        self.field_errors = field_errors if field_errors is not None else {}
-        super().__init__(message)
-
-    def __str__(self) -> str:
-        base_message = super().__str__()
-        if self.field_errors:
-            field_errors_str = "; ".join([f"{field}: {error}" for field, error in self.field_errors.items()])
-            return f"{base_message} (Field errors: {field_errors_str})"
-        return base_message
- 
-
-class UserAlreadyExistsError(BaseError):
-    def __init__(self) -> None:
-        super().__init__(f"User with the same username or email already exists")
+class ObjectAlreadyExistsError(BaseError):
+    def __init__(self, object_value: Any, object_name: str, model_name: str) -> None:
+        self.object_value = object_value
+        self.object_name = object_name
+        self.model_name = model_name
+        super().__init__(f"{self.model_name} with given unique {self.object_name} - {self.object_value} already taken")
     
     def errors(self):
-        return "User with the same username or email already exists"
-        
+        return f"{self.model_name} with given unique {self.object_name} - {self.object_value} already taken"
+
+
+class EmailAlreadyExistsError(ObjectAlreadyExistsError):
+    def __init__(self, object_value: EmailStr, object_name: str = "email", model_name: str = "user") -> None:
+        super().__init__(object_value, object_name, model_name)
+
+
+class UsernameAlreadyExistsError(ObjectAlreadyExistsError):
+    def __init__(self, object_value: str, object_name: str = "username", model_name: str = "user") -> None:
+        super().__init__(object_value, object_name, model_name)

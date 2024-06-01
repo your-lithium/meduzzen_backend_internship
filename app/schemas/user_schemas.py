@@ -33,10 +33,6 @@ class UserUpdateRequest(BaseModel):
     password: str | None = None
 
 
-class UsersListResponse(BaseModel):
-    users: List[UserResponse]
-
-
 class UserDetailResponse(BaseModel):
     id: UUID
     name: str
