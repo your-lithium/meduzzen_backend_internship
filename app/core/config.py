@@ -1,11 +1,14 @@
 from pydantic_settings import BaseSettings
-from pydantic import Field, PrivateAttr, ConfigDict
-from typing import Optional
+from pydantic import PrivateAttr, ConfigDict
 
 
 class AppConfig(BaseSettings):
     port: int
     host: str
+
+    oauth2_secret_key: str
+    oauth2_algorithm: str
+    oauth2_access_token_expire_days: int
 
     postgres_host: str
     postgres_port: int
@@ -27,6 +30,7 @@ class AppConfig(BaseSettings):
             )
         return self._postgres_url
 
-    model_config = ConfigDict(env_file='.env')
+    model_config = ConfigDict(env_file=".env")
+
 
 config = AppConfig()

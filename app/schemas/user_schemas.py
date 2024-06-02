@@ -1,5 +1,4 @@
 from pydantic import BaseModel, EmailStr
-from typing import List
 from uuid import UUID
 
 
@@ -9,7 +8,8 @@ class UserResponse(BaseModel):
     username: str
     email: EmailStr
     password_hash: str
-    
+    disabled: bool
+
     class Config:
         from_attributes = True
 
@@ -38,3 +38,4 @@ class UserDetailResponse(BaseModel):
     name: str
     username: str
     email: EmailStr
+    disabled: bool
