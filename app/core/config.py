@@ -10,6 +10,10 @@ class AppConfig(BaseSettings):
     oauth2_algorithm: str
     oauth2_access_token_expire_days: int
 
+    auth0_domain: str
+    auth0_audience: str
+    auth0_algorithms: list[str]
+
     postgres_host: str
     postgres_port: int
     postgres_user: str

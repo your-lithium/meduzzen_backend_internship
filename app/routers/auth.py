@@ -1,7 +1,12 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Annotated
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from fastapi.security import (
+    OAuth2PasswordBearer,
+    OAuth2PasswordRequestForm,
+    HTTPBearer,
+    HTTPAuthorizationCredentials,
+)
 from datetime import timedelta
 
 from app.schemas.user_schemas import SignUpRequest, UserDetailResponse
@@ -14,6 +19,19 @@ from app.core.config import config
 
 router = APIRouter(prefix="/auth")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/signin")
+auth0_scheme = HTTPBearer()
+
+
+async def get_token(
+    oauth2_token: str | None = Depends(oauth2_scheme),
+    auth0_token: HTTPAuthorizationCredentials | None = Depends(auth0_scheme),
+) -> str | None:
+    if oauth2_token:
+        return oauth2_token
+    elif auth0_token:
+        return auth0_token.credentials
+    else:
+        return None
 
 
 def get_user_service():
@@ -25,8 +43,11 @@ def get_auth_service():
 
 
 @router.get("/items/")
-async def read_items(token: Annotated[str, Depends(oauth2_scheme)]):
-    return {"token": token}
+async def read_items(token: str | None = Depends(get_token)):
+    if token:
+        return {"token": token}
+    else:
+        return {"message": "No token provided"}
 
 
 @router.post("/signin")
@@ -50,14 +71,17 @@ async def signin(
 
 @router.get("/me")
 async def get_current_user(
-    token: Annotated[str, Depends(oauth2_scheme)],
+    token: str | None = Depends(get_token),
     session: AsyncSession = Depends(get_session),
     auth_service: AuthService = Depends(get_auth_service),
-):
+) -> User:
     current_user: User = await auth_service.get_current_active_user(
-        secret_key=config.oauth2_secret_key,
-        algorithm=config.oauth2_algorithm,
         token=token,
+        oauth2_secret_key=config.oauth2_secret_key,
+        oauth2_algorithm=config.oauth2_algorithm,
+        auth0_domain=config.auth0_domain,
+        auth0_algorithms=config.auth0_algorithms,
+        auth0_audience=config.auth0_audience,
         session=session,
     )
     return current_user
@@ -68,7 +92,7 @@ async def create_user(
     user: SignUpRequest,
     session: AsyncSession = Depends(get_session),
     user_service: UserService = Depends(get_user_service),
-):
+) -> User:
     user = await user_service.create_user(user=user, session=session)
 
     return user

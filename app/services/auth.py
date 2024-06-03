@@ -1,15 +1,18 @@
 import bcrypt
 import jwt
+import requests
+import secrets
 from typing import Annotated
 from fastapi import Depends
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
 from jwt import ExpiredSignatureError, InvalidTokenError, DecodeError
+from jwt.algorithms import RSAAlgorithm
 from pydantic import BaseModel, EmailStr
 from datetime import datetime, timedelta, timezone
 
 from app.db.user_model import User
-from app.schemas.user_schemas import SignInRequest
+from app.schemas.user_schemas import SignInRequest, SignUpRequest
 from app.db.repo.user import UserRepo
 from app.services.exceptions import (
     UserNotFoundError,
@@ -35,18 +38,13 @@ class TokenData(BaseModel):
 class AuthService:
     """Represents a service for handling authentication requests."""
 
-    def __init__(
-        self,
-    ):
-        pass
-
     def create_access_token(
         self,
         data: dict,
         secret_key: str,
         algorithm: str,
         expires_delta: timedelta | None = None,
-    ):
+    ) -> str:
         to_encode = data.copy()
 
         if expires_delta:
@@ -61,19 +59,84 @@ class AuthService:
 
     async def get_current_user(
         self,
-        secret_key: str,
-        algorithm: str,
         token: str,
+        oauth2_secret_key: str,
+        oauth2_algorithm: str,
+        auth0_domain: str,
+        auth0_algorithms: list[str],
+        auth0_audience: str,
         session: AsyncSession = Depends(get_session),
     ) -> User:
         try:
+            token_data = self.verify_email_password_token(
+                secret_key=oauth2_secret_key, algorithm=oauth2_algorithm, token=token
+            )
+        except UnauthorizedError:
+            token_data = self.verify_auth0_token(
+                token=token,
+                domain=auth0_domain,
+                algorithms=auth0_algorithms,
+                audience=auth0_audience,
+            )
+            auth_method = "auth0"
+
+        user = await user_repo.get_user_by_email(
+            user_email=token_data.email, session=session
+        )
+        if user is None:
+            if auth_method != "auth0":
+                raise UserNotFoundError(identifier=token_data.email)
+            else:
+                sign_up_request = SignUpRequest(
+                    name="John Doe",
+                    username=token_data.email,
+                    email=token_data.email,
+                    password=secrets.token_hex(12),
+                )
+                user = await user_repo.create_user(
+                    user=sign_up_request, session=session
+                )
+
+        return user
+
+    async def get_current_active_user(
+        self,
+        token: str,
+        oauth2_secret_key: str,
+        oauth2_algorithm: str,
+        auth0_domain: str,
+        auth0_algorithms: list[str],
+        auth0_audience: str,
+        session: AsyncSession = Depends(get_session),
+    ) -> User:
+        current_user: User = await self.get_current_user(
+            token=token,
+            oauth2_secret_key=oauth2_secret_key,
+            oauth2_algorithm=oauth2_algorithm,
+            auth0_domain=auth0_domain,
+            auth0_algorithms=auth0_algorithms,
+            auth0_audience=auth0_audience,
+            session=session,
+        )
+
+        if current_user.disabled:
+            raise InactiveUserError
+
+        return current_user
+
+    def verify_email_password_token(
+        self,
+        secret_key: str,
+        algorithm: str,
+        token: str,
+    ) -> TokenData:
+        try:
             payload = jwt.decode(token, secret_key, algorithms=[algorithm])
-            print(f"Decoded Payload: {payload}")
             email: str = payload.get("sub")
-            print(f"Email: {email}")
             if email is None:
                 raise UnauthorizedError
             token_data = TokenData(email=email)
+            return token_data
         except ExpiredSignatureError:
             raise UnauthorizedError("Token has expired")
         except DecodeError:
@@ -81,29 +144,52 @@ class AuthService:
         except InvalidTokenError:
             raise UnauthorizedError("Invalid token")
 
-        user = await user_repo.get_user_by_email(
-            user_email=token_data.email, session=session
-        )
-        if user is None:
-            raise UserNotFoundError(identifier=token_data.email)
-
-        return user
-
-    async def get_current_active_user(
+    def verify_auth0_token(
         self,
-        secret_key: str,
-        algorithm: str,
         token: str,
-        session: AsyncSession = Depends(get_session),
-    ) -> User:
-        current_user: User = await self.get_current_user(
-            secret_key=secret_key, algorithm=algorithm, token=token, session=session
-        )
+        domain: str,
+        algorithms: list[str],
+        audience: str,
+    ) -> TokenData:
+        json_url = f"https://{domain}/.well-known/jwks.json"
+        response = requests.get(json_url)
+        jwks = response.json()
 
-        if current_user.disabled:
-            raise InactiveUserError
+        rsa_key = {}
+        for key in jwks["keys"]:
+            if key["kid"] == jwt.get_unverified_header(token)["kid"]:
+                rsa_key = {
+                    "kty": key["kty"],
+                    "kid": key["kid"],
+                    "use": key["use"],
+                    "n": key["n"],
+                    "e": key["e"],
+                }
 
-        return current_user
+        if rsa_key:
+            public_key = RSAAlgorithm.from_jwk(rsa_key)
+            try:
+                decoded = jwt.decode(
+                    token,
+                    public_key,
+                    algorithms=algorithms,
+                    audience=audience,
+                    issuer=f"https://{domain}/",
+                )
+
+                email = decoded.get(audience + "/email", "Email not found in token")
+                token_data = TokenData(email=email)
+                return token_data
+            except jwt.ExpiredSignatureError:
+                raise UnauthorizedError("Token has expired")
+            except jwt.JWTClaimsError:
+                raise UnauthorizedError(
+                    "Incorrect claims, please check the audience and issuer"
+                )
+            except Exception as e:
+                return UnauthorizedError(f"Unable to parse token: {e}")
+        else:
+            return UnauthorizedError("Unable to find appropriate key")
 
     async def signin(
         self,
