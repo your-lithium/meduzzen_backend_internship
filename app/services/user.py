@@ -9,8 +9,6 @@ from app.services.exceptions import UserNotFoundError, EmailAlreadyExistsError, 
 from app.db.database import get_session
 
 
-user_repo = UserRepo()
-
 class UserService:
     """Represents a service for handling requests to User model.
     """
@@ -32,7 +30,7 @@ class UserService:
         Returns:
             list[User]: The list of users.
         """
-        users: list[User] = await user_repo.get_all_users(limit=limit, offset=offset, session=session)
+        users: list[User] = await UserRepo.get_all_users(limit=limit, offset=offset, session=session)
         
         return users
     
@@ -54,7 +52,7 @@ class UserService:
         Returns:
             User: User details.
         """
-        user: User | None = await user_repo.get_user_by_id(user_id=user_id, session=session)
+        user: User | None = await UserRepo.get_user_by_id(user_id=user_id, session=session)
         
         if user is None:
             raise UserNotFoundError(user_id)
@@ -76,15 +74,15 @@ class UserService:
         Returns:
             User: The created user.
         """        
-        check_email: User | None = await user_repo.get_user_by_email(user_email=user.email, session=session)
+        check_email: User | None = await UserRepo.get_user_by_email(user_email=user.email, session=session)
         if check_email is not None:
             raise EmailAlreadyExistsError(object_value=user.email)
         
-        check_username: User | None = await user_repo.get_user_by_username(user_username=user.username, session=session)
+        check_username: User | None = await UserRepo.get_user_by_username(user_username=user.username, session=session)
         if check_username is not None:
             raise UsernameAlreadyExistsError(object_value=user.username)
         
-        user: User | None = await user_repo.create_user(user=user, session=session)
+        user: User | None = await UserRepo.create_user(user=user, session=session)
         
         return user
     
@@ -112,15 +110,15 @@ class UserService:
         """
         existing_user: User = await self.get_user_by_id(user_id=user_id, session=session)
         
-        check_email: User | None = await user_repo.get_user_by_email(user_email=user_update.email, session=session)
+        check_email: User | None = await UserRepo.get_user_by_email(user_email=user_update.email, session=session)
         if check_email is not None:
             raise EmailAlreadyExistsError(object_value=user_update.email)
         
-        check_username: User | None = await user_repo.get_user_by_username(user_username=user_update.username, session=session)
+        check_username: User | None = await UserRepo.get_user_by_username(user_username=user_update.username, session=session)
         if check_username is not None:
             raise UsernameAlreadyExistsError(object_value=user_update.username)
         
-        updated_user: User = await user_repo.update_user(existing_user=existing_user, user_update=user_update, session=session)
+        updated_user: User = await UserRepo.update_user(existing_user=existing_user, user_update=user_update, session=session)
             
         return updated_user
     
@@ -141,6 +139,4 @@ class UserService:
         """
         user: User = await self.get_user_by_id(user_id=user_id, session=session)
         
-        await user_repo.delete_user(user=user, session=session)
-                
-        return None
+        await UserRepo.delete_user(user=user, session=session)
