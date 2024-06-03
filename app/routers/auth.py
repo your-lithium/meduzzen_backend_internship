@@ -69,12 +69,12 @@ async def signin(
     return Token(access_token=access_token, token_type="bearer")
 
 
-@router.get("/me")
+@router.get("/me", response_model=UserDetailResponse)
 async def get_current_user(
     token: str | None = Depends(get_token),
     session: AsyncSession = Depends(get_session),
     auth_service: AuthService = Depends(get_auth_service),
-) -> User:
+):
     current_user: User = await auth_service.get_current_active_user(
         token=token,
         oauth2_secret_key=config.oauth2_secret_key,
@@ -92,7 +92,7 @@ async def create_user(
     user: SignUpRequest,
     session: AsyncSession = Depends(get_session),
     user_service: UserService = Depends(get_user_service),
-) -> User:
+):
     user = await user_service.create_user(user=user, session=session)
 
     return user
