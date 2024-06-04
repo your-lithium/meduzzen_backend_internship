@@ -1,13 +1,17 @@
 from pydantic import BaseModel, EmailStr
-from typing import Optional, List
+from typing import List
+from uuid import UUID
 
 
-class User(BaseModel):
-    id: int
+class UserResponse(BaseModel):
+    id: UUID
     name: str
     username: str
     email: EmailStr
-    password: str
+    password_hash: str
+    
+    class Config:
+        from_attributes = True
 
 
 class SignInRequest(BaseModel):
@@ -23,18 +27,14 @@ class SignUpRequest(BaseModel):
 
 
 class UserUpdateRequest(BaseModel):
-    name: Optional[str] = None
-    username: Optional[str] = None
-    email: Optional[EmailStr] = None
-    password: Optional[str] = None
-
-
-class UsersListResponse(BaseModel):
-    users: List[User]
+    name: str | None = None
+    username: str | None = None
+    email: str | None = None
+    password: str | None = None
 
 
 class UserDetailResponse(BaseModel):
-    id: int
+    id: UUID
     name: str
     username: str
     email: EmailStr

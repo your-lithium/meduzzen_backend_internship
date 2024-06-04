@@ -1,5 +1,5 @@
 from pydantic_settings import BaseSettings
-from pydantic import Field, PrivateAttr
+from pydantic import Field, PrivateAttr, ConfigDict
 from typing import Optional
 
 
@@ -12,7 +12,7 @@ class AppConfig(BaseSettings):
     postgres_user: str
     postgres_password: str
     postgres_name: str
-    _postgres_url: Optional[str] = PrivateAttr(default=None)
+    _postgres_url: str | None = PrivateAttr(default=None)
 
     redis_host: str
     redis_port: int
@@ -27,8 +27,6 @@ class AppConfig(BaseSettings):
             )
         return self._postgres_url
 
-    class Config:
-        env_file = '.env'
-
+    model_config = ConfigDict(env_file='.env')
 
 config = AppConfig()
