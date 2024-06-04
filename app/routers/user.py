@@ -4,14 +4,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.schemas.user_schemas import UserDetailResponse, UserUpdateRequest, UserResponse
 from app.services.user import UserService
+from app.services.auth import AuthService
 from app.db.database import get_session
+from app.db.user_model import User
+from app.core.security import auth_scheme
 
 
 router = APIRouter(prefix="/users")
-
-
-def get_user_service():
-    return UserService()
 
 
 @router.get("", response_model=list[UserResponse])
@@ -19,11 +18,8 @@ async def read_all_users(
     limit: int = 10,
     offset: int = 0,
     session: AsyncSession = Depends(get_session),
-    user_service: UserService = Depends(get_user_service),
 ):
-    users = await user_service.get_all_users(
-        limit=limit, offset=offset, session=session
-    )
+    users = await UserService.get_all_users(limit=limit, offset=offset, session=session)
 
     return users
 
@@ -32,9 +28,8 @@ async def read_all_users(
 async def read_user_by_id(
     user_id: UUID,
     session: AsyncSession = Depends(get_session),
-    user_service: UserService = Depends(get_user_service),
 ):
-    user = await user_service.get_user_by_id(user_id=user_id, session=session)
+    user = await UserService.get_user_by_id(user_id=user_id, session=session)
 
     return user
 
@@ -44,9 +39,8 @@ async def update_user(
     user_id: UUID,
     user_update: UserUpdateRequest,
     session: AsyncSession = Depends(get_session),
-    user_service: UserService = Depends(get_user_service),
 ):
-    user = await user_service.update_user(
+    user = await UserService.update_user(
         user_id=user_id, user_update=user_update, session=session
     )
 
@@ -57,8 +51,20 @@ async def update_user(
 async def delete_user(
     user_id: UUID,
     session: AsyncSession = Depends(get_session),
-    user_service: UserService = Depends(get_user_service),
 ):
-    await user_service.delete_user(user_id=user_id, session=session)
+    await UserService.delete_user(user_id=user_id, session=session)
 
     return None
+
+
+@router.get("/me", response_model=UserDetailResponse)
+async def get_current_user(
+    token: str | None = Depends(auth_scheme),
+    session: AsyncSession = Depends(get_session),
+):
+    print(token)
+    current_user: User = await AuthService.get_current_active_user(
+        token=token.credentials,
+        session=session,
+    )
+    return current_user
