@@ -1,12 +1,10 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
-from pydantic import ValidationError
 
 from app.routers import health_check, user, auth
 from app.core.config import config
 from app.routers.handlers import (
-    validation_exception_handler,
     user_not_found_exception_handler,
     email_already_exists_exception_handler,
     username_already_exists_exception_handler,
@@ -48,7 +46,6 @@ app.include_router(user.router)
 app.include_router(auth.router)
 
 app.add_exception_handler(UserNotFoundError, user_not_found_exception_handler)
-app.add_exception_handler(ValidationError, validation_exception_handler)
 app.add_exception_handler(
     EmailAlreadyExistsError, email_already_exists_exception_handler
 )
