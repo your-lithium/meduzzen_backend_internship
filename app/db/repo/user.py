@@ -15,8 +15,8 @@ class UserRepo:
     """Represents a repository pattern to perform CRUD on User model.
     """
     
+    @staticmethod
     async def get_all_users(
-        self,
         limit: int = 10,
         offset: int = 0,
         session: AsyncSession = Depends(get_session)
@@ -42,8 +42,8 @@ class UserRepo:
         
         return users
     
+    @staticmethod
     async def get_user_by_id(
-        self,
         user_id: UUID,
         session: AsyncSession = Depends(get_session)
     ) -> User | None:
@@ -62,8 +62,8 @@ class UserRepo:
         
         return user
 
+    @staticmethod
     async def get_user_by_email(
-        self,
         user_email: EmailStr,
         session: AsyncSession = Depends(get_session)
     ) -> User | None:
@@ -82,8 +82,8 @@ class UserRepo:
         
         return user
     
+    @staticmethod
     async def get_user_by_username(
-        self,
         user_username: str,
         session: AsyncSession = Depends(get_session)
     ) -> User | None:
@@ -97,13 +97,13 @@ class UserRepo:
         Returns:
             User | None: User details.
         """
-        result = await session.execute(select(User).where(User.username == user_username)        )
+        result = await session.execute(select(User).where(User.username == user_username))
         user = result.scalars().first()
         
         return user
     
+    @staticmethod
     async def create_user(
-        self,
         user: SignUpRequest,
         session: AsyncSession = Depends(get_session)
     ) -> User:
@@ -133,9 +133,9 @@ class UserRepo:
         
         logger.info("New user created successfully")
         return new_user
-        
+    
+    @staticmethod
     async def update_user(
-        self,
         existing_user: User,
         user_update: UserUpdateRequest,
         session: AsyncSession = Depends(get_session)
@@ -166,8 +166,8 @@ class UserRepo:
         logger.info(f"User with ID {existing_user.id} updated successfully")
         return existing_user
     
+    @staticmethod
     async def delete_user(
-        self,
         user: User,
         session: AsyncSession = Depends(get_session)
     ) -> None:
