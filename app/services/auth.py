@@ -22,9 +22,13 @@ from app.db.database import get_session
 from app.core.config import config
 
 
+def get_auth_service():
+    return AuthService()
+
+
 class Token(BaseModel):
     access_token: str
-    token_type: str
+    token_type: str = "bearer"
 
 
 class TokenData(BaseModel):
@@ -34,8 +38,8 @@ class TokenData(BaseModel):
 class AuthService:
     """Represents a service for handling authentication requests."""
 
-    @staticmethod
     def create_access_token(
+        self,
         data: dict,
         secret_key: str,
         algorithm: str,
@@ -53,8 +57,8 @@ class AuthService:
 
         return encoded_jwt
 
-    @staticmethod
     async def get_current_user(
+        self,
         token: str,
         oauth2_secret_key: str,
         oauth2_algorithm: str,
@@ -64,11 +68,11 @@ class AuthService:
         session: AsyncSession = Depends(get_session),
     ) -> User:
         try:
-            token_data = AuthService.verify_email_password_token(
+            token_data = self.verify_email_password_token(
                 secret_key=oauth2_secret_key, algorithm=oauth2_algorithm, token=token
             )
         except UnauthorizedError:
-            token_data = AuthService.verify_auth0_token(
+            token_data = self.verify_auth0_token(
                 token=token,
                 domain=auth0_domain,
                 algorithms=auth0_algorithms,
@@ -93,8 +97,8 @@ class AuthService:
 
         return user
 
-    @staticmethod
     async def get_current_active_user(
+        self,
         token: str,
         oauth2_secret_key: str = config.oauth2_secret_key,
         oauth2_algorithm: str = config.oauth2_algorithm,
@@ -103,7 +107,7 @@ class AuthService:
         auth0_audience: str = config.auth0_audience,
         session: AsyncSession = Depends(get_session),
     ) -> User:
-        current_user: User = await AuthService.get_current_user(
+        current_user: User = await self.get_current_user(
             token=token,
             oauth2_secret_key=oauth2_secret_key,
             oauth2_algorithm=oauth2_algorithm,
@@ -118,8 +122,8 @@ class AuthService:
 
         return current_user
 
-    @staticmethod
     def verify_email_password_token(
+        self,
         secret_key: str,
         algorithm: str,
         token: str,
@@ -138,8 +142,8 @@ class AuthService:
         except InvalidTokenError:
             raise UnauthorizedError("Invalid token")
 
-    @staticmethod
     def verify_auth0_token(
+        self,
         token: str,
         domain: str,
         algorithms: list[str],
@@ -185,8 +189,8 @@ class AuthService:
         else:
             return UnauthorizedError("Unable to find appropriate key")
 
-    @staticmethod
     async def signin(
+        self,
         request: SignInRequest,
         session: AsyncSession = Depends(get_session),
     ) -> str:
@@ -203,7 +207,7 @@ class AuthService:
             raise IncorrectPasswordError
 
         access_token_expires = timedelta(days=config.oauth2_access_token_expire_days)
-        access_token = AuthService.create_access_token(
+        access_token = self.create_access_token(
             data={"sub": user.email},
             secret_key=config.oauth2_secret_key,
             algorithm=config.oauth2_algorithm,

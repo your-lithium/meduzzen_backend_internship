@@ -13,12 +13,18 @@ from app.services.exceptions import (
 from app.db.database import get_session
 
 
+def get_user_service():
+    return UserService()
+
+
 class UserService:
     """Represents a service for handling requests to User model."""
 
-    @staticmethod
     async def get_all_users(
-        limit: int = 10, offset: int = 0, session: AsyncSession = Depends(get_session)
+        self,
+        limit: int = 10,
+        offset: int = 0,
+        session: AsyncSession = Depends(get_session),
     ) -> list[User]:
         """Get a list of users.
 
@@ -38,9 +44,8 @@ class UserService:
 
         return users
 
-    @staticmethod
     async def get_user_by_id(
-        user_id: UUID, session: AsyncSession = Depends(get_session)
+        self, user_id: UUID, session: AsyncSession = Depends(get_session)
     ) -> User:
         """Get details for one user.
 
@@ -65,9 +70,8 @@ class UserService:
 
         return user
 
-    @staticmethod
     async def create_user(
-        user: SignUpRequest, session: AsyncSession = Depends(get_session)
+        self, user: SignUpRequest, session: AsyncSession = Depends(get_session)
     ) -> User:
         """Creates a new user from details provided.
 
@@ -96,8 +100,8 @@ class UserService:
 
         return user
 
-    @staticmethod
     async def update_user(
+        self,
         user_id: UUID,
         user_update: UserUpdateRequest,
         session: AsyncSession = Depends(get_session),
@@ -119,7 +123,7 @@ class UserService:
         Returns:
             User: Details of the updated user.
         """
-        existing_user: User = await UserService.get_user_by_id(
+        existing_user: User = await self.get_user_by_id(
             user_id=user_id, session=session
         )
 
@@ -141,9 +145,8 @@ class UserService:
 
         return updated_user
 
-    @staticmethod
     async def delete_user(
-        user_id: UUID, session: AsyncSession = Depends(get_session)
+        self, user_id: UUID, session: AsyncSession = Depends(get_session)
     ) -> None:
         """Delete a user.
 
@@ -156,6 +159,6 @@ class UserService:
         Raises:
             UserNotFoundError: If the requested user does not exist.
         """
-        user: User = await UserService.get_user_by_id(user_id=user_id, session=session)
+        user: User = await self.get_user_by_id(user_id=user_id, session=session)
 
         await UserRepo.delete_user(user=user, session=session)
