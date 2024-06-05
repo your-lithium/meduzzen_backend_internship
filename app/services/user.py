@@ -13,6 +13,10 @@ from app.services.exceptions import (
 from app.db.database import get_session
 
 
+def get_user_service():
+    return UserService()
+
+
 class UserService:
     """Represents a service for handling requests to User model."""
 
@@ -59,6 +63,7 @@ class UserService:
         user: User | None = await UserRepo.get_user_by_id(
             user_id=user_id, session=session
         )
+
         if user is None:
             raise UserNotFoundError(user_id)
 
@@ -147,5 +152,5 @@ class UserService:
             UserNotFoundError: If the requested user does not exist.
         """
         user: User = await self.get_user_by_id(user_id=user_id, session=session)
-        
+
         await UserRepo.delete_user(user=user, session=session)

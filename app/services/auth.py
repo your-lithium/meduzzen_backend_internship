@@ -2,9 +2,7 @@ import bcrypt
 import jwt
 import requests
 import secrets
-from typing import Annotated
 from fastapi import Depends
-from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
 from jwt import ExpiredSignatureError, InvalidTokenError, DecodeError
 from jwt.algorithms import RSAAlgorithm
@@ -21,14 +19,16 @@ from app.services.exceptions import (
     InactiveUserError,
 )
 from app.db.database import get_session
+from app.core.config import config
 
 
-user_repo = UserRepo()
+def get_auth_service():
+    return AuthService()
 
 
 class Token(BaseModel):
     access_token: str
-    token_type: str
+    token_type: str = "bearer"
 
 
 class TokenData(BaseModel):
@@ -80,7 +80,7 @@ class AuthService:
             )
             auth_method = "auth0"
 
-        user = await user_repo.get_user_by_email(
+        user = await UserRepo.get_user_by_email(
             user_email=token_data.email, session=session
         )
         if user is None:
@@ -93,20 +93,18 @@ class AuthService:
                     email=token_data.email,
                     password=secrets.token_hex(12),
                 )
-                user = await user_repo.create_user(
-                    user=sign_up_request, session=session
-                )
+                user = await UserRepo.create_user(user=sign_up_request, session=session)
 
         return user
 
     async def get_current_active_user(
         self,
         token: str,
-        oauth2_secret_key: str,
-        oauth2_algorithm: str,
-        auth0_domain: str,
-        auth0_algorithms: list[str],
-        auth0_audience: str,
+        oauth2_secret_key: str = config.oauth2_secret_key,
+        oauth2_algorithm: str = config.oauth2_algorithm,
+        auth0_domain: str = config.auth0_domain,
+        auth0_algorithms: list[str] = config.auth0_algorithms,
+        auth0_audience: str = config.auth0_audience,
         session: AsyncSession = Depends(get_session),
     ) -> User:
         current_user: User = await self.get_current_user(
@@ -193,12 +191,11 @@ class AuthService:
 
     async def signin(
         self,
-        form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
+        request: SignInRequest,
         session: AsyncSession = Depends(get_session),
-    ) -> dict[str, str]:
-        request = SignInRequest(email=form_data.username, password=form_data.password)
+    ) -> str:
 
-        user = await user_repo.get_user_by_email(
+        user = await UserRepo.get_user_by_email(
             user_email=request.email, session=session
         )
         if user is None:
@@ -209,4 +206,12 @@ class AuthService:
         ):
             raise IncorrectPasswordError
 
-        return user
+        access_token_expires = timedelta(days=config.oauth2_access_token_expire_days)
+        access_token = self.create_access_token(
+            data={"sub": user.email},
+            secret_key=config.oauth2_secret_key,
+            algorithm=config.oauth2_algorithm,
+            expires_delta=access_token_expires,
+        )
+
+        return access_token
