@@ -8,7 +8,6 @@ from app.services.auth import get_auth_service
 from app.db.database import get_session
 from app.db.user_model import User
 from app.routers.auth import get_current_user
-from app.services.exceptions import AccessDeniedError
 from app.core.security import auth_scheme
 
 
@@ -48,13 +47,11 @@ async def update_user(
     user_service=Depends(get_user_service),
     session: AsyncSession = Depends(get_session),
 ):
-    if user_id != current_user.id:
-        raise AccessDeniedError(
-            "You are not allowed to update other users' information"
-        )
-
     user = await user_service.update_user(
-        user_id=user_id, user_update=user_update, session=session
+        user_id=user_id,
+        user_update=user_update,
+        current_user=current_user,
+        session=session,
     )
 
     return user
@@ -67,10 +64,9 @@ async def delete_user(
     user_service=Depends(get_user_service),
     session: AsyncSession = Depends(get_session),
 ):
-    if user_id != current_user.id:
-        raise AccessDeniedError("You are not allowed to delete other users")
-
-    await user_service.delete_user(user_id=user_id, session=session)
+    await user_service.delete_user(
+        user_id=user_id, current_user=current_user, session=session
+    )
 
     return None
 

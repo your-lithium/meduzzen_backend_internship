@@ -11,6 +11,7 @@ from app.services.exceptions import (
     UsernameAlreadyExistsError,
 )
 from app.db.database import get_session
+from app.services.exceptions import AccessDeniedError
 
 
 def get_user_service():
@@ -103,6 +104,7 @@ class UserService:
         self,
         user_id: UUID,
         user_update: UserUpdateRequest,
+        current_user: User,
         session: AsyncSession = Depends(get_session),
     ) -> User:
         """Update an existing user.
@@ -121,24 +123,29 @@ class UserService:
         Returns:
             User: Details of the updated user.
         """
-        existing_user: User = await self.get_user_by_id(
-            user_id=user_id, session=session
-        )
+        if user_id != current_user.id:
+            raise AccessDeniedError(
+                "You are not allowed to update other users' information"
+            )
 
-        check_username: User | None = await UserRepo.get_user_by_username(
-            user_username=user_update.username, session=session
-        )
-        if check_username is not None:
-            raise UsernameAlreadyExistsError(object_value=user_update.username)
+        if user_update.username:
+            check_username: User | None = await UserRepo.get_user_by_username(
+                user_username=user_update.username, session=session
+            )
+            if check_username is not None:
+                raise UsernameAlreadyExistsError(object_value=user_update.username)
 
         updated_user: User = await UserRepo.update_user(
-            existing_user=existing_user, user_update=user_update, session=session
+            existing_user=current_user, user_update=user_update, session=session
         )
 
         return updated_user
 
     async def delete_user(
-        self, user_id: UUID, session: AsyncSession = Depends(get_session)
+        self,
+        user_id: UUID,
+        current_user: User,
+        session: AsyncSession = Depends(get_session),
     ) -> None:
         """Delete a user.
 
@@ -151,6 +158,7 @@ class UserService:
         Raises:
             UserNotFoundError: If the requested user does not exist.
         """
-        user: User = await self.get_user_by_id(user_id=user_id, session=session)
+        if user_id != current_user.id:
+            raise AccessDeniedError("You are not allowed to delete other users")
 
-        await UserRepo.delete_user(user=user, session=session)
+        await UserRepo.delete_user(user=current_user, session=session)
