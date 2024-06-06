@@ -11,7 +11,7 @@ from app.services.exceptions import (
     UsernameAlreadyExistsError,
 )
 from app.db.database import get_session
-from app.services.exceptions import AccessDeniedError
+from app.services.permissions import PermissionService
 
 
 def get_user_service():
@@ -123,10 +123,9 @@ class UserService:
         Returns:
             User: Details of the updated user.
         """
-        if user_id != current_user.id:
-            raise AccessDeniedError(
-                "You are not allowed to update other users' information"
-            )
+        PermissionService.grant_user_update_permission(
+            user_id=user_id, current_user_id=current_user.id
+        )
 
         if user_update.username:
             check_username: User | None = await UserRepo.get_user_by_username(
@@ -158,7 +157,8 @@ class UserService:
         Raises:
             UserNotFoundError: If the requested user does not exist.
         """
-        if user_id != current_user.id:
-            raise AccessDeniedError("You are not allowed to delete other users")
+        PermissionService.grant_user_delete_permission(
+            user_id=user_id, current_user_id=current_user.id
+        )
 
         await UserRepo.delete_user(user=current_user, session=session)
