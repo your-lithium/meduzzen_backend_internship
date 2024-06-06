@@ -68,8 +68,6 @@ async def delete_user(
         user_id=user_id, current_user=current_user, session=session
     )
 
-    return None
-
 
 @router.get("/me", response_model=UserDetailResponse)
 async def get_current_user(
