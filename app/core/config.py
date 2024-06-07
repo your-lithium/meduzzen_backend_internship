@@ -1,6 +1,5 @@
 from pydantic_settings import BaseSettings
-from pydantic import Field, PrivateAttr, ConfigDict
-from typing import Optional
+from pydantic import PrivateAttr, ConfigDict
 
 
 class AppConfig(BaseSettings):
@@ -27,6 +26,13 @@ class AppConfig(BaseSettings):
             )
         return self._postgres_url
 
-    model_config = ConfigDict(env_file='.env')
+    def update_postgres_url(self) -> None:
+        self._postgres_url = (
+            f"postgresql+asyncpg://{self.postgres_user}:{self.postgres_password}@"
+            f"{self.postgres_host}:{self.postgres_port}/{self.postgres_name}"
+        )
+
+    model_config = ConfigDict(env_file=".env")
+
 
 config = AppConfig()
