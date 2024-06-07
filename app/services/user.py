@@ -123,8 +123,8 @@ class UserService:
         Returns:
             User: Details of the updated user.
         """
-        PermissionService.grant_user_update_permission(
-            user_id=user_id, current_user_id=current_user.id
+        PermissionService.grant_user_permission(
+            user_id=user_id, current_user_id=current_user.id, operation="update"
         )
 
         if user_update.username:
@@ -157,8 +157,8 @@ class UserService:
         Raises:
             UserNotFoundError: If the requested user does not exist.
         """
-        PermissionService.grant_user_delete_permission(
-            user_id=user_id, current_user_id=current_user.id
+        PermissionService.grant_user_permission(
+            user_id=user_id, current_user_id=current_user.id, operation="delete"
         )
 
         await UserRepo.delete_user(user=current_user, session=session)
