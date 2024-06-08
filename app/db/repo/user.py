@@ -23,7 +23,7 @@ class UserRepo:
         Args:
             limit (int, optional): How much users to get. Defaults to 10.
             offset (int, optional): Where to start getting users. Defaults to 0.
-            session (AsyncSession, optional):
+            session (AsyncSession):
                 The database session used for querying users.
                 Defaults to the session obtained through get_session.
 
@@ -48,7 +48,7 @@ class UserRepo:
 
         Args:
             user_id (UUID): The user's ID.
-            session (AsyncSession, optional):
+            session (AsyncSession):
                 The database session used for querying users.
                 Defaults to the session obtained through get_session.
 
@@ -68,7 +68,7 @@ class UserRepo:
 
         Args:
             user_email (EmailStr): The email which to check.
-            session (AsyncSession, optional):
+            session (AsyncSession):
                 The database session used for querying users.
                 Defaults to the session obtained through get_session.
 
@@ -88,7 +88,7 @@ class UserRepo:
 
         Args:
             user_username (str): The username which to check.
-            session (AsyncSession, optional):
+            session (AsyncSession):
                 The database session used for querying users.
                 Defaults to the session obtained through get_session.
 
@@ -110,7 +110,7 @@ class UserRepo:
 
         Args:
             user (SignUpRequest): Details for creating a new user.
-            session (AsyncSession, optional):
+            session (AsyncSession):
                 The database session used for querying users.
                 Defaults to the session obtained through get_session.
 
@@ -145,7 +145,7 @@ class UserRepo:
         Args:
             existing_user (User): The existing user to update
             user_update (UserUpdateRequest): The details which to update in a user.
-            session (AsyncSession, optional):
+            session (AsyncSession):
                 The database session used for querying users.
                 Defaults to the session obtained through get_session.
 
@@ -177,7 +177,7 @@ class UserRepo:
 
         Args:
             user (User): The existing user to delete.
-            session (AsyncSession, optional):
+            session (AsyncSession):
                 The database session used for querying users.
                 Defaults to the session obtained through get_session.
         """

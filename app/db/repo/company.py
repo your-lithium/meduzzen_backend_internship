@@ -25,7 +25,7 @@ class CompanyRepo:
             owner (User): The current owner.
             limit (int, optional): How much companies to get. Defaults to 10.
             offset (int, optional): Where to start getting companies. Defaults to 0.
-            session (AsyncSession, optional):
+            session (AsyncSession):
                 The database session used for querying companies.
                 Defaults to the session obtained through get_session.
 
@@ -53,7 +53,7 @@ class CompanyRepo:
         Args:
             company_id (UUID): The company's ID.
             owner (User): The current owner.
-            session (AsyncSession, optional):
+            session (AsyncSession):
                 The database session used for querying companies.
                 Defaults to the session obtained through get_session.
 
@@ -79,7 +79,7 @@ class CompanyRepo:
         Args:
             company_name (str): The name which to check.
             owner (User): The current owner.
-            session (AsyncSession, optional):
+            session (AsyncSession):
                 The database session used for querying companies.
                 Defaults to the session obtained through get_session.
 
@@ -107,7 +107,7 @@ class CompanyRepo:
         Args:
             company (SignUpRequest): Details for creating a new company.
             owner (User): The current owner.
-            session (AsyncSession, optional):
+            session (AsyncSession):
                 The database session used for querying companies.
                 Defaults to the session obtained through get_session.
 
@@ -141,7 +141,7 @@ class CompanyRepo:
             existing_company (Company): The existing company to update
             company_update (CompanyUpdateRequest):
                 The details which to update in a company.
-            session (AsyncSession, optional):
+            session (AsyncSession):
                 The database session used for querying companies.
                 Defaults to the session obtained through get_session.
 
@@ -169,7 +169,7 @@ class CompanyRepo:
 
         Args:
             company (Company): The existing company to delete.
-            session (AsyncSession, optional):
+            session (AsyncSession):
                 The database session used for querying companies.
                 Defaults to the session obtained through get_session.
         """

@@ -30,7 +30,7 @@ class CompanyService:
             current_user (User): The current authenticated user.
             limit (int, optional): How much companies to get. Defaults to 10.
             offset (int, optional): Where to start getting companies. Defaults to 0.
-            session (AsyncSession, optional):
+            session (AsyncSession):
                 The database session used for querying companies.
                 Defaults to the session obtained through get_session.
 
@@ -56,7 +56,7 @@ class CompanyService:
         Args:
             company_id (UUID): The company's ID.
             current_user (User): The current authenticated user.
-            session (AsyncSession, optional):
+            session (AsyncSession):
                 The database session used for querying companies.
                 Defaults to the session obtained through get_session.
 
@@ -86,7 +86,7 @@ class CompanyService:
         Args:
             company (CompanyCreateRequest): Details for the new company.
             current_user (User): The current authenticated user.
-            session (AsyncSession, optional):
+            session (AsyncSession):
                 The database session used for querying companies.
                 Defaults to the session obtained through get_session.
 
@@ -119,7 +119,7 @@ class CompanyService:
             company_update (CompanyUpdateRequest):
                 The details which to update in a company.
             current_user (User): The current authenticated user.
-            session (AsyncSession, optional):
+            session (AsyncSession):
                 The database session used for querying companies.
                 Defaults to the session obtained through get_session.
 
@@ -168,7 +168,7 @@ class CompanyService:
         Args:
             company_id (UUID): The company's ID.
             current_user (User): The current authenticated user.
-            session (AsyncSession, optional):
+            session (AsyncSession):
                 The database session used for querying company.
                 Defaults to the session obtained through get_session.
 
