@@ -78,3 +78,12 @@ class InactiveUserError(BaseError):
 
     def errors(self):
         return "Inactive user"
+
+
+class AccessDeniedError(BaseError):
+    def __init__(self, message: str = "Access denied"):
+        self.message = message
+        super().__init__(self.message)
+
+    def errors(self):
+        return self.message

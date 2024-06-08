@@ -9,6 +9,7 @@ from app.services.exceptions import (
     IncorrectPasswordError,
     UnauthorizedError,
     InactiveUserError,
+    AccessDeniedError,
 )
 
 
@@ -60,5 +61,13 @@ async def inactive_user_exception_handler(_: Request, exc: InactiveUserError):
     logger.error(f"InactiveUserError error: {exc.errors()}")
     return JSONResponse(
         status_code=400,
+        content={"detail": exc.errors()},
+    )
+
+
+async def access_denied_exception_handler(_: Request, exc: AccessDeniedError):
+    logger.error(f"AccessDeniedError error: {exc.errors()}")
+    return JSONResponse(
+        status_code=403,
         content={"detail": exc.errors()},
     )
