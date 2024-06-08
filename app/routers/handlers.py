@@ -4,8 +4,10 @@ from fastapi.responses import JSONResponse
 from app.core.logger import logger
 from app.services.exceptions import (
     UserNotFoundError,
+    CompanyNotFoundError,
     EmailAlreadyExistsError,
     UsernameAlreadyExistsError,
+    CompanyNameAlreadyExistsError,
     IncorrectPasswordError,
     UnauthorizedError,
     InactiveUserError,
@@ -15,6 +17,14 @@ from app.services.exceptions import (
 
 async def user_not_found_exception_handler(_: Request, exc: UserNotFoundError):
     logger.error(f"UserNotFoundError error: {exc.errors()}")
+    return JSONResponse(
+        status_code=404,
+        content={"detail": exc.errors()},
+    )
+
+
+async def company_not_found_exception_handler(_: Request, exc: CompanyNotFoundError):
+    logger.error(f"CompanyNotFoundError error: {exc.errors()}")
     return JSONResponse(
         status_code=404,
         content={"detail": exc.errors()},
@@ -35,6 +45,16 @@ async def username_already_exists_exception_handler(
     _: Request, exc: UsernameAlreadyExistsError
 ):
     logger.error(f"UserAlreadyExistsError error: {exc.errors()}")
+    return JSONResponse(
+        status_code=400,
+        content={"detail": exc.errors()},
+    )
+
+
+async def company_name_already_exists_exception_handler(
+    _: Request, exc: CompanyNameAlreadyExistsError
+):
+    logger.error(f"CompanyNameAlreadyExistsError error: {exc.errors()}")
     return JSONResponse(
         status_code=400,
         content={"detail": exc.errors()},

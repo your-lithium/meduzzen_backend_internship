@@ -1,5 +1,5 @@
-from sqlalchemy import String, Boolean
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy import String, Boolean, ForeignKey
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.dialects import postgresql
 from uuid import UUID, uuid4
 
@@ -21,3 +21,16 @@ class User(BaseId):
     email: Mapped[str] = mapped_column(String, nullable=False, unique=True)
     password_hash: Mapped[str] = mapped_column(String, nullable=False)
     disabled: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+
+    companies: Mapped[list["Company"]] = relationship("Company", back_populates="owner")
+
+
+class Company(BaseId):
+    __tablename__ = "company"
+
+    name: Mapped[str] = mapped_column(String(100), nullable=False, unique=True)
+    description: Mapped[str] = mapped_column(String, nullable=False)
+    owner_id: Mapped[UUID] = mapped_column(ForeignKey("user.id"), nullable=False)
+    is_public: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+
+    owner: Mapped["User"] = relationship("User", back_populates="companies")

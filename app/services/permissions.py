@@ -11,3 +11,11 @@ class PermissionService:
             raise AccessDeniedError(
                 f"You are not allowed to {operation} other users' information"
             )
+
+    @staticmethod
+    def grant_owner_permission(owner_id: UUID, current_user_id: UUID, operation: str):
+        if owner_id != current_user_id:
+            raise AccessDeniedError(
+                f"You are not allowed to {operation} information "
+                "for companies you're not an owner of"
+            )
