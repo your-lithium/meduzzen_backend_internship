@@ -13,6 +13,10 @@ from app.services.exceptions import (
 from app.db.database import get_session
 
 
+def get_user_service():
+    return UserService()
+
+
 class UserService:
     """Represents a service for handling requests to User model."""
 
@@ -27,7 +31,8 @@ class UserService:
         Args:
             limit (int, optional): How much users to get. Defaults to 10.
             offset (int, optional): Where to start getting users. Defaults to 0.
-            session (AsyncSession): The database session used for querying users.
+            session (AsyncSession):
+                The database session used for querying users.
                 Defaults to the session obtained through get_session.
 
         Returns:
@@ -46,7 +51,8 @@ class UserService:
 
         Args:
             user_id (UUID): The user's ID.
-            session (AsyncSession): The database session used for querying users.
+            session (AsyncSession):
+                The database session used for querying users.
                 Defaults to the session obtained through get_session.
 
         Raises:
@@ -71,7 +77,8 @@ class UserService:
 
         Args:
             user (SignUpRequest): Details for the new user
-            session (AsyncSession): The database session used for querying users.
+            session (AsyncSession):
+                The database session used for querying users.
                 Defaults to the session obtained through get_session.
 
         Returns:
@@ -104,7 +111,8 @@ class UserService:
         Args:
             user_id (UUID): The user's ID.
             user_update (UserUpdateRequest): The details which to update in a user.
-            session (AsyncSession): The database session used for querying users.
+            session (AsyncSession):
+                The database session used for querying users.
                 Defaults to the session obtained through get_session.
 
         Raises:
@@ -144,7 +152,8 @@ class UserService:
 
         Args:
             user_id (UUID): The user's ID.
-            session (AsyncSession): The database session used for querying users.
+            session (AsyncSession):
+                The database session used for querying users.
                 Defaults to the session obtained through get_session.
 
         Raises:
