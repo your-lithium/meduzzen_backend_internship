@@ -14,7 +14,6 @@ class CompanyRepo:
 
     @staticmethod
     async def get_all_companies(
-        owner: User,
         limit: int = 10,
         offset: int = 0,
         session: AsyncSession = Depends(get_session),
@@ -22,7 +21,6 @@ class CompanyRepo:
         """Get a list of companies.
 
         Args:
-            owner (User): The current owner.
             limit (int, optional): How much companies to get. Defaults to 10.
             offset (int, optional): Where to start getting companies. Defaults to 0.
             session (AsyncSession):
@@ -32,27 +30,21 @@ class CompanyRepo:
         Returns:
             list[Company]: The list of companies.
         """
-        query = select(Company)
-
-        query = query.where((Company.owner_id == owner.id) | (Company.is_public))
-
-        query = query.limit(limit)
-        query = query.offset(offset)
-
-        result = await session.execute(query)
+        result = await session.execute(
+            select(Company).where(Company.is_public).limit(limit).offset(offset)
+        )
         companies = result.scalars().all()
 
         return companies
 
     @staticmethod
     async def get_company_by_id(
-        company_id: UUID, owner: User, session: AsyncSession = Depends(get_session)
+        company_id: UUID, session: AsyncSession = Depends(get_session)
     ) -> Company | None:
         """Get details for one company via its ID.
 
         Args:
             company_id (UUID): The company's ID.
-            owner (User): The current owner.
             session (AsyncSession):
                 The database session used for querying companies.
                 Defaults to the session obtained through get_session.
@@ -60,25 +52,19 @@ class CompanyRepo:
         Returns:
             Company | None: Company details.
         """
-        result = await session.execute(
-            select(Company).where(
-                (Company.id == company_id)
-                & ((Company.owner_id == owner.id) | (Company.is_public))
-            )
-        )
+        result = await session.execute(select(Company).where(Company.id == company_id))
         company = result.scalars().first()
 
         return company
 
     @staticmethod
     async def get_company_by_name(
-        company_name: str, owner: User, session: AsyncSession = Depends(get_session)
+        company_name: str, session: AsyncSession = Depends(get_session)
     ) -> Company | None:
         """Get details for one company via its name.
 
         Args:
             company_name (str): The name which to check.
-            owner (User): The current owner.
             session (AsyncSession):
                 The database session used for querying companies.
                 Defaults to the session obtained through get_session.
@@ -87,10 +73,7 @@ class CompanyRepo:
             Company | None: Company details.
         """
         result = await session.execute(
-            select(Company).where(
-                (Company.name == company_name)
-                & ((Company.owner_id == owner.id) | (Company.is_public))
-            )
+            select(Company).where(Company.name == company_name)
         )
         company = result.scalars().first()
 

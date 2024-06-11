@@ -19,7 +19,6 @@ class CompanyService:
 
     async def get_all_companies(
         self,
-        current_user: User,
         limit: int = 10,
         offset: int = 0,
         session: AsyncSession = Depends(get_session),
@@ -27,7 +26,6 @@ class CompanyService:
         """Get a list of companies.
 
         Args:
-            current_user (User): The current authenticated user.
             limit (int, optional): How much companies to get. Defaults to 10.
             offset (int, optional): Where to start getting companies. Defaults to 0.
             session (AsyncSession):
@@ -38,7 +36,6 @@ class CompanyService:
             list[Company]: The list of companies.
         """
         companies: list[Company] = await CompanyRepo.get_all_companies(
-            owner=current_user,
             limit=limit,
             offset=offset,
             session=session,
@@ -48,14 +45,12 @@ class CompanyService:
     async def get_company_by_id(
         self,
         company_id: UUID,
-        current_user: User,
         session: AsyncSession = Depends(get_session),
     ) -> Company:
         """Get details for one company.
 
         Args:
             company_id (UUID): The company's ID.
-            current_user (User): The current authenticated user.
             session (AsyncSession):
                 The database session used for querying companies.
                 Defaults to the session obtained through get_session.
@@ -67,7 +62,7 @@ class CompanyService:
             Company: Company details.
         """
         company: Company | None = await CompanyRepo.get_company_by_id(
-            company_id=company_id, owner=current_user, session=session
+            company_id=company_id, session=session
         )
 
         if company is None:

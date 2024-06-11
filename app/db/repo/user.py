@@ -30,12 +30,7 @@ class UserRepo:
         Returns:
             list[User]: The list of users.
         """
-        query = select(User)
-
-        query = query.limit(limit)
-        query = query.offset(offset)
-
-        result = await session.execute(query)
+        result = await session.execute(select(User).limit(limit).offset(offset))
         users = result.scalars().all()
 
         return users
