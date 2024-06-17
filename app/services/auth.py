@@ -9,7 +9,7 @@ from jwt.algorithms import RSAAlgorithm
 from pydantic import BaseModel, EmailStr
 from datetime import datetime, timedelta, timezone
 
-from app.db.user_model import User
+from app.db.models import User
 from app.schemas.user_schemas import SignInRequest, SignUpRequest
 from app.db.repo.user import UserRepo
 from app.services.exceptions import (

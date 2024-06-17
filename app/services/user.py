@@ -2,7 +2,7 @@ from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import Depends
 
-from app.db.user_model import User
+from app.db.models import User
 from app.schemas.user_schemas import UserUpdateRequest, SignUpRequest
 from app.db.repo.user import UserRepo
 from app.services.exceptions import (
@@ -32,7 +32,7 @@ class UserService:
         Args:
             limit (int, optional): How much users to get. Defaults to 10.
             offset (int, optional): Where to start getting users. Defaults to 0.
-            session (AsyncSession, optional):
+            session (AsyncSession):
                 The database session used for querying users.
                 Defaults to the session obtained through get_session.
 
@@ -51,7 +51,7 @@ class UserService:
 
         Args:
             user_id (UUID): The user's ID.
-            session (AsyncSession, optional):
+            session (AsyncSession):
                 The database session used for querying users.
                 Defaults to the session obtained through get_session.
 
@@ -77,7 +77,7 @@ class UserService:
 
         Args:
             user (SignUpRequest): Details for the new user
-            session (AsyncSession, optional):
+            session (AsyncSession):
                 The database session used for querying users.
                 Defaults to the session obtained through get_session.
 
@@ -112,7 +112,7 @@ class UserService:
         Args:
             user_id (UUID): The user's ID.
             user_update (UserUpdateRequest): The details which to update in a user.
-            session (AsyncSession, optional):
+            session (AsyncSession):
                 The database session used for querying users.
                 Defaults to the session obtained through get_session.
 
@@ -150,7 +150,7 @@ class UserService:
 
         Args:
             user_id (UUID): The user's ID.
-            session (AsyncSession, optional):
+            session (AsyncSession):
                 The database session used for querying users.
                 Defaults to the session obtained through get_session.
 

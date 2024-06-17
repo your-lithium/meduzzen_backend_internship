@@ -2,12 +2,14 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 
-from app.routers import health_check, user, auth
+from app.routers import health_check, user, auth, company
 from app.core.config import config
 from app.routers.handlers import (
     user_not_found_exception_handler,
+    company_not_found_exception_handler,
     email_already_exists_exception_handler,
     username_already_exists_exception_handler,
+    company_name_already_exists_exception_handler,
     incorrect_password_exception_handler,
     unauthorized_exception_handler,
     inactive_user_exception_handler,
@@ -15,8 +17,10 @@ from app.routers.handlers import (
 )
 from app.services.exceptions import (
     UserNotFoundError,
+    CompanyNotFoundError,
     EmailAlreadyExistsError,
     UsernameAlreadyExistsError,
+    CompanyNameAlreadyExistsError,
     IncorrectPasswordError,
     UnauthorizedError,
     InactiveUserError,
@@ -44,13 +48,18 @@ app.add_middleware(
 app.include_router(health_check.router)
 app.include_router(user.router)
 app.include_router(auth.router)
+app.include_router(company.router)
 
 app.add_exception_handler(UserNotFoundError, user_not_found_exception_handler)
+app.add_exception_handler(CompanyNotFoundError, company_not_found_exception_handler)
 app.add_exception_handler(
     EmailAlreadyExistsError, email_already_exists_exception_handler
 )
 app.add_exception_handler(
     UsernameAlreadyExistsError, username_already_exists_exception_handler
+)
+app.add_exception_handler(
+    CompanyNameAlreadyExistsError, company_name_already_exists_exception_handler
 )
 app.add_exception_handler(IncorrectPasswordError, incorrect_password_exception_handler)
 app.add_exception_handler(UnauthorizedError, unauthorized_exception_handler)
