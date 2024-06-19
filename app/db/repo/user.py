@@ -122,6 +122,7 @@ class UserRepo:
         hashed_password = bcrypt.hashpw(user.password.encode("utf-8"), bcrypt.gensalt())
 
         new_user = User(
+            id=user.id,
             name=user.name,
             username=user.username,
             email=user.email,
