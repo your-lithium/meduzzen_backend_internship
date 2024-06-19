@@ -21,6 +21,14 @@ class UserNotFoundError(ObjectNotFoundError):
         return f"{self.model_name} with given identifier - {self.identifier} not found"
 
 
+class CompanyNotFoundError(ObjectNotFoundError):
+    def __init__(self, identifier: Any, model_name: str = "company"):
+        super().__init__(identifier, model_name)
+
+    def errors(self):
+        return f"{self.model_name} with given identifier - {self.identifier} not found"
+
+
 class ObjectAlreadyExistsError(BaseError):
     def __init__(self, object_value: Any, object_name: str, model_name: str) -> None:
         self.object_value = object_value
@@ -55,6 +63,13 @@ class UsernameAlreadyExistsError(ObjectAlreadyExistsError):
         super().__init__(object_value, object_name, model_name)
 
 
+class CompanyNameAlreadyExistsError(ObjectAlreadyExistsError):
+    def __init__(
+        self, object_value: str, object_name: str = "name", model_name: str = "company"
+    ) -> None:
+        super().__init__(object_value, object_name, model_name)
+
+
 class IncorrectPasswordError(BaseError):
     def __init__(self):
         super().__init__("Incorrect password provided")
@@ -78,3 +93,12 @@ class InactiveUserError(BaseError):
 
     def errors(self):
         return "Inactive user"
+
+
+class AccessDeniedError(BaseError):
+    def __init__(self, message: str = "Access denied"):
+        self.message = message
+        super().__init__(self.message)
+
+    def errors(self):
+        return self.message

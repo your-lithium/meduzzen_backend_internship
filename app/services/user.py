@@ -2,7 +2,7 @@ from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import Depends
 
-from app.db.user_model import User
+from app.db.models import User
 from app.schemas.user_schemas import UserUpdateRequest, SignUpRequest
 from app.db.repo.user import UserRepo
 from app.services.exceptions import (
@@ -11,6 +11,7 @@ from app.services.exceptions import (
     UsernameAlreadyExistsError,
 )
 from app.db.database import get_session
+from app.services.permissions import PermissionService
 
 
 def get_user_service():
@@ -41,7 +42,6 @@ class UserService:
         users: list[User] = await UserRepo.get_all_users(
             limit=limit, offset=offset, session=session
         )
-
         return users
 
     async def get_user_by_id(
@@ -104,6 +104,7 @@ class UserService:
         self,
         user_id: UUID,
         user_update: UserUpdateRequest,
+        current_user: User,
         session: AsyncSession = Depends(get_session),
     ) -> User:
         """Update an existing user.
@@ -117,36 +118,33 @@ class UserService:
 
         Raises:
             UserNotFoundError: If the requested user does not exist.
-            EmailAlreadyExistsError: If the email provided has already been used.
             UsernameAlreadyExistsError: If the username provided has already been used.
 
         Returns:
             User: Details of the updated user.
         """
-        existing_user: User = await self.get_user_by_id(
-            user_id=user_id, session=session
+        PermissionService.grant_user_permission(
+            user_id=user_id, current_user_id=current_user.id, operation="update"
         )
 
-        check_email: User | None = await UserRepo.get_user_by_email(
-            user_email=user_update.email, session=session
-        )
-        if check_email is not None:
-            raise EmailAlreadyExistsError(object_value=user_update.email)
-
-        check_username: User | None = await UserRepo.get_user_by_username(
-            user_username=user_update.username, session=session
-        )
-        if check_username is not None:
-            raise UsernameAlreadyExistsError(object_value=user_update.username)
+        if user_update.username:
+            check_username: User | None = await UserRepo.get_user_by_username(
+                user_username=user_update.username, session=session
+            )
+            if check_username is not None:
+                raise UsernameAlreadyExistsError(object_value=user_update.username)
 
         updated_user: User = await UserRepo.update_user(
-            existing_user=existing_user, user_update=user_update, session=session
+            existing_user=current_user, user_update=user_update, session=session
         )
 
         return updated_user
 
     async def delete_user(
-        self, user_id: UUID, session: AsyncSession = Depends(get_session)
+        self,
+        user_id: UUID,
+        current_user: User,
+        session: AsyncSession = Depends(get_session),
     ) -> None:
         """Delete a user.
 
@@ -159,6 +157,8 @@ class UserService:
         Raises:
             UserNotFoundError: If the requested user does not exist.
         """
-        user: User = await self.get_user_by_id(user_id=user_id, session=session)
+        PermissionService.grant_user_permission(
+            user_id=user_id, current_user_id=current_user.id, operation="delete"
+        )
 
-        await UserRepo.delete_user(user=user, session=session)
+        await UserRepo.delete_user(user=current_user, session=session)

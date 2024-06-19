@@ -6,7 +6,7 @@ from fastapi import Depends
 from pydantic import EmailStr
 
 from app.db.database import get_session
-from app.db.user_model import User
+from app.db.models import User
 from app.schemas.user_schemas import UserUpdateRequest, SignUpRequest
 from app.core.logger import logger
 
@@ -30,12 +30,7 @@ class UserRepo:
         Returns:
             list[User]: The list of users.
         """
-        query = select(User)
-
-        query = query.limit(limit)
-        query = query.offset(offset)
-
-        result = await session.execute(query)
+        result = await session.execute(select(User).limit(limit).offset(offset))
         users = result.scalars().all()
 
         return users

@@ -4,10 +4,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.schemas.user_schemas import UserDetailResponse, UserUpdateRequest, UserResponse
 from app.services.user import get_user_service
-from app.services.auth import get_auth_service
+from app.services.auth import get_current_user
 from app.db.database import get_session
-from app.db.user_model import User
-from app.core.security import auth_scheme
+from app.db.models import User
 
 
 router = APIRouter(prefix="/users")
@@ -27,6 +26,13 @@ async def read_all_users(
     return users
 
 
+@router.get("/me", response_model=UserDetailResponse)
+async def get_current_user(
+    current_user: User = Depends(get_current_user),
+):
+    return current_user
+
+
 @router.get("/{user_id}", response_model=UserDetailResponse)
 async def read_user_by_id(
     user_id: UUID,
@@ -42,11 +48,15 @@ async def read_user_by_id(
 async def update_user(
     user_id: UUID,
     user_update: UserUpdateRequest,
+    current_user: User = Depends(get_current_user),
     user_service=Depends(get_user_service),
     session: AsyncSession = Depends(get_session),
 ):
     user = await user_service.update_user(
-        user_id=user_id, user_update=user_update, session=session
+        user_id=user_id,
+        user_update=user_update,
+        current_user=current_user,
+        session=session,
     )
 
     return user
@@ -55,20 +65,10 @@ async def update_user(
 @router.delete("/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_user(
     user_id: UUID,
+    current_user: User = Depends(get_current_user),
     user_service=Depends(get_user_service),
     session: AsyncSession = Depends(get_session),
 ):
-    await user_service.delete_user(user_id=user_id, session=session)
-
-
-@router.get("/me", response_model=UserDetailResponse)
-async def get_current_user(
-    token: str | None = Depends(auth_scheme),
-    auth_service=Depends(get_auth_service),
-    session: AsyncSession = Depends(get_session),
-):
-    current_user: User = await auth_service.get_current_active_user(
-        token=token.credentials,
-        session=session,
+    await user_service.delete_user(
+        user_id=user_id, current_user=current_user, session=session
     )
-    return current_user

@@ -31,7 +31,6 @@ class SignUpRequest(BaseModel):
 class UserUpdateRequest(BaseModel):
     name: str | None = None
     username: str | None = None
-    email: str | None = None
     password: str | None = None
 
 

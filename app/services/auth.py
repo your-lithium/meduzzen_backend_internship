@@ -9,7 +9,7 @@ from jwt.algorithms import RSAAlgorithm
 from pydantic import BaseModel, EmailStr
 from datetime import datetime, timedelta, timezone
 
-from app.db.user_model import User
+from app.db.models import User
 from app.schemas.user_schemas import SignInRequest, SignUpRequest
 from app.db.repo.user import UserRepo
 from app.services.exceptions import (
@@ -20,10 +20,23 @@ from app.services.exceptions import (
 )
 from app.db.database import get_session
 from app.core.config import config
+from app.core.security import auth_scheme
 
 
 def get_auth_service():
     return AuthService()
+
+
+async def get_current_user(
+    token: str | None = Depends(auth_scheme),
+    auth_service=Depends(get_auth_service),
+    session: AsyncSession = Depends(get_session),
+) -> User:
+    current_user: User = await auth_service.get_current_active_user(
+        token=token.credentials,
+        session=session,
+    )
+    return current_user
 
 
 class Token(BaseModel):
