@@ -231,29 +231,32 @@ class MembershipService:
             session=session,
         )
 
-        membership = await self.get_membership_by_parties(
-            parties=parties, session=session
-        )
-        if membership:
-            if membership.status == StatusEnum.MEMBER:
-                raise MembershipAlreadyExistsError(
-                    f"user {parties.user_id} and company {parties.company_id}"
-                )
-            elif membership.status == StatusEnum.INVITED:
-                membership = await MembershipRepo.accept_invitation(
-                    membership=membership, session=session
-                )
-                return membership
-            else:
-                raise AccessDeniedError(
-                    (
-                        f"User with ID {parties.user_id} ",
-                        f"has membership status {membership.status} ",
-                        "that is incompatible with the requested action",
+        membership: Membership | None = None
+        try:
+            membership = await self.get_membership_by_parties(
+                parties=parties, session=session
+            )
+        finally:
+            if membership:
+                if membership.status == StatusEnum.MEMBER:
+                    raise MembershipAlreadyExistsError(
+                        f"user {parties.user_id} and company {parties.company_id}"
                     )
-                )
-        else:
-            raise MembershipNotFoundError(parties)
+                elif membership.status == StatusEnum.INVITED:
+                    membership = await MembershipRepo.accept_invitation(
+                        membership=membership, session=session
+                    )
+                    return membership
+                else:
+                    raise AccessDeniedError(
+                        (
+                            f"User with ID {parties.user_id} ",
+                            f"has membership status {membership.status} ",
+                            "that is incompatible with the requested action",
+                        )
+                    )
+            else:
+                raise MembershipNotFoundError(parties)
 
     async def decline_invitation(
         self,
@@ -271,30 +274,33 @@ class MembershipService:
             session=session,
         )
 
-        membership = await self.get_membership_by_parties(
-            parties=parties, session=session
-        )
-        if membership:
-            if membership.status == StatusEnum.MEMBER:
-                raise MembershipAlreadyExistsError(
-                    f"user {parties.user_id} and company {parties.company_id}"
-                )
-            elif membership.status == StatusEnum.INVITED:
-                membership = await MembershipRepo.decline_invitation(
-                    membership=membership,
-                    session=session,
-                )
-                return membership
-            else:
-                raise AccessDeniedError(
-                    (
-                        f"User with ID {parties.user_id} ",
-                        f"has membership status {membership.status} ",
-                        "that is incompatible with the requested action",
+        membership: Membership | None = None
+        try:
+            membership = await self.get_membership_by_parties(
+                parties=parties, session=session
+            )
+        finally:
+            if membership:
+                if membership.status == StatusEnum.MEMBER:
+                    raise MembershipAlreadyExistsError(
+                        f"user {parties.user_id} and company {parties.company_id}"
                     )
-                )
-        else:
-            raise MembershipNotFoundError(parties)
+                elif membership.status == StatusEnum.INVITED:
+                    membership = await MembershipRepo.decline_invitation(
+                        membership=membership,
+                        session=session,
+                    )
+                    return membership
+                else:
+                    raise AccessDeniedError(
+                        (
+                            f"User with ID {parties.user_id} ",
+                            f"has membership status {membership.status} ",
+                            "that is incompatible with the requested action",
+                        )
+                    )
+            else:
+                raise MembershipNotFoundError(parties)
 
     async def send_request(
         self,
@@ -312,31 +318,33 @@ class MembershipService:
             session=session,
         )
 
-        membership = await self.get_membership_by_parties(
-            parties=parties, session=session
-        )
-        if membership:
-            if membership.status == StatusEnum.MEMBER:
-                raise MembershipAlreadyExistsError(
-                    f"user {parties.user_id} and company {parties.company_id}"
-                )
-            elif membership.status == StatusEnum.DECLINED:
-                pass
-            else:
-                raise AccessDeniedError(
-                    (
-                        f"User with ID {parties.user_id} ",
-                        f"has membership status {membership.status} ",
-                        "that is incompatible with the requested action",
+        try:
+            membership = await self.get_membership_by_parties(
+                parties=parties, session=session
+            )
+        finally:
+            if membership:
+                if membership.status == StatusEnum.MEMBER:
+                    raise MembershipAlreadyExistsError(
+                        f"user {parties.user_id} and company {parties.company_id}"
                     )
-                )
+                elif membership.status == StatusEnum.DECLINED:
+                    pass
+                else:
+                    raise AccessDeniedError(
+                        (
+                            f"User with ID {parties.user_id} ",
+                            f"has membership status {membership.status} ",
+                            "that is incompatible with the requested action",
+                        )
+                    )
 
-        request = await MembershipRepo.send_request(
-            parties=parties,
-            session=session,
-        )
+            request = await MembershipRepo.send_request(
+                parties=parties,
+                session=session,
+            )
 
-        return request
+            return request
 
     async def cancel_request(
         self,
@@ -354,29 +362,31 @@ class MembershipService:
             session=session,
         )
 
-        membership = await self.get_membership_by_parties(
-            parties=parties, session=session
-        )
-        if membership:
-            if membership.status == StatusEnum.MEMBER:
-                raise MembershipAlreadyExistsError(
-                    f"user {parties.user_id} and company {parties.company_id}"
-                )
-            elif membership.status == StatusEnum.REQUESTED:
-                await MembershipRepo.cancel_request(
-                    membership=membership,
-                    session=session,
-                )
-            else:
-                raise AccessDeniedError(
-                    (
-                        f"User with ID {parties.user_id} ",
-                        f"has membership status {membership.status} ",
-                        "that is incompatible with the requested action",
+        try:
+            membership = await self.get_membership_by_parties(
+                parties=parties, session=session
+            )
+        finally:
+            if membership:
+                if membership.status == StatusEnum.MEMBER:
+                    raise MembershipAlreadyExistsError(
+                        f"user {parties.user_id} and company {parties.company_id}"
                     )
-                )
-        else:
-            raise MembershipNotFoundError(parties)
+                elif membership.status == StatusEnum.REQUESTED:
+                    await MembershipRepo.cancel_request(
+                        membership=membership,
+                        session=session,
+                    )
+                else:
+                    raise AccessDeniedError(
+                        (
+                            f"User with ID {parties.user_id} ",
+                            f"has membership status {membership.status} ",
+                            "that is incompatible with the requested action",
+                        )
+                    )
+            else:
+                raise MembershipNotFoundError(parties)
 
     async def accept_request(
         self,
@@ -394,30 +404,32 @@ class MembershipService:
             session=session,
         )
 
-        membership = await self.get_membership_by_parties(
-            parties=parties, session=session
-        )
-        if membership:
-            if membership.status == StatusEnum.MEMBER:
-                raise MembershipAlreadyExistsError(
-                    f"user {parties.user_id} and company {parties.company_id}"
-                )
-            elif membership.status == StatusEnum.REQUESTED:
-                request = await MembershipRepo.accept_request(
-                    membership=membership,
-                    session=session,
-                )
-                return request
-            else:
-                raise AccessDeniedError(
-                    (
-                        f"User with ID {parties.user_id} ",
-                        f"has membership status {membership.status} ",
-                        "that is incompatible with the requested action",
+        try:
+            membership = await self.get_membership_by_parties(
+                parties=parties, session=session
+            )
+        finally:
+            if membership:
+                if membership.status == StatusEnum.MEMBER:
+                    raise MembershipAlreadyExistsError(
+                        f"user {parties.user_id} and company {parties.company_id}"
                     )
-                )
-        else:
-            raise MembershipNotFoundError(parties)
+                elif membership.status == StatusEnum.REQUESTED:
+                    request = await MembershipRepo.accept_request(
+                        membership=membership,
+                        session=session,
+                    )
+                    return request
+                else:
+                    raise AccessDeniedError(
+                        (
+                            f"User with ID {parties.user_id} ",
+                            f"has membership status {membership.status} ",
+                            "that is incompatible with the requested action",
+                        )
+                    )
+            else:
+                raise MembershipNotFoundError(parties)
 
     async def reject_request(
         self,
@@ -435,54 +447,58 @@ class MembershipService:
             session=session,
         )
 
-        membership = await self.get_membership_by_parties(
-            parties=parties, session=session
-        )
-        if membership:
-            if membership.status == StatusEnum.MEMBER:
-                raise MembershipAlreadyExistsError(
-                    f"user {parties.user_id} and company {parties.company_id}"
-                )
-            elif membership.status == StatusEnum.REQUESTED:
-                request = await MembershipRepo.reject_request(
-                    membership=membership,
-                    session=session,
-                )
-                return request
-            else:
-                raise AccessDeniedError(
-                    (
-                        f"User with ID {parties.user_id} ",
-                        f"has membership status {membership.status} ",
-                        "that is incompatible with the requested action",
+        try:
+            membership = await self.get_membership_by_parties(
+                parties=parties, session=session
+            )
+        finally:
+            if membership:
+                if membership.status == StatusEnum.MEMBER:
+                    raise MembershipAlreadyExistsError(
+                        f"user {parties.user_id} and company {parties.company_id}"
                     )
-                )
-        else:
-            raise MembershipNotFoundError(parties)
+                elif membership.status == StatusEnum.REQUESTED:
+                    request = await MembershipRepo.reject_request(
+                        membership=membership,
+                        session=session,
+                    )
+                    return request
+                else:
+                    raise AccessDeniedError(
+                        (
+                            f"User with ID {parties.user_id} ",
+                            f"has membership status {membership.status} ",
+                            "that is incompatible with the requested action",
+                        )
+                    )
+            else:
+                raise MembershipNotFoundError(parties)
 
     async def terminate_membership(
         self,
         parties: MembershipActionRequest,
         session: AsyncSession = Depends(get_session),
     ) -> None:
-        membership = await self.get_membership_by_parties(
-            parties=parties, session=session
-        )
-        if membership:
-            if membership.status == StatusEnum.MEMBER:
-                await MembershipRepo.terminate_membership(
-                    membership=membership, session=session
-                )
-            else:
-                raise AccessDeniedError(
-                    (
-                        f"User with ID {parties.user_id} ",
-                        f"has membership status {membership.status} ",
-                        "that is incompatible with the requested action",
+        try:
+            membership = await self.get_membership_by_parties(
+                parties=parties, session=session
+            )
+        finally:
+            if membership:
+                if membership.status == StatusEnum.MEMBER:
+                    await MembershipRepo.terminate_membership(
+                        membership=membership, session=session
                     )
-                )
-        else:
-            raise MembershipNotFoundError(parties)
+                else:
+                    raise AccessDeniedError(
+                        (
+                            f"User with ID {parties.user_id} ",
+                            f"has membership status {membership.status} ",
+                            "that is incompatible with the requested action",
+                        )
+                    )
+            else:
+                raise MembershipNotFoundError(parties)
 
     async def remove_member(
         self,
