@@ -29,6 +29,14 @@ class CompanyNotFoundError(ObjectNotFoundError):
         return f"{self.model_name} with given identifier - {self.identifier} not found"
 
 
+class MembershipNotFoundError(ObjectNotFoundError):
+    def __init__(self, identifier: Any, model_name: str = "membership"):
+        super().__init__(identifier, model_name)
+
+    def errors(self):
+        return f"{self.model_name} with given identifier - {self.identifier} not found"
+
+
 class ObjectAlreadyExistsError(BaseError):
     def __init__(self, object_value: Any, object_name: str, model_name: str) -> None:
         self.object_value = object_value
@@ -66,6 +74,16 @@ class UsernameAlreadyExistsError(ObjectAlreadyExistsError):
 class CompanyNameAlreadyExistsError(ObjectAlreadyExistsError):
     def __init__(
         self, object_value: str, object_name: str = "name", model_name: str = "company"
+    ) -> None:
+        super().__init__(object_value, object_name, model_name)
+
+
+class MembershipAlreadyExistsError(ObjectAlreadyExistsError):
+    def __init__(
+        self,
+        object_value: str,
+        object_name: str = "link",
+        model_name: str = "membership",
     ) -> None:
         super().__init__(object_value, object_name, model_name)
 

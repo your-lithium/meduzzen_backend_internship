@@ -2,14 +2,16 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 
-from app.routers import health_check, user, auth, company
+from app.routers import health_check, user, auth, company, membership
 from app.core.config import config
 from app.routers.handlers import (
     user_not_found_exception_handler,
     company_not_found_exception_handler,
+    membership_not_found_exception_handler,
     email_already_exists_exception_handler,
     username_already_exists_exception_handler,
     company_name_already_exists_exception_handler,
+    membership_already_exists_exception_handler,
     incorrect_password_exception_handler,
     unauthorized_exception_handler,
     inactive_user_exception_handler,
@@ -18,9 +20,11 @@ from app.routers.handlers import (
 from app.services.exceptions import (
     UserNotFoundError,
     CompanyNotFoundError,
+    MembershipNotFoundError,
     EmailAlreadyExistsError,
     UsernameAlreadyExistsError,
     CompanyNameAlreadyExistsError,
+    MembershipAlreadyExistsError,
     IncorrectPasswordError,
     UnauthorizedError,
     InactiveUserError,
@@ -49,9 +53,13 @@ app.include_router(health_check.router)
 app.include_router(user.router)
 app.include_router(auth.router)
 app.include_router(company.router)
+app.include_router(membership.router)
 
 app.add_exception_handler(UserNotFoundError, user_not_found_exception_handler)
 app.add_exception_handler(CompanyNotFoundError, company_not_found_exception_handler)
+app.add_exception_handler(
+    MembershipNotFoundError, membership_not_found_exception_handler
+)
 app.add_exception_handler(
     EmailAlreadyExistsError, email_already_exists_exception_handler
 )
@@ -60,6 +68,9 @@ app.add_exception_handler(
 )
 app.add_exception_handler(
     CompanyNameAlreadyExistsError, company_name_already_exists_exception_handler
+)
+app.add_exception_handler(
+    MembershipAlreadyExistsError, membership_already_exists_exception_handler
 )
 app.add_exception_handler(IncorrectPasswordError, incorrect_password_exception_handler)
 app.add_exception_handler(UnauthorizedError, unauthorized_exception_handler)

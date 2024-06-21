@@ -5,9 +5,11 @@ from app.core.logger import logger
 from app.services.exceptions import (
     UserNotFoundError,
     CompanyNotFoundError,
+    MembershipNotFoundError,
     EmailAlreadyExistsError,
     UsernameAlreadyExistsError,
     CompanyNameAlreadyExistsError,
+    MembershipAlreadyExistsError,
     IncorrectPasswordError,
     UnauthorizedError,
     InactiveUserError,
@@ -25,6 +27,16 @@ async def user_not_found_exception_handler(_: Request, exc: UserNotFoundError):
 
 async def company_not_found_exception_handler(_: Request, exc: CompanyNotFoundError):
     logger.error(f"CompanyNotFoundError error: {exc.errors()}")
+    return JSONResponse(
+        status_code=404,
+        content={"detail": exc.errors()},
+    )
+
+
+async def membership_not_found_exception_handler(
+    _: Request, exc: MembershipNotFoundError
+):
+    logger.error(f"MembershipNotFoundError error: {exc.errors()}")
     return JSONResponse(
         status_code=404,
         content={"detail": exc.errors()},
@@ -55,6 +67,16 @@ async def company_name_already_exists_exception_handler(
     _: Request, exc: CompanyNameAlreadyExistsError
 ):
     logger.error(f"CompanyNameAlreadyExistsError error: {exc.errors()}")
+    return JSONResponse(
+        status_code=400,
+        content={"detail": exc.errors()},
+    )
+
+
+async def membership_already_exists_exception_handler(
+    _: Request, exc: MembershipAlreadyExistsError
+):
+    logger.error(f"MembershipAlreadyExistsError error: {exc.errors()}")
     return JSONResponse(
         status_code=400,
         content={"detail": exc.errors()},
