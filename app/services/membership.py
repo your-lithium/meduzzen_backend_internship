@@ -318,6 +318,7 @@ class MembershipService:
             session=session,
         )
 
+        membership: Membership | None = None
         try:
             membership = await self.get_membership_by_parties(
                 parties=parties, session=session
@@ -362,6 +363,7 @@ class MembershipService:
             session=session,
         )
 
+        membership: Membership | None = None
         try:
             membership = await self.get_membership_by_parties(
                 parties=parties, session=session
@@ -404,6 +406,7 @@ class MembershipService:
             session=session,
         )
 
+        membership: Membership | None = None
         try:
             membership = await self.get_membership_by_parties(
                 parties=parties, session=session
@@ -447,6 +450,7 @@ class MembershipService:
             session=session,
         )
 
+        membership: Membership | None = None
         try:
             membership = await self.get_membership_by_parties(
                 parties=parties, session=session
@@ -479,6 +483,7 @@ class MembershipService:
         parties: MembershipActionRequest,
         session: AsyncSession = Depends(get_session),
     ) -> None:
+        membership: Membership | None = None
         try:
             membership = await self.get_membership_by_parties(
                 parties=parties, session=session
