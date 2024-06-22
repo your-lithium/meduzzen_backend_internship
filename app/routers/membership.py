@@ -18,7 +18,9 @@ from app.services.auth import get_current_user
 router = APIRouter(prefix="/memberships")
 
 
-@router.post("/invitations/{company_id}/{user_id}", response_model=MembershipResponse)
+@router.post(
+    "/owner/invitations/{company_id}/{user_id}", response_model=MembershipResponse
+)
 async def send_invitation(
     company_id: UUID,
     user_id: UUID,
@@ -41,7 +43,7 @@ async def send_invitation(
 
 
 @router.delete(
-    "/invitations/{company_id}/{user_id}", status_code=status.HTTP_204_NO_CONTENT
+    "/owner/invitations/{company_id}/{user_id}", status_code=status.HTTP_204_NO_CONTENT
 )
 async def cancel_invitation(
     company_id: UUID,
@@ -63,18 +65,17 @@ async def cancel_invitation(
 
 
 @router.patch(
-    "/invitations/{company_id}/{user_id}/accept", response_model=MembershipResponse
+    "/user/invitations/{company_id}/accept", response_model=MembershipResponse
 )
 async def accept_invitation(
     company_id: UUID,
-    user_id: UUID,
     current_user: User = Depends(get_current_user),
     company_service=Depends(get_company_service),
     user_service=Depends(get_user_service),
     membership_service=Depends(get_membership_service),
     session: AsyncSession = Depends(get_session),
 ):
-    parties = MembershipActionRequest(company_id=company_id, user_id=user_id)
+    parties = MembershipActionRequest(company_id=company_id, user_id=current_user.id)
     membership = await membership_service.accept_invitation(
         parties=parties,
         current_user=current_user,
@@ -87,18 +88,17 @@ async def accept_invitation(
 
 
 @router.patch(
-    "/invitations/{company_id}/{user_id}/decline", response_model=MembershipResponse
+    "/user/invitations/{company_id}/decline", response_model=MembershipResponse
 )
 async def decline_invitation(
     company_id: UUID,
-    user_id: UUID,
     current_user: User = Depends(get_current_user),
     company_service=Depends(get_company_service),
     user_service=Depends(get_user_service),
     membership_service=Depends(get_membership_service),
     session: AsyncSession = Depends(get_session),
 ):
-    parties = MembershipActionRequest(company_id=company_id, user_id=user_id)
+    parties = MembershipActionRequest(company_id=company_id, user_id=current_user.id)
     membership = await membership_service.decline_invitation(
         parties=parties,
         current_user=current_user,
@@ -110,17 +110,16 @@ async def decline_invitation(
     return membership
 
 
-@router.post("/requests/{company_id}/{user_id}", response_model=MembershipResponse)
+@router.post("/user/requests/{company_id}", response_model=MembershipResponse)
 async def send_request(
     company_id: UUID,
-    user_id: UUID,
     current_user: User = Depends(get_current_user),
     company_service=Depends(get_company_service),
     user_service=Depends(get_user_service),
     membership_service=Depends(get_membership_service),
     session: AsyncSession = Depends(get_session),
 ):
-    parties = MembershipActionRequest(company_id=company_id, user_id=user_id)
+    parties = MembershipActionRequest(company_id=company_id, user_id=current_user.id)
     request = await membership_service.send_request(
         parties=parties,
         current_user=current_user,
@@ -132,19 +131,16 @@ async def send_request(
     return request
 
 
-@router.delete(
-    "/requests/{company_id}/{user_id}", status_code=status.HTTP_204_NO_CONTENT
-)
+@router.delete("/user/requests/{company_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def cancel_request(
     company_id: UUID,
-    user_id: UUID,
     current_user: User = Depends(get_current_user),
     company_service=Depends(get_company_service),
     user_service=Depends(get_user_service),
     membership_service=Depends(get_membership_service),
     session: AsyncSession = Depends(get_session),
 ):
-    parties = MembershipActionRequest(company_id=company_id, user_id=user_id)
+    parties = MembershipActionRequest(company_id=company_id, user_id=current_user.id)
     await membership_service.cancel_request(
         parties=parties,
         current_user=current_user,
@@ -155,7 +151,7 @@ async def cancel_request(
 
 
 @router.patch(
-    "/requests/{company_id}/{user_id}/accept", response_model=MembershipResponse
+    "/owner/requests/{company_id}/{user_id}/accept", response_model=MembershipResponse
 )
 async def accept_request(
     company_id: UUID,
@@ -179,7 +175,7 @@ async def accept_request(
 
 
 @router.patch(
-    "/requests/{company_id}/{user_id}/decline", response_model=MembershipResponse
+    "/owner/requests/{company_id}/{user_id}/decline", response_model=MembershipResponse
 )
 async def decline_request(
     company_id: UUID,
@@ -222,17 +218,16 @@ async def remove_member(
     )
 
 
-@router.delete("/user/{user_id}/{company_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/user/{company_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def leave_company(
     company_id: UUID,
-    user_id: UUID,
     current_user: User = Depends(get_current_user),
     company_service=Depends(get_company_service),
     user_service=Depends(get_user_service),
     membership_service=Depends(get_membership_service),
     session: AsyncSession = Depends(get_session),
 ):
-    parties = MembershipActionRequest(company_id=company_id, user_id=user_id)
+    parties = MembershipActionRequest(company_id=company_id, user_id=current_user.id)
     await membership_service.leave_company(
         parties=parties,
         current_user=current_user,
@@ -242,35 +237,35 @@ async def leave_company(
     )
 
 
-@router.get("/user/{user_id}/requests", response_model=list[MembershipResponse])
-async def get_requests_by_user(
-    user_id: UUID,
+@router.get("/user/requests", response_model=list[MembershipResponse])
+async def get_current_users_requests(
+    current_user: User = Depends(get_current_user),
     limit: int = 10,
     offset: int = 0,
     membership_service=Depends(get_membership_service),
     session: AsyncSession = Depends(get_session),
 ):
     requests = await membership_service.get_requests_by_user(
-        user_id=user_id, limit=limit, offset=offset, session=session
+        user_id=current_user.id, limit=limit, offset=offset, session=session
     )
     return requests
 
 
-@router.get("/user/{user_id}/invitations", response_model=list[MembershipResponse])
-async def get_invitations_by_user(
-    user_id: UUID,
+@router.get("/user/invitations", response_model=list[MembershipResponse])
+async def get_current_users_invitations(
+    current_user: User = Depends(get_current_user),
     limit: int = 10,
     offset: int = 0,
     membership_service=Depends(get_membership_service),
     session: AsyncSession = Depends(get_session),
 ):
     invitations = await membership_service.get_invitations_by_user(
-        user_id=user_id, limit=limit, offset=offset, session=session
+        user_id=current_user.id, limit=limit, offset=offset, session=session
     )
     return invitations
 
 
-@router.get("/owner/{company_id}/invitations", response_model=list[MembershipResponse])
+@router.get("/owner/invitations/{company_id}", response_model=list[MembershipResponse])
 async def get_invitations_by_company(
     company_id: UUID,
     limit: int = 10,
@@ -291,7 +286,7 @@ async def get_invitations_by_company(
     return invitations
 
 
-@router.get("/owner/{company_id}/requests", response_model=list[MembershipResponse])
+@router.get("/owner/requests/{company_id}", response_model=list[MembershipResponse])
 async def get_requests_by_company(
     company_id: UUID,
     limit: int = 10,
@@ -312,7 +307,7 @@ async def get_requests_by_company(
     return requests
 
 
-@router.get("/{company_id}/users", response_model=list[UserResponse])
+@router.get("/company/{company_id}/users", response_model=list[UserResponse])
 async def get_members_by_company(
     company_id: UUID,
     limit: int = 10,
