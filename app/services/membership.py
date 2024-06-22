@@ -633,3 +633,98 @@ class MembershipService:
             session=session,
         )
         return members
+
+    async def appoint_admin(
+        self,
+        parties: MembershipActionRequest,
+        current_user: User,
+        company_service=Depends(get_company_service),
+        user_service=Depends(get_user_service),
+        session: AsyncSession = Depends(get_session),
+    ) -> Membership:
+        await self.check_parties_and_owner(
+            parties=parties,
+            current_user=current_user,
+            company_service=company_service,
+            user_service=user_service,
+            session=session,
+        )
+
+        membership: Membership | None = None
+        try:
+            membership = await self.get_membership_by_parties(
+                parties=parties, session=session
+            )
+        finally:
+            if membership:
+                if membership.status == StatusEnum.MEMBER:
+                    membership = await MembershipRepo.appoint_admin(
+                        membership=membership,
+                        session=session,
+                    )
+                    return membership
+                else:
+                    raise AccessDeniedError(
+                        (
+                            f"User with ID {parties.user_id} ",
+                            f"has membership status {membership.status} ",
+                            "that is incompatible with the requested action",
+                        )
+                    )
+            else:
+                raise MembershipNotFoundError(parties)
+
+    async def remove_admin(
+        self,
+        parties: MembershipActionRequest,
+        current_user: User,
+        company_service=Depends(get_company_service),
+        user_service=Depends(get_user_service),
+        session: AsyncSession = Depends(get_session),
+    ) -> Membership:
+        await self.check_parties_and_owner(
+            parties=parties,
+            current_user=current_user,
+            company_service=company_service,
+            user_service=user_service,
+            session=session,
+        )
+
+        membership: Membership | None = None
+        try:
+            membership = await self.get_membership_by_parties(
+                parties=parties, session=session
+            )
+        finally:
+            if membership:
+                if membership.status == StatusEnum.ADMIN:
+                    membership = await MembershipRepo.remove_admin(
+                        membership=membership,
+                        session=session,
+                    )
+                    return membership
+                else:
+                    raise AccessDeniedError(
+                        (
+                            f"User with ID {parties.user_id} ",
+                            f"has membership status {membership.status} ",
+                            "that is incompatible with the requested action",
+                        )
+                    )
+            else:
+                raise MembershipNotFoundError(parties)
+
+    async def get_admins_by_company(
+        self,
+        company_id: UUID,
+        limit: int = 10,
+        offset: int = 0,
+        session: AsyncSession = Depends(get_session),
+    ) -> list[User]:
+        admins = await MembershipRepo.get_admins_by_company(
+            company_id=company_id,
+            limit=limit,
+            offset=offset,
+            session=session,
+        )
+        return admins

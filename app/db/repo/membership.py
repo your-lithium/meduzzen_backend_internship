@@ -297,3 +297,76 @@ class MembershipRepo:
         members = result.scalars().all()
 
         return members
+
+    @staticmethod
+    async def appoint_admin(
+        membership=Membership,
+        session: AsyncSession = Depends(get_session),
+    ) -> Membership:
+        logger.info(
+            (
+                f"Received request to appoint user {membership.user_id} ",
+                f"an admin in company {membership.company_id}",
+            )
+        )
+
+        setattr(membership, "status", StatusEnum.ADMIN)
+
+        await session.commit()
+        await session.refresh(membership)
+
+        logger.info(
+            (
+                f"User {membership.user_id} successfully appointed ",
+                f"an admin in company {membership.company_id}",
+            )
+        )
+
+        return membership
+
+    @staticmethod
+    async def remove_admin(
+        membership=Membership,
+        session: AsyncSession = Depends(get_session),
+    ) -> Membership:
+        logger.info(
+            (
+                f"Received request to remove user {membership.user_id} ",
+                f"from an admin role in company {membership.company_id}",
+            )
+        )
+
+        setattr(membership, "status", StatusEnum.MEMBER)
+
+        await session.commit()
+        await session.refresh(membership)
+
+        logger.info(
+            (
+                f"User {membership.user_id} successfully removed ",
+                f"from an admin role in company {membership.company_id}",
+            )
+        )
+
+        return membership
+
+    @staticmethod
+    async def get_admins_by_company(
+        company_id: UUID,
+        limit: int = 10,
+        offset: int = 0,
+        session: AsyncSession = Depends(get_session),
+    ) -> list[User]:
+        result = await session.execute(
+            select(User)
+            .join(Membership, User.id == Membership.user_id)
+            .where(
+                (Membership.company_id == company_id)
+                & (Membership.status == StatusEnum.ADMIN)
+            )
+            .limit(limit)
+            .offset(offset)
+        )
+        admins = result.scalars().all()
+
+        return admins

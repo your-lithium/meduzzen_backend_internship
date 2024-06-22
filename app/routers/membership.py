@@ -324,3 +324,70 @@ async def get_members_by_company(
         session=session,
     )
     return members
+
+
+@router.patch(
+    "/owner/admins/{company_id}/{user_id}/appoint", response_model=MembershipResponse
+)
+async def appoint_admin(
+    company_id: UUID,
+    user_id: UUID,
+    current_user: User = Depends(get_current_user),
+    company_service=Depends(get_company_service),
+    user_service=Depends(get_user_service),
+    membership_service=Depends(get_membership_service),
+    session: AsyncSession = Depends(get_session),
+):
+    parties = MembershipActionRequest(company_id=company_id, user_id=user_id)
+    membership = await membership_service.appoint_admin(
+        parties=parties,
+        current_user=current_user,
+        company_service=company_service,
+        user_service=user_service,
+        session=session,
+    )
+
+    return membership
+
+
+@router.patch(
+    "/owner/admins/{company_id}/{user_id}/remove", response_model=MembershipResponse
+)
+async def remove_admin(
+    company_id: UUID,
+    user_id: UUID,
+    current_user: User = Depends(get_current_user),
+    company_service=Depends(get_company_service),
+    user_service=Depends(get_user_service),
+    membership_service=Depends(get_membership_service),
+    session: AsyncSession = Depends(get_session),
+):
+    parties = MembershipActionRequest(company_id=company_id, user_id=user_id)
+    membership = await membership_service.remove_admin(
+        parties=parties,
+        current_user=current_user,
+        company_service=company_service,
+        user_service=user_service,
+        session=session,
+    )
+
+    return membership
+
+
+@router.get("/company/{company_id}/admins", response_model=list[UserResponse])
+async def get_admins_by_company(
+    company_id: UUID,
+    limit: int = 10,
+    offset: int = 0,
+    membership_service=Depends(get_membership_service),
+    session: AsyncSession = Depends(get_session),
+):
+    print(company_id)
+    print(type(company_id))
+    admins = await membership_service.get_admins_by_company(
+        company_id=company_id,
+        limit=limit,
+        offset=offset,
+        session=session,
+    )
+    return admins
