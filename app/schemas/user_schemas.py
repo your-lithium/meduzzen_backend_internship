@@ -1,6 +1,5 @@
 from pydantic import BaseModel, EmailStr
 from uuid import UUID
-from typing import Optional
 
 
 class UserResponse(BaseModel):
@@ -8,7 +7,6 @@ class UserResponse(BaseModel):
     name: str
     username: str
     email: EmailStr
-    password_hash: str
     disabled: bool
 
     class Config:
@@ -21,7 +19,7 @@ class SignInRequest(BaseModel):
 
 
 class SignUpRequest(BaseModel):
-    id: Optional[str] = None
+    id: str | None = None
     name: str
     username: str
     email: EmailStr
