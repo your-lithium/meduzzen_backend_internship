@@ -36,9 +36,9 @@ class Company(BaseId):
 class StatusEnum(enum.Enum):
     MEMBER = "member"
     ADMIN = "admin"
-    INVITED = "invite"
+    INVITED = "invited"
     DECLINED = "declined"  # can't be invited again, but can request membership
-    REQUESTED = "request"
+    REQUESTED = "requested"
     REJECTED = "rejected"  # can't request membership again, but can be invited
 
 

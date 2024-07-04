@@ -2,6 +2,7 @@ from sqlalchemy.future import select
 from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import Depends
+from sqlalchemy.sql import and_
 
 from app.db.database import get_session
 from app.db.models import Membership, StatusEnum, User
@@ -31,8 +32,10 @@ class MembershipRepo:
     ) -> Membership:
         result = await session.execute(
             select(Membership).where(
-                (Membership.company_id == parties.company_id)
-                & (Membership.user_id == parties.user_id)
+                and_(
+                    Membership.company_id == parties.company_id,
+                    Membership.user_id == parties.user_id,
+                )
             )
         )
         membership = result.scalars().first()
@@ -207,8 +210,10 @@ class MembershipRepo:
         result = await session.execute(
             select(Membership)
             .where(
-                (Membership.user_id == user_id)
-                & (Membership.status == StatusEnum.REQUESTED)
+                and_(
+                    Membership.user_id == user_id,
+                    Membership.status == StatusEnum.REQUESTED,
+                )
             )
             .limit(limit)
             .offset(offset)
@@ -227,8 +232,10 @@ class MembershipRepo:
         result = await session.execute(
             select(Membership)
             .where(
-                (Membership.user_id == user_id)
-                & (Membership.status == StatusEnum.INVITED)
+                and_(
+                    Membership.user_id == user_id,
+                    Membership.status == StatusEnum.INVITED,
+                )
             )
             .limit(limit)
             .offset(offset)
@@ -247,8 +254,10 @@ class MembershipRepo:
         result = await session.execute(
             select(Membership)
             .where(
-                (Membership.company_id == company_id)
-                & (Membership.status == StatusEnum.INVITED)
+                and_(
+                    Membership.company_id == company_id,
+                    Membership.status == StatusEnum.INVITED,
+                )
             )
             .limit(limit)
             .offset(offset)
@@ -267,8 +276,10 @@ class MembershipRepo:
         result = await session.execute(
             select(Membership)
             .where(
-                (Membership.company_id == company_id)
-                & (Membership.status == StatusEnum.REQUESTED)
+                and_(
+                    Membership.company_id == company_id,
+                    Membership.status == StatusEnum.REQUESTED,
+                )
             )
             .limit(limit)
             .offset(offset)
@@ -288,8 +299,10 @@ class MembershipRepo:
             select(User)
             .join(Membership, User.id == Membership.user_id)
             .where(
-                (Membership.company_id == company_id)
-                & (Membership.status == StatusEnum.MEMBER)
+                and_(
+                    Membership.company_id == company_id,
+                    Membership.status == StatusEnum.MEMBER,
+                )
             )
             .limit(limit)
             .offset(offset)
