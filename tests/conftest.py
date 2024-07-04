@@ -31,7 +31,6 @@ def engine():
 @pytest_asyncio.fixture(scope="function")
 async def test_session(prepare_db, engine):
     async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.drop_all)
         await conn.run_sync(Base.metadata.create_all)
 
     TestingSessionLocal = sessionmaker(
@@ -46,6 +45,9 @@ async def test_session(prepare_db, engine):
         yield test_session
         await test_session.flush()
         await test_session.rollback()
+
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.drop_all)
 
 
 @pytest.fixture(scope="function")
@@ -82,6 +84,4 @@ async def fill_db_with_users(test_session: AsyncSession):
         db_user = User(**user)
         test_session.add(db_user)
 
-    await test_session.commit()
-    yield
-    await test_session.rollback()
+        await test_session.commit()

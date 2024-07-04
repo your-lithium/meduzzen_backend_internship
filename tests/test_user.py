@@ -1,7 +1,10 @@
 import pytest
+
 from httpx import AsyncClient
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from tests import payload
+from app.db.repo.user import UserRepo
 
 
 @pytest.mark.asyncio
@@ -46,11 +49,10 @@ async def test_update_user(client: AsyncClient, fill_db_with_users):
 
 
 @pytest.mark.asyncio
-async def test_delete_user(client: AsyncClient, fill_db_with_users):
-    user_1_id = payload.test_user_1.id
-    await client.delete(f"/users/{user_1_id}")
-    user_2_id = payload.test_user_2.id
-    await client.delete(f"/users/{user_2_id}")
-    response = await client.get("/users")
-    assert response.status_code == 200
-    assert response.json() == []
+async def test_delete_user(
+    client: AsyncClient, test_session: AsyncSession, fill_db_with_users
+):
+    user_id = payload.test_user_1.id
+    await client.delete(f"/users/{user_id}")
+    user = await UserRepo.get_user_by_id(user_id=user_id, session=test_session)
+    assert user is None
