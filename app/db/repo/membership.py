@@ -366,20 +366,23 @@ class MembershipRepo:
     @staticmethod
     async def get_admins_by_company(
         company_id: UUID,
-        limit: int = 10,
+        limit: int | None = 10,
         offset: int = 0,
         session: AsyncSession = Depends(get_session),
     ) -> list[User]:
-        result = await session.execute(
+        query = (
             select(User)
             .join(Membership, User.id == Membership.user_id)
             .where(
                 (Membership.company_id == company_id)
                 & (Membership.status == StatusEnum.ADMIN)
             )
-            .limit(limit)
             .offset(offset)
         )
+        if limit:
+            query = query.limit(limit)
+
+        result = await session.execute(query)
         admins = result.scalars().all()
 
         return admins

@@ -6,6 +6,7 @@ from app.services.exceptions import (
     UserNotFoundError,
     CompanyNotFoundError,
     MembershipNotFoundError,
+    QuizNotFoundError,
     EmailAlreadyExistsError,
     UsernameAlreadyExistsError,
     CompanyNameAlreadyExistsError,
@@ -37,6 +38,14 @@ async def membership_not_found_exception_handler(
     _: Request, exc: MembershipNotFoundError
 ):
     logger.error(f"MembershipNotFoundError error: {exc.errors()}")
+    return JSONResponse(
+        status_code=404,
+        content={"detail": exc.errors()},
+    )
+
+
+async def quiz_not_found_exception_handler(_: Request, exc: QuizNotFoundError):
+    logger.error(f"QuizNotFoundError error: {exc.errors()}")
     return JSONResponse(
         status_code=404,
         content={"detail": exc.errors()},

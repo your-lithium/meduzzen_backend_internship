@@ -19,3 +19,16 @@ class PermissionService:
                 f"You are not allowed to {operation} information "
                 "for companies you're not an owner of"
             )
+
+    @staticmethod
+    def grant_owner_admin_permission(
+        owner_id: UUID, admin_ids: list[UUID], current_user_id: UUID, operation: str
+    ):
+        is_owner = owner_id == current_user_id
+        is_admin = current_user_id in admin_ids
+
+        if not (is_owner or is_admin):
+            raise AccessDeniedError(
+                f"You are not allowed to {operation} information "
+                "for companies you're not an owner or admin of"
+            )
