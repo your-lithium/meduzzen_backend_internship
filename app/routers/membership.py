@@ -316,8 +316,6 @@ async def get_admins_by_company(
     membership_service=Depends(get_membership_service),
     session: AsyncSession = Depends(get_session),
 ):
-    print(company_id)
-    print(type(company_id))
     admins = await membership_service.get_admins_by_company(
         company_id=company_id,
         limit=limit,
