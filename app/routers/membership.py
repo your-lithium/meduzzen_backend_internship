@@ -4,9 +4,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.schemas.membership_schemas import MembershipResponse
 from app.schemas.user_schemas import UserResponse
-from app.services.membership import get_membership_service
+from app.services.membership import get_membership_service, MembershipService
 from app.db.database import get_session
-from app.db.models import User
+from app.db.models import User, Membership
 from app.services.auth import get_current_user
 
 
@@ -18,9 +18,9 @@ async def send_invitation(
     company_id: UUID,
     user_id: UUID,
     current_user: User = Depends(get_current_user),
-    membership_service=Depends(get_membership_service),
+    membership_service: MembershipService = Depends(get_membership_service),
     session: AsyncSession = Depends(get_session),
-):
+) -> Membership:
     invitation = await membership_service.send_invitation(
         company_id=company_id,
         user_id=user_id,
@@ -38,7 +38,7 @@ async def cancel_invitation(
     company_id: UUID,
     user_id: UUID,
     current_user: User = Depends(get_current_user),
-    membership_service=Depends(get_membership_service),
+    membership_service: MembershipService = Depends(get_membership_service),
     session: AsyncSession = Depends(get_session),
 ):
     await membership_service.cancel_invitation(
@@ -55,9 +55,9 @@ async def cancel_invitation(
 async def accept_invitation(
     company_id: UUID,
     current_user: User = Depends(get_current_user),
-    membership_service=Depends(get_membership_service),
+    membership_service: MembershipService = Depends(get_membership_service),
     session: AsyncSession = Depends(get_session),
-):
+) -> Membership:
     membership = await membership_service.accept_invitation(
         company_id=company_id,
         current_user=current_user,
@@ -73,9 +73,9 @@ async def accept_invitation(
 async def decline_invitation(
     company_id: UUID,
     current_user: User = Depends(get_current_user),
-    membership_service=Depends(get_membership_service),
+    membership_service: MembershipService = Depends(get_membership_service),
     session: AsyncSession = Depends(get_session),
-):
+) -> Membership:
     membership = await membership_service.decline_invitation(
         company_id=company_id,
         current_user=current_user,
@@ -89,9 +89,9 @@ async def decline_invitation(
 async def send_request(
     company_id: UUID,
     current_user: User = Depends(get_current_user),
-    membership_service=Depends(get_membership_service),
+    membership_service: MembershipService = Depends(get_membership_service),
     session: AsyncSession = Depends(get_session),
-):
+) -> Membership:
     request = await membership_service.send_request(
         company_id=company_id,
         current_user=current_user,
@@ -105,7 +105,7 @@ async def send_request(
 async def cancel_request(
     company_id: UUID,
     current_user: User = Depends(get_current_user),
-    membership_service=Depends(get_membership_service),
+    membership_service: MembershipService = Depends(get_membership_service),
     session: AsyncSession = Depends(get_session),
 ):
     await membership_service.cancel_request(
@@ -122,9 +122,9 @@ async def accept_request(
     company_id: UUID,
     user_id: UUID,
     current_user: User = Depends(get_current_user),
-    membership_service=Depends(get_membership_service),
+    membership_service: MembershipService = Depends(get_membership_service),
     session: AsyncSession = Depends(get_session),
-):
+) -> Membership:
     membership = await membership_service.accept_request(
         company_id=company_id,
         user_id=user_id,
@@ -142,9 +142,9 @@ async def reject_request(
     company_id: UUID,
     user_id: UUID,
     current_user: User = Depends(get_current_user),
-    membership_service=Depends(get_membership_service),
+    membership_service: MembershipService = Depends(get_membership_service),
     session: AsyncSession = Depends(get_session),
-):
+) -> Membership:
     membership = await membership_service.decline_request(
         company_id=company_id,
         user_id=user_id,
@@ -160,7 +160,7 @@ async def remove_member(
     company_id: UUID,
     user_id: UUID,
     current_user: User = Depends(get_current_user),
-    membership_service=Depends(get_membership_service),
+    membership_service: MembershipService = Depends(get_membership_service),
     session: AsyncSession = Depends(get_session),
 ):
     await membership_service.remove_member(
@@ -175,7 +175,7 @@ async def remove_member(
 async def leave_company(
     company_id: UUID,
     current_user: User = Depends(get_current_user),
-    membership_service=Depends(get_membership_service),
+    membership_service: MembershipService = Depends(get_membership_service),
     session: AsyncSession = Depends(get_session),
 ):
     await membership_service.leave_company(
@@ -190,9 +190,9 @@ async def get_current_users_requests(
     current_user: User = Depends(get_current_user),
     limit: int = 10,
     offset: int = 0,
-    membership_service=Depends(get_membership_service),
+    membership_service: MembershipService = Depends(get_membership_service),
     session: AsyncSession = Depends(get_session),
-):
+) -> list[Membership]:
     requests = await membership_service.get_requests_by_user(
         user_id=current_user.id, limit=limit, offset=offset, session=session
     )
@@ -204,9 +204,9 @@ async def get_current_users_invitations(
     current_user: User = Depends(get_current_user),
     limit: int = 10,
     offset: int = 0,
-    membership_service=Depends(get_membership_service),
+    membership_service: MembershipService = Depends(get_membership_service),
     session: AsyncSession = Depends(get_session),
-):
+) -> list[Membership]:
     invitations = await membership_service.get_invitations_by_user(
         user_id=current_user.id, limit=limit, offset=offset, session=session
     )
@@ -219,9 +219,9 @@ async def get_invitations_by_company(
     limit: int = 10,
     offset: int = 0,
     current_user: User = Depends(get_current_user),
-    membership_service=Depends(get_membership_service),
+    membership_service: MembershipService = Depends(get_membership_service),
     session: AsyncSession = Depends(get_session),
-):
+) -> list[Membership]:
     invitations = await membership_service.get_invitations_by_company(
         company_id=company_id,
         current_user=current_user,
@@ -238,9 +238,9 @@ async def get_requests_by_company(
     limit: int = 10,
     offset: int = 0,
     current_user: User = Depends(get_current_user),
-    membership_service=Depends(get_membership_service),
+    membership_service: MembershipService = Depends(get_membership_service),
     session: AsyncSession = Depends(get_session),
-):
+) -> list[Membership]:
     requests = await membership_service.get_requests_by_company(
         company_id=company_id,
         current_user=current_user,
@@ -256,9 +256,9 @@ async def get_members_by_company(
     company_id: UUID,
     limit: int = 10,
     offset: int = 0,
-    membership_service=Depends(get_membership_service),
+    membership_service: MembershipService = Depends(get_membership_service),
     session: AsyncSession = Depends(get_session),
-):
+) -> list[User]:
     members = await membership_service.get_members_by_company(
         company_id=company_id,
         limit=limit,

@@ -14,6 +14,21 @@ class MembershipRepo:
     """Represents a repository pattern to perform CRUD on Membership model."""
 
     @staticmethod
+    def get_common_where_clause(
+        status: StatusEnum, user_id: UUID | None = None, company_id: UUID | None = None
+    ):
+        if user_id:
+            return and_(
+                Membership.user_id == user_id,
+                Membership.status == status,
+            )
+        elif company_id:
+            return and_(
+                Membership.company_id == company_id,
+                Membership.status == status,
+            )
+
+    @staticmethod
     async def get_membership_by_id(
         membership_id: UUID,
         session: AsyncSession = Depends(get_session),
@@ -210,9 +225,8 @@ class MembershipRepo:
         result = await session.execute(
             select(Membership)
             .where(
-                and_(
-                    Membership.user_id == user_id,
-                    Membership.status == StatusEnum.REQUESTED,
+                MembershipRepo.get_common_where_clause(
+                    user_id=user_id, status=StatusEnum.REQUESTED
                 )
             )
             .limit(limit)
@@ -232,9 +246,8 @@ class MembershipRepo:
         result = await session.execute(
             select(Membership)
             .where(
-                and_(
-                    Membership.user_id == user_id,
-                    Membership.status == StatusEnum.INVITED,
+                MembershipRepo.get_common_where_clause(
+                    user_id=user_id, status=StatusEnum.INVITED
                 )
             )
             .limit(limit)
@@ -254,9 +267,8 @@ class MembershipRepo:
         result = await session.execute(
             select(Membership)
             .where(
-                and_(
-                    Membership.company_id == company_id,
-                    Membership.status == StatusEnum.INVITED,
+                MembershipRepo.get_common_where_clause(
+                    company_id=company_id, status=StatusEnum.INVITED
                 )
             )
             .limit(limit)
@@ -276,9 +288,8 @@ class MembershipRepo:
         result = await session.execute(
             select(Membership)
             .where(
-                and_(
-                    Membership.company_id == company_id,
-                    Membership.status == StatusEnum.REQUESTED,
+                MembershipRepo.get_common_where_clause(
+                    company_id=company_id, status=StatusEnum.REQUESTED
                 )
             )
             .limit(limit)
@@ -299,9 +310,8 @@ class MembershipRepo:
             select(User)
             .join(Membership, User.id == Membership.user_id)
             .where(
-                and_(
-                    Membership.company_id == company_id,
-                    Membership.status == StatusEnum.MEMBER,
+                MembershipRepo.get_common_where_clause(
+                    company_id=company_id, status=StatusEnum.MEMBER
                 )
             )
             .limit(limit)
