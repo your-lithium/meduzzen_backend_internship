@@ -1,10 +1,20 @@
 import enum
 
-from sqlalchemy import String, Boolean, ForeignKey, Enum, Integer, CheckConstraint
+from sqlalchemy import (
+    String,
+    Boolean,
+    ForeignKey,
+    Enum,
+    Integer,
+    CheckConstraint,
+    DateTime,
+    func,
+)
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.dialects.postgresql import JSONB
 from uuid import UUID, uuid4
+from datetime import datetime
 
 from app.db.database import Base
 from app.schemas.quiz_schemas import QuestionList
@@ -67,3 +77,16 @@ class Quiz(BaseId):
             "jsonb_array_length(questions) >= 2", name="questions_min_length"
         ),
     )
+
+
+class QuizResult(BaseId):
+    __tablename__ = "quiz_result"
+
+    user_id: Mapped[UUID] = mapped_column(ForeignKey("user.id"), nullable=False)
+    company_id: Mapped[UUID] = mapped_column(ForeignKey("company.id"), nullable=False)
+    quiz_id: Mapped[UUID] = mapped_column(ForeignKey("quiz.id"), nullable=False)
+    time: Mapped[datetime] = mapped_column(
+        DateTime, nullable=False, server_default=func.now()
+    )
+    answered: Mapped[int] = mapped_column(Integer, nullable=False)
+    correct: Mapped[int] = mapped_column(Integer, nullable=False)
