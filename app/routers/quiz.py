@@ -15,7 +15,7 @@ from app.db.models import User
 from app.services.auth import get_current_user
 
 
-router = APIRouter(prefix="/quizzes")
+router = APIRouter(prefix="/quizzes", tags=["Quiz Methods"])
 
 
 @router.get("/{company_id}", response_model=list[QuizResponse])

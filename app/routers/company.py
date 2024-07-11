@@ -13,7 +13,7 @@ from app.db.models import User
 from app.services.auth import get_current_user
 
 
-router = APIRouter(prefix="/companies")
+router = APIRouter(prefix="/companies", tags=["Company Methods"])
 
 
 @router.get("", response_model=list[CompanyResponse])

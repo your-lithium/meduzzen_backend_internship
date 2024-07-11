@@ -7,7 +7,7 @@ from app.services.auth import get_auth_service, Token
 from app.db.database import get_session
 
 
-router = APIRouter(prefix="/auth")
+router = APIRouter(prefix="/auth", tags=["Auth Methods"])
 
 
 @router.post("/signin", response_model=Token)

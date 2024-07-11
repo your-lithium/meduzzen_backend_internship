@@ -9,7 +9,7 @@ from app.db.database import get_session
 from app.db.models import User
 
 
-router = APIRouter(prefix="/users")
+router = APIRouter(prefix="/users", tags=["User Methods"])
 
 
 @router.get("", response_model=list[UserResponse])

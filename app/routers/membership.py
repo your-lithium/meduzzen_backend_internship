@@ -10,7 +10,7 @@ from app.db.models import User
 from app.services.auth import get_current_user
 
 
-router = APIRouter(prefix="/memberships")
+router = APIRouter(prefix="/memberships", tags=["Membership Methods"])
 
 
 @router.post("/{company_id}/invitation/{user_id}", response_model=MembershipResponse)
