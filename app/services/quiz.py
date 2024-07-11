@@ -2,10 +2,11 @@ from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import Depends
 
-from app.db.models import Company, User, Quiz
+from app.db.models import Company, User, Quiz, Membership
 from app.schemas.quiz_schemas import QuizCreateRequest, QuizUpdateRequest
+from app.schemas.membership_schemas import MembershipActionRequest
 from app.db.repo.quiz import QuizRepo
-from app.services.exceptions import QuizNotFoundError
+from app.services.exceptions import QuizNotFoundError, MembershipNotFoundError
 from app.db.database import get_session
 from app.services.permissions import PermissionService
 from app.services.company import get_company_service, CompanyService
@@ -44,19 +45,23 @@ class QuizService:
             company_id=company_id, session=session
         )
 
-        admins = await self._membership_service.get_admins_by_company(
-            company_id=existing_company.id,
-            limit=None,
-            session=session,
+        parties = MembershipActionRequest(
+            company_id=company_id, user_id=current_user.id
         )
-        admin_ids = [admin.id for admin in admins]
-
-        PermissionService.grant_owner_admin_permission(
-            owner_id=existing_company.owner_id,
-            admin_ids=admin_ids,
-            current_user_id=current_user.id,
-            operation="update quiz",
-        )
+        membership: Membership | None = None
+        try:
+            membership = await self._membership_service.get_membership_by_parties(
+                parties=parties, session=session
+            )
+        except MembershipNotFoundError:
+            pass
+        finally:
+            PermissionService.grant_owner_admin_permission(
+                owner_id=existing_company.owner_id,
+                membership=membership,
+                current_user_id=current_user.id,
+                operation="update quiz",
+            )
 
     async def get_quizzes_by_company(
         self,
@@ -100,7 +105,7 @@ class QuizService:
             session=session,
         )
 
-        quiz: Quiz | None = await QuizRepo.create_quiz(
+        quiz: Quiz = await QuizRepo.create_quiz(
             quiz=quiz, company_id=company_id, session=session
         )
 
@@ -135,7 +140,7 @@ class QuizService:
         current_user: User,
         session: AsyncSession = Depends(get_session),
     ) -> None:
-        quiz: Quiz | None = await self.get_quiz_by_id(quiz_id=quiz_id, session=session)
+        quiz: Quiz = await self.get_quiz_by_id(quiz_id=quiz_id, session=session)
 
         await self.check_company_and_user(
             company_id=quiz.company_id,

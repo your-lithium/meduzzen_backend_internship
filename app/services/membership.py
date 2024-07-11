@@ -144,6 +144,8 @@ class MembershipService:
             membership = await self.get_membership_by_parties(
                 parties=parties, session=session
             )
+        except MembershipNotFoundError:
+            pass
         finally:
             if membership:
                 if membership.status == StatusEnum.MEMBER:
@@ -291,6 +293,8 @@ class MembershipService:
             membership = await self.get_membership_by_parties(
                 parties=parties, session=session
             )
+        except MembershipNotFoundError:
+            pass
         finally:
             if membership:
                 if membership.status == StatusEnum.MEMBER:

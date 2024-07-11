@@ -2,18 +2,15 @@
 
 Revision ID: 0007
 Revises: 0006
-Create Date: 2024-07-05 13:18:43.263801
+Create Date: 2024-07-11 11:03:50.936156
 
 """
 
 from typing import Sequence, Union
-from sqlalchemy.types import Text
 
 from alembic import op
 import sqlalchemy as sa
-
-from app.db.models import JSONEncodedDict
-
+from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision: str = "0007"
@@ -30,7 +27,7 @@ def upgrade() -> None:
         sa.Column("name", sa.String(), nullable=False),
         sa.Column("description", sa.String(), nullable=False),
         sa.Column("frequency", sa.Integer(), nullable=False),
-        sa.Column("questions", JSONEncodedDict(astext_type=Text()), nullable=False),
+        sa.Column("questions", postgresql.JSONB(astext_type=sa.Text()), nullable=False),
         sa.Column("id", sa.UUID(), nullable=False),
         sa.CheckConstraint(
             "jsonb_array_length(questions) >= 2", name="questions_min_length"

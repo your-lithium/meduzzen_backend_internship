@@ -51,11 +51,12 @@ class QuizRepo:
             name=quiz.name,
             description=quiz.description,
             frequency=quiz.frequency,
-            questions=quiz.questions,
+            questions=quiz.questions.model_dump(),
         )
 
         session.add(new_quiz)
         await session.commit()
+        await session.refresh(new_quiz)
 
         logger.info("New quiz created successfully")
         return new_quiz

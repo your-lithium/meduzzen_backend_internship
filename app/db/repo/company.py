@@ -108,6 +108,7 @@ class CompanyRepo:
 
         session.add(new_company)
         await session.commit()
+        await session.refresh(new_company)
 
         logger.info("New company created successfully")
         return new_company
