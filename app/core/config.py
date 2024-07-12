@@ -1,5 +1,5 @@
 from pydantic_settings import BaseSettings
-from pydantic import PrivateAttr, ConfigDict
+from pydantic import ConfigDict
 
 
 class AppConfig(BaseSettings):
@@ -19,7 +19,7 @@ class AppConfig(BaseSettings):
     postgres_user: str
     postgres_password: str
     postgres_name: str
-    _postgres_url: str | None = PrivateAttr(default=None)
+    postgres_test_name: str
 
     redis_host: str
     redis_port: int
@@ -27,12 +27,17 @@ class AppConfig(BaseSettings):
 
     @property
     def postgres_url(self) -> str:
-        if self._postgres_url is None:
-            self._postgres_url = (
-                f"postgresql+asyncpg://{self.postgres_user}:{self.postgres_password}@"
-                f"{self.postgres_host}:{self.postgres_port}/{self.postgres_name}"
-            )
-        return self._postgres_url
+        return (
+            f"postgresql+asyncpg://{self.postgres_user}:{self.postgres_password}@"
+            f"{self.postgres_host}:{self.postgres_port}/{self.postgres_name}"
+        )
+
+    @property
+    def postgres_test_url(self) -> str:
+        return (
+            f"postgresql+asyncpg://{self.postgres_user}:{self.postgres_password}@"
+            f"{self.postgres_host}:{self.postgres_port}/{self.postgres_test_name}"
+        )
 
     model_config = ConfigDict(env_file=".env")
 

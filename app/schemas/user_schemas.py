@@ -7,7 +7,6 @@ class UserResponse(BaseModel):
     name: str
     username: str
     email: EmailStr
-    password_hash: str
     disabled: bool
 
     class Config:
@@ -20,6 +19,7 @@ class SignInRequest(BaseModel):
 
 
 class SignUpRequest(BaseModel):
+    id: str | None = None
     name: str
     username: str
     email: EmailStr
