@@ -50,6 +50,22 @@ class QuizResultService:
         current_user: User,
         session: AsyncSession = Depends(get_session),
     ) -> Quiz:
+        """Check if the Quiz exists and a User is a member of its Company.
+
+        Args:
+            quiz_id (UUID): The ID of the Quiz requested.
+            current_user (User): The User who to authorize.
+            session (AsyncSession):
+                The database session used for querying.
+                Defaults to the session obtained through get_session.
+
+        Raises:
+            AccessDeniedError:
+                If the User isn't a member of the Company that owns the Quiz.
+
+        Returns:
+            Quiz: Quiz details.
+        """
         quiz = await self._quiz_service.get_quiz_by_id(quiz_id=quiz_id, session=session)
 
         parties = MembershipActionRequest(
@@ -73,6 +89,22 @@ class QuizResultService:
         current_user: User,
         session: AsyncSession = Depends(get_session),
     ) -> QuizResult:
+        """Add a new quiz result.
+
+        Args:
+            quiz_id (UUID): The quiz answered.
+            answers (Answers): The answers.
+            current_user (User): The User who to authorize.
+            session (AsyncSession):
+                The database session used for querying.
+                Defaults to the session obtained through get_session.
+
+        Raises:
+            IncompleteQuizError: If not all questions in the quiz have answers.
+
+        Returns:
+            QuizResult: The new result.
+        """
         quiz = await self.check_company_member_and_quiz(
             quiz_id=quiz_id, current_user=current_user, session=session
         )
@@ -103,6 +135,23 @@ class QuizResultService:
         company_id: UUID | None = None,
         session: AsyncSession = Depends(get_session),
     ) -> float:
+        """Get quiz results of one User.
+        Can be used both for overall results and per company.
+
+        Args:
+            user_id (UUID): The user which to check.
+            company_id (UUID | None, optional):
+                The company which to check. Defaults to None.
+            session (AsyncSession):
+                The database session used for querying.
+                Defaults to the session obtained through get_session.
+
+        Raises:
+            ResultsNotFoundError: If there were no results found.
+
+        Returns:
+            float: The obtained rating.
+        """
         quizzes = await QuizResultRepo.get_results_by_user(
             user_id=user_id,
             company_id=company_id,

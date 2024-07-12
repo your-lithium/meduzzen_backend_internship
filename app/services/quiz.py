@@ -41,6 +41,15 @@ class QuizService:
         current_user: User,
         session: AsyncSession = Depends(get_session),
     ) -> None:
+        """Check if a Company exists and if a User is its owner or admin.
+
+        Args:
+            company_id (UUID): The ID of a Company to check.
+            current_user (User): The User to check.
+            session (AsyncSession):
+                The database session used for querying.
+                Defaults to the session obtained through get_session.
+        """
         existing_company = await self._company_service.get_company_by_id(
             company_id=company_id, session=session
         )
@@ -70,6 +79,19 @@ class QuizService:
         offset: int = 0,
         session: AsyncSession = Depends(get_session),
     ) -> list[Quiz]:
+        """Get a list of quizzes belonging to one Company.
+
+        Args:
+            company_id (UUID): The ID of the company to check.
+            limit (int, optional): How much quizzes to get. Defaults to 10.
+            offset (int, optional): Where to start getting quizzes. Defaults to 0.
+            session (AsyncSession):
+                The database session used for querying.
+                Defaults to the session obtained through get_session.
+
+        Returns:
+            list[Quiz]: The list of quizzes.
+        """
         quizzes: list[Quiz] = await QuizRepo.get_quizzes_by_company(
             company_id=company_id,
             limit=limit,
@@ -83,6 +105,20 @@ class QuizService:
         quiz_id: UUID,
         session: AsyncSession = Depends(get_session),
     ) -> Quiz:
+        """Get details for one quiz via its ID.
+
+        Args:
+            quiz_id (UUID): The quiz's ID.
+            session (AsyncSession):
+                The database session used for querying.
+                Defaults to the session obtained through get_session.
+
+        Raises:
+            QuizNotFoundError: If there's no Quiz with given ID.
+
+        Returns:
+            Quiz: Quiz details.
+        """
         quiz: Quiz | None = await QuizRepo.get_quiz_by_id(
             quiz_id=quiz_id, session=session
         )
@@ -99,6 +135,19 @@ class QuizService:
         current_user: User,
         session: AsyncSession = Depends(get_session),
     ) -> Quiz:
+        """Create a new quiz.
+
+        Args:
+            quiz (QuizCreateRequest): Details for creating a new quiz.
+            company_id (UUID): The company which the quiz should belong to.
+            current_user (User): The current user to authorize as an owner or admin.
+            session (AsyncSession):
+                The database session used for querying.
+                Defaults to the session obtained through get_session.
+
+        Returns:
+            Quiz: Details of the new quiz.
+        """
         await self.check_company_and_user(
             company_id=company_id,
             current_user=current_user,
@@ -118,6 +167,19 @@ class QuizService:
         current_user: User,
         session: AsyncSession = Depends(get_session),
     ) -> Company:
+        """Update an existing quiz.
+
+        Args:
+            quiz_id (UUID): The ID of the quiz to update.
+            quiz_update (QuizUpdateRequest): The details which to update in a quiz.
+            current_user (User): The current user to authorize as an owner or admin.
+            session (AsyncSession):
+                The database session used for querying.
+                Defaults to the session obtained through get_session.
+
+        Returns:
+            Company: Details of the updated quiz.
+        """
         existing_quiz = await self.get_quiz_by_id(quiz_id=quiz_id, session=session)
 
         await self.check_company_and_user(
@@ -140,6 +202,15 @@ class QuizService:
         current_user: User,
         session: AsyncSession = Depends(get_session),
     ) -> None:
+        """Delete a quiz.
+
+        Args:
+            quiz_id (UUID): The ID of the quiz to delete.
+            current_user (User): The current user to authorize as an owner or admin.
+            session (AsyncSession):
+                The database session used for querying.
+                Defaults to the session obtained through get_session.
+        """
         quiz: Quiz = await self.get_quiz_by_id(quiz_id=quiz_id, session=session)
 
         await self.check_company_and_user(

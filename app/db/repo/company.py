@@ -122,7 +122,7 @@ class CompanyRepo:
         """Update an existing company.
 
         Args:
-            existing_company (Company): The existing company to update
+            existing_company (Company): The existing company to update.
             company_update (CompanyUpdateRequest):
                 The details which to update in a company.
             session (AsyncSession):

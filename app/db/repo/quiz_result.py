@@ -21,6 +21,21 @@ class QuizResultRepo:
         correct: int,
         session: AsyncSession = Depends(get_session),
     ) -> QuizResult:
+        """Add a new quiz result.
+
+        Args:
+            user_id (UUID): The user who answered the quiz.
+            company_id (UUID): The company that the quiz belongs to.
+            quiz_id (UUID): The quiz answered.
+            answered (int): The amount of answered questions.
+            correct (int): The amount of questions answered correctly.
+            session (AsyncSession):
+                The database session used for querying quiz results.
+                Defaults to the session obtained through get_session.
+
+        Returns:
+            QuizResult: The new result.
+        """
         logger.info("Received a request to add a new quiz result")
 
         new_result = QuizResult(
@@ -43,6 +58,20 @@ class QuizResultRepo:
         company_id: UUID | None = None,
         session: AsyncSession = Depends(get_session),
     ) -> list[QuizResult]:
+        """Get quiz results of one User.
+        Can be used both for overall results and per company.
+
+        Args:
+            user_id (UUID): The user which to check.
+            company_id (UUID | None, optional):
+                The company which to check. Defaults to None.
+            session (AsyncSession):
+                The database session used for querying quiz results.
+                Defaults to the session obtained through get_session.
+
+        Returns:
+            list[QuizResult]: The results of a User.
+        """
         if company_id:
             result = await session.execute(
                 select(QuizResult).where(
