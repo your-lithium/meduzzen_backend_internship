@@ -89,7 +89,7 @@ class CompanyService:
             Company: The created company.
         """
         check_name: Company | None = await CompanyRepo.get_company_by_name(
-            company_name=company.name, owner=current_user, session=session
+            company_name=company.name, session=session
         )
         if check_name is not None:
             raise CompanyNameAlreadyExistsError(object_value=company.name)
@@ -139,7 +139,7 @@ class CompanyService:
 
         if company_update.name:
             check_name: Company | None = await CompanyRepo.get_company_by_name(
-                company_name=company_update.name, owner=current_user, session=session
+                company_name=company_update.name, session=session
             )
             if check_name is not None:
                 raise CompanyNameAlreadyExistsError(object_value=company_update.name)

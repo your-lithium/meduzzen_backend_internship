@@ -1,7 +1,8 @@
-from sqlalchemy import String, Boolean, ForeignKey
+from sqlalchemy import String, Boolean, ForeignKey, Enum
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.dialects import postgresql
 from uuid import UUID, uuid4
+import enum
 
 from app.db.database import Base
 
@@ -30,3 +31,19 @@ class Company(BaseId):
     description: Mapped[str] = mapped_column(String, nullable=False)
     owner_id: Mapped[UUID] = mapped_column(ForeignKey("user.id"), nullable=False)
     is_public: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+
+
+class StatusEnum(enum.Enum):
+    MEMBER = "member"
+    INVITED = "invited"
+    DECLINED = "declined"  # can't be invited again, but can request membership
+    REQUESTED = "requested"
+    REJECTED = "rejected"  # can't request membership again, but can be invited
+
+
+class Membership(BaseId):
+    __tablename__ = "membership"
+
+    company_id: Mapped[UUID] = mapped_column(ForeignKey("company.id"), nullable=False)
+    user_id: Mapped[UUID] = mapped_column(ForeignKey("user.id"), nullable=False)
+    status: Mapped[StatusEnum] = mapped_column(Enum(StatusEnum), nullable=False)
