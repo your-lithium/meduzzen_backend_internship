@@ -78,7 +78,7 @@ async def delete_quiz(
     )
 
 
-@router.post("/answer/{quiz_id}", response_model=QuizResultDetails)
+@router.post("/{quiz_id}/answer", response_model=QuizResultDetails)
 async def answer_quiz(
     quiz_id: UUID,
     answers: Answers,
