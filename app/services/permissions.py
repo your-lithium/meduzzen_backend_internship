@@ -23,16 +23,6 @@ class PermissionService:
             )
 
     @staticmethod
-    def grant_admin_permission(membership_status: StatusEnum, operation: str):
-        is_admin = membership_status == StatusEnum.ADMIN
-
-        if not is_admin:
-            raise AccessDeniedError(
-                f"You are not allowed to {operation} information "
-                "for companies you're not an admin of"
-            )
-
-    @staticmethod
     def grant_owner_admin_permission(
         owner_id: UUID,
         membership: Membership | None,
@@ -44,6 +34,8 @@ class PermissionService:
                 owner_id=owner_id, current_user_id=current_user_id, operation=operation
             )
         else:
-            PermissionService.grant_admin_permission(
-                membership_status=membership.status, operation=operation
-            )
+            if membership.status != StatusEnum.ADMIN:
+                raise AccessDeniedError(
+                    f"You are not allowed to {operation} information "
+                    "for companies you're not an admin of"
+                )
