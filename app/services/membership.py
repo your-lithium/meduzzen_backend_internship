@@ -563,3 +563,82 @@ class MembershipService:
             session=session,
         )
         return members
+
+    async def appoint_admin(
+        self,
+        company_id: UUID,
+        user_id: UUID,
+        current_user: User,
+        session: AsyncSession = Depends(get_session),
+    ) -> Membership:
+        parties = MembershipActionRequest(company_id=company_id, user_id=user_id)
+        await self.check_parties_and_owner(
+            parties=parties,
+            current_user=current_user,
+            session=session,
+        )
+
+        membership = await self.get_membership_by_parties(
+            parties=parties, session=session
+        )
+        if membership.status == StatusEnum.MEMBER:
+            membership = await MembershipRepo.appoint_admin(
+                membership=membership,
+                session=session,
+            )
+            return membership
+        else:
+            raise AccessDeniedError(
+                (
+                    f"User with ID {parties.user_id} ",
+                    f"has membership status {membership.status} ",
+                    "that is incompatible with the requested action",
+                )
+            )
+
+    async def remove_admin(
+        self,
+        company_id: UUID,
+        user_id: UUID,
+        current_user: User,
+        session: AsyncSession = Depends(get_session),
+    ) -> Membership:
+        parties = MembershipActionRequest(company_id=company_id, user_id=user_id)
+        await self.check_parties_and_owner(
+            parties=parties,
+            current_user=current_user,
+            session=session,
+        )
+
+        membership = await self.get_membership_by_parties(
+            parties=parties, session=session
+        )
+        if membership.status == StatusEnum.ADMIN:
+            membership = await MembershipRepo.remove_admin(
+                membership=membership,
+                session=session,
+            )
+            return membership
+        else:
+            raise AccessDeniedError(
+                (
+                    f"User with ID {parties.user_id} ",
+                    f"has membership status {membership.status} ",
+                    "that is incompatible with the requested action",
+                )
+            )
+
+    async def get_admins_by_company(
+        self,
+        company_id: UUID,
+        limit: int = 10,
+        offset: int = 0,
+        session: AsyncSession = Depends(get_session),
+    ) -> list[User]:
+        admins = await MembershipRepo.get_admins_by_company(
+            company_id=company_id,
+            limit=limit,
+            offset=offset,
+            session=session,
+        )
+        return admins
