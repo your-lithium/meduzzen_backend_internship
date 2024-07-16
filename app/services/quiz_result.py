@@ -1,9 +1,10 @@
 from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import Depends
+from datetime import timedelta
 
 from app.db.models import User, Quiz, QuizResult, StatusEnum
-from app.schemas.quiz_result_schemas import Answers
+from app.schemas.quiz_result_schemas import Answers, QuizResultDetails
 from app.schemas.membership_schemas import MembershipActionRequest
 from app.db.repo.quiz_result import QuizResultRepo
 from app.services.exceptions import (
@@ -16,6 +17,7 @@ from app.services.company import get_company_service, CompanyService
 from app.services.user import get_user_service, UserService
 from app.services.membership import get_membership_service, MembershipService
 from app.services.quiz import get_quiz_service, QuizService
+from app.services.redis_connect import redis_client
 
 
 def get_quiz_result_service(
@@ -82,6 +84,17 @@ class QuizResultService:
 
         return quiz
 
+    async def store_quiz_result(self, quiz_result: QuizResultDetails):
+        await redis_client.connect()
+        key = (
+            f"quiz_result:{quiz_result.user_id}:{quiz_result.quiz_id}:"
+            f"{quiz_result.time}"
+        )
+        value = quiz_result.model_dump_json()
+        ttl = int(timedelta(hours=48).total_seconds())
+        await redis_client.setex(key, value, ttl)
+        await redis_client.close()
+
     async def add_result(
         self,
         quiz_id: UUID,
@@ -127,6 +140,9 @@ class QuizResultService:
             session=session,
         )
 
+        await self.store_quiz_result(
+            quiz_result=QuizResultDetails.model_validate(quiz_result)
+        )
         return quiz_result
 
     async def get_user_rating(
