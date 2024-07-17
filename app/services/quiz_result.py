@@ -87,8 +87,8 @@ class QuizResultService:
     async def store_quiz_result(self, quiz_result: QuizResultDetails):
         await redis_client.connect()
         key = (
-            f"quiz_result:{quiz_result.user_id}:{quiz_result.quiz_id}:"
-            f"{quiz_result.time}"
+            f"quiz_result:{quiz_result.user_id}:{quiz_result.company_id}:"
+            f"{quiz_result.quiz_id}:{quiz_result.time}"
         )
         value = quiz_result.model_dump_json()
         ttl = int(timedelta(hours=48).total_seconds())
