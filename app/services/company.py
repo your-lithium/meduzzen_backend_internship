@@ -128,7 +128,7 @@ class CompanyService:
             Company: Details of the updated company.
         """
         existing_company = await self.get_company_by_id(
-            company_id=company_id, current_user=current_user, session=session
+            company_id=company_id, session=session
         )
 
         PermissionService.grant_owner_permission(
@@ -172,12 +172,9 @@ class CompanyService:
             AccessDeniedError:
                 If the current authenticated user is not the company's owner.
         """
-        company: Company | None = await CompanyRepo.get_company_by_id(
-            company_id=company_id, owner=current_user, session=session
+        company: Company | None = await self.get_company_by_id(
+            company_id=company_id, session=session
         )
-
-        if company is None:
-            raise CompanyNotFoundError(company_id)
 
         PermissionService.grant_owner_permission(
             owner_id=company.owner_id,

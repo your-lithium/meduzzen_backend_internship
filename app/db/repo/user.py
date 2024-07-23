@@ -126,6 +126,7 @@ class UserRepo:
 
         session.add(new_user)
         await session.commit()
+        await session.refresh(new_user)
 
         logger.info("New user created successfully")
         return new_user

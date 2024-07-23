@@ -1,10 +1,13 @@
-from sqlalchemy import String, Boolean, ForeignKey, Enum
-from sqlalchemy.orm import Mapped, mapped_column
-from sqlalchemy.dialects import postgresql
-from uuid import UUID, uuid4
 import enum
 
+from sqlalchemy import String, Boolean, ForeignKey, Enum, Integer, CheckConstraint
+from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.dialects import postgresql
+from sqlalchemy.dialects.postgresql import JSONB
+from uuid import UUID, uuid4
+
 from app.db.database import Base
+from app.schemas.quiz_schemas import QuestionList
 
 
 class BaseId(Base):
@@ -48,3 +51,19 @@ class Membership(BaseId):
     company_id: Mapped[UUID] = mapped_column(ForeignKey("company.id"), nullable=False)
     user_id: Mapped[UUID] = mapped_column(ForeignKey("user.id"), nullable=False)
     status: Mapped[StatusEnum] = mapped_column(Enum(StatusEnum), nullable=False)
+
+
+class Quiz(BaseId):
+    __tablename__ = "quiz"
+
+    company_id: Mapped[UUID] = mapped_column(ForeignKey("company.id"), nullable=False)
+    name: Mapped[str] = mapped_column(String, nullable=False)
+    description: Mapped[str] = mapped_column(String, nullable=False)
+    frequency: Mapped[int] = mapped_column(Integer, nullable=False)
+    questions: Mapped[QuestionList] = mapped_column(JSONB, nullable=False)
+
+    __table_args__ = (
+        CheckConstraint(
+            "jsonb_array_length(questions) >= 2", name="questions_min_length"
+        ),
+    )

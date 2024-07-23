@@ -1,5 +1,7 @@
 from uuid import UUID
+
 from app.services.exceptions import AccessDeniedError
+from app.db.models import Membership, StatusEnum
 
 
 class PermissionService:
@@ -19,3 +21,21 @@ class PermissionService:
                 f"You are not allowed to {operation} information "
                 "for companies you're not an owner of"
             )
+
+    @staticmethod
+    def grant_owner_admin_permission(
+        owner_id: UUID,
+        membership: Membership | None,
+        current_user_id: UUID,
+        operation: str,
+    ):
+        if membership is None:
+            PermissionService.grant_owner_permission(
+                owner_id=owner_id, current_user_id=current_user_id, operation=operation
+            )
+        else:
+            if membership.status != StatusEnum.ADMIN:
+                raise AccessDeniedError(
+                    f"You are not allowed to {operation} information "
+                    "for companies you're not an admin of"
+                )

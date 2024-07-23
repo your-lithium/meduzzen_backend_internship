@@ -144,6 +144,8 @@ class MembershipService:
             membership = await self.get_membership_by_parties(
                 parties=parties, session=session
             )
+        except MembershipNotFoundError:
+            pass
         finally:
             if membership:
                 if membership.status == StatusEnum.MEMBER:
@@ -291,6 +293,8 @@ class MembershipService:
             membership = await self.get_membership_by_parties(
                 parties=parties, session=session
             )
+        except MembershipNotFoundError:
+            pass
         finally:
             if membership:
                 if membership.status == StatusEnum.MEMBER:
@@ -631,7 +635,7 @@ class MembershipService:
     async def get_admins_by_company(
         self,
         company_id: UUID,
-        limit: int = 10,
+        limit: int | None = 10,
         offset: int = 0,
         session: AsyncSession = Depends(get_session),
     ) -> list[User]:

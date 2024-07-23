@@ -32,7 +32,7 @@ class MembershipRepo:
     async def get_membership_by_id(
         membership_id: UUID,
         session: AsyncSession = Depends(get_session),
-    ) -> Membership:
+    ) -> Membership | None:
         result = await session.execute(
             select(Membership).where(Membership.id == membership_id)
         )
@@ -44,7 +44,7 @@ class MembershipRepo:
     async def get_membership_by_parties(
         parties: MembershipActionRequest,
         session: AsyncSession = Depends(get_session),
-    ) -> Membership:
+    ) -> Membership | None:
         result = await session.execute(
             select(Membership).where(
                 and_(
@@ -77,6 +77,7 @@ class MembershipRepo:
 
         session.add(invitation)
         await session.commit()
+        await session.refresh(invitation)
 
         logger.info(
             (
@@ -150,6 +151,7 @@ class MembershipRepo:
 
         session.add(request)
         await session.commit()
+        await session.refresh(request)
 
         logger.info(
             (
