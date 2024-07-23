@@ -7,6 +7,7 @@ from app.services.exceptions import (
     CompanyNotFoundError,
     MembershipNotFoundError,
     QuizNotFoundError,
+    ResultsNotFoundError,
     EmailAlreadyExistsError,
     UsernameAlreadyExistsError,
     CompanyNameAlreadyExistsError,
@@ -15,6 +16,7 @@ from app.services.exceptions import (
     UnauthorizedError,
     InactiveUserError,
     AccessDeniedError,
+    IncompleteQuizError,
 )
 
 
@@ -46,6 +48,14 @@ async def membership_not_found_exception_handler(
 
 async def quiz_not_found_exception_handler(_: Request, exc: QuizNotFoundError):
     logger.error(f"QuizNotFoundError error: {exc.errors()}")
+    return JSONResponse(
+        status_code=404,
+        content={"detail": exc.errors()},
+    )
+
+
+async def results_not_found_exception_handler(_: Request, exc: ResultsNotFoundError):
+    logger.error(f"ResultsNotFoundError error: {exc.errors()}")
     return JSONResponse(
         status_code=404,
         content={"detail": exc.errors()},
@@ -120,5 +130,13 @@ async def access_denied_exception_handler(_: Request, exc: AccessDeniedError):
     logger.error(f"AccessDeniedError error: {exc.errors()}")
     return JSONResponse(
         status_code=403,
+        content={"detail": exc.errors()},
+    )
+
+
+async def incomplete_quiz_exception_handler(_: Request, exc: IncompleteQuizError):
+    logger.error(f"IncompleteQuizError error: {exc.errors()}")
+    return JSONResponse(
+        status_code=422,
         content={"detail": exc.errors()},
     )

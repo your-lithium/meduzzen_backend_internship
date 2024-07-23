@@ -45,6 +45,17 @@ class QuizNotFoundError(ObjectNotFoundError):
         return f"{self.model_name} with given identifier - {self.identifier} not found"
 
 
+class ResultsNotFoundError(ObjectNotFoundError):
+    def __init__(self, identifier: Any, model_name: str = "quiz result for user"):
+        super().__init__(identifier, model_name)
+
+    def errors(self):
+        return (
+            f"{self.model_name} for user with given identifier - "
+            f"{self.identifier} not found"
+        )
+
+
 class ObjectAlreadyExistsError(BaseError):
     def __init__(self, object_value: Any, object_name: str, model_name: str) -> None:
         self.object_value = object_value
@@ -123,6 +134,15 @@ class InactiveUserError(BaseError):
 
 class AccessDeniedError(BaseError):
     def __init__(self, message: str = "Access denied"):
+        self.message = message
+        super().__init__(self.message)
+
+    def errors(self):
+        return self.message
+
+
+class IncompleteQuizError(BaseError):
+    def __init__(self, message: str = "You must answer all questions in the quiz"):
         self.message = message
         super().__init__(self.message)
 

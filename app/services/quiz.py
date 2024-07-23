@@ -65,7 +65,7 @@ class QuizService:
 
     async def get_quizzes_by_company(
         self,
-        company_id=UUID,
+        company_id: UUID,
         limit: int = 10,
         offset: int = 0,
         session: AsyncSession = Depends(get_session),
