@@ -117,7 +117,6 @@ class UserRepo:
         hashed_password = bcrypt.hashpw(user.password.encode("utf-8"), bcrypt.gensalt())
 
         new_user = User(
-            id=user.id,
             name=user.name,
             username=user.username,
             email=user.email,
@@ -151,7 +150,7 @@ class UserRepo:
         """
         logger.info(f"Received request to update user with ID {existing_user.id}")
 
-        for attr in user_update.__dict__:
+        for attr in user_update.model_fields_set:
             value = getattr(user_update, attr)
             if value is not None:
                 setattr(existing_user, attr, value)

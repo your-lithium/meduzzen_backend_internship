@@ -3,7 +3,6 @@ import pytest_asyncio
 import bcrypt
 from httpx import ASGITransport, AsyncClient
 
-# from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 
