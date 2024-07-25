@@ -1,16 +1,15 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, ConfigDict
 from uuid import UUID
 
 
 class UserResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: UUID
     name: str
     username: str
     email: EmailStr
     disabled: bool
-
-    class Config:
-        from_attributes = True
 
 
 class SignInRequest(BaseModel):

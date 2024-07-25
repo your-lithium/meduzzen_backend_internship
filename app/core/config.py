@@ -1,5 +1,4 @@
-from pydantic_settings import BaseSettings
-from pydantic import ConfigDict
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class AppConfig(BaseSettings):
@@ -39,7 +38,7 @@ class AppConfig(BaseSettings):
             f"{self.postgres_host}:{self.postgres_port}/{self.postgres_test_name}"
         )
 
-    model_config = ConfigDict(env_file=".env")
+    model_config = SettingsConfigDict(env_file=".env")
 
 
 config = AppConfig()
