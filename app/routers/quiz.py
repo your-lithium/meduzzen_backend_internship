@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, status
 from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
+from fastapi.responses import FileResponse
 
 from app.schemas.quiz_schemas import (
     QuizResponse,
@@ -116,3 +117,73 @@ async def get_user_rating(
     rating = await quiz_result_service.get_user_rating(user_id=user_id, session=session)
 
     return rating
+
+
+@router.get("/results/me")
+async def get_user_results_48h(
+    current_user: User = Depends(get_current_user),
+    quiz_result_service: QuizResultService = Depends(get_quiz_result_service),
+    get_csv: bool = False,
+):
+    results = await quiz_result_service.get_user_results_48h(
+        current_user=current_user, get_csv=get_csv
+    )
+    if get_csv:
+        results = FileResponse(results)
+    return results
+
+
+@router.get("/results/company/{company_id}")
+async def get_company_results_48h(
+    company_id: UUID,
+    current_user: User = Depends(get_current_user),
+    quiz_result_service: QuizResultService = Depends(get_quiz_result_service),
+    session: AsyncSession = Depends(get_session),
+    get_csv: bool = False,
+):
+    results = await quiz_result_service.get_company_results_48h(
+        company_id=company_id,
+        current_user=current_user,
+        session=session,
+        get_csv=get_csv,
+    )
+    if get_csv:
+        results = FileResponse(results)
+    return results
+
+
+@router.get("/results/company/{company_id}/{user_id}")
+async def get_company_user_results_48h(
+    company_id: UUID,
+    user_id: UUID,
+    current_user: User = Depends(get_current_user),
+    quiz_result_service: QuizResultService = Depends(get_quiz_result_service),
+    session: AsyncSession = Depends(get_session),
+    get_csv: bool = False,
+):
+    results = await quiz_result_service.get_company_user_results_48h(
+        company_id=company_id,
+        user_id=user_id,
+        current_user=current_user,
+        session=session,
+        get_csv=get_csv,
+    )
+    if get_csv:
+        results = FileResponse(results)
+    return results
+
+
+@router.get("/results/quiz/{quiz_id}")
+async def get_quiz_results_48h(
+    quiz_id: UUID,
+    current_user: User = Depends(get_current_user),
+    quiz_result_service: QuizResultService = Depends(get_quiz_result_service),
+    session: AsyncSession = Depends(get_session),
+    get_csv: bool = False,
+):
+    results = await quiz_result_service.get_quiz_results_48h(
+        quiz_id=quiz_id, current_user=current_user, session=session, get_csv=get_csv
+    )
+    if get_csv:
+        results = FileResponse(results)
+    return results
