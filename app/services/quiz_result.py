@@ -1,23 +1,20 @@
-from uuid import UUID
-from sqlalchemy.ext.asyncio import AsyncSession
-from fastapi import Depends
 from datetime import timedelta
+from fastapi import Depends
+from sqlalchemy.ext.asyncio import AsyncSession
+from uuid import UUID
 
-from app.db.models import User, Quiz, QuizResult, StatusEnum
-from app.schemas.quiz_result_schemas import Answers, QuizResultDetails
-from app.schemas.membership_schemas import MembershipActionRequest
-from app.db.repo.quiz_result import QuizResultRepo
-from app.services.exceptions import (
-    ResultsNotFoundError,
-    AccessDeniedError,
-    IncompleteQuizError,
-)
 from app.db.database import get_session
-from app.services.company import get_company_service, CompanyService
-from app.services.user import get_user_service, UserService
-from app.services.membership import get_membership_service, MembershipService
-from app.services.quiz import get_quiz_service, QuizService
+from app.db.models import Quiz, QuizResult, StatusEnum, User
+from app.db.repo.quiz_result import QuizResultRepo
+from app.schemas.membership_schemas import MembershipActionRequest
+from app.schemas.quiz_result_schemas import Answers, QuizResultDetails
+from app.services.company import CompanyService, get_company_service
+from app.services.exceptions import (AccessDeniedError, IncompleteQuizError,
+                                     ResultsNotFoundError)
+from app.services.membership import MembershipService, get_membership_service
 from app.services.redis_connect import redis_client
+from app.services.quiz import QuizService, get_quiz_service
+from app.services.user import UserService, get_user_service
 
 
 def get_quiz_result_service(

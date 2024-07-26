@@ -1,17 +1,18 @@
 from uuid import UUID
-from sqlalchemy.ext.asyncio import AsyncSession
-from fastapi import Depends
 
-from app.db.models import Company, User, Quiz, Membership
-from app.schemas.quiz_schemas import QuizCreateRequest, QuizUpdateRequest
-from app.schemas.membership_schemas import MembershipActionRequest
-from app.db.repo.quiz import QuizRepo
-from app.services.exceptions import QuizNotFoundError, MembershipNotFoundError
+from fastapi import Depends
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.db.database import get_session
+from app.db.models import Company, Membership, Quiz, User
+from app.db.repo.quiz import QuizRepo
+from app.schemas.membership_schemas import MembershipActionRequest
+from app.schemas.quiz_schemas import QuizCreateRequest, QuizUpdateRequest
+from app.services.company import CompanyService, get_company_service
+from app.services.exceptions import MembershipNotFoundError, QuizNotFoundError
+from app.services.membership import MembershipService, get_membership_service
 from app.services.permissions import PermissionService
-from app.services.company import get_company_service, CompanyService
-from app.services.user import get_user_service, UserService
-from app.services.membership import get_membership_service, MembershipService
+from app.services.user import UserService, get_user_service
 
 
 def get_quiz_service(

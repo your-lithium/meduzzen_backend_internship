@@ -1,19 +1,17 @@
-from fastapi import APIRouter, Depends, status
 from uuid import UUID
+
+from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.schemas.quiz_schemas import (
-    QuizResponse,
-    QuizCreateRequest,
-    QuizUpdateRequest,
-)
-from app.schemas.quiz_result_schemas import QuizResultDetails, Answers, MeanScore
-from app.services.quiz import get_quiz_service, QuizService
-from app.services.quiz_result import get_quiz_result_service, QuizResultService
 from app.db.database import get_session
 from app.db.models import User
+from app.schemas.quiz_result_schemas import (Answers, MeanScore,
+                                             QuizResultDetails)
+from app.schemas.quiz_schemas import (QuizCreateRequest, QuizResponse,
+                                      QuizUpdateRequest)
 from app.services.auth import get_current_user
-
+from app.services.quiz import QuizService, get_quiz_service
+from app.services.quiz_result import QuizResultService, get_quiz_result_service
 
 router = APIRouter(prefix="/quizzes", tags=["Quiz Methods"])
 

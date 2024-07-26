@@ -1,14 +1,15 @@
-import bcrypt
-from sqlalchemy.future import select
 from uuid import UUID
-from sqlalchemy.ext.asyncio import AsyncSession
+
+import bcrypt
 from fastapi import Depends
 from pydantic import EmailStr
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.future import select
 
+from app.core.logger import logger
 from app.db.database import get_session
 from app.db.models import User
-from app.schemas.user_schemas import UserUpdateRequest, SignUpRequest
-from app.core.logger import logger
+from app.schemas.user_schemas import SignUpRequest, UserUpdateRequest
 
 
 class UserRepo:
@@ -151,7 +152,7 @@ class UserRepo:
         """
         logger.info(f"Received request to update user with ID {existing_user.id}")
 
-        for attr in user_update.__dict__:
+        for attr in user_update.model_fields_set:
             value = getattr(user_update, attr)
             if value is not None:
                 setattr(existing_user, attr, value)
