@@ -2,22 +2,18 @@ from fastapi import Request
 from fastapi.responses import JSONResponse
 
 from app.core.logger import logger
-from app.services.exceptions import (
-    UserNotFoundError,
-    CompanyNotFoundError,
-    MembershipNotFoundError,
-    QuizNotFoundError,
-    ResultsNotFoundError,
-    EmailAlreadyExistsError,
-    UsernameAlreadyExistsError,
-    CompanyNameAlreadyExistsError,
-    MembershipAlreadyExistsError,
-    IncorrectPasswordError,
-    UnauthorizedError,
-    InactiveUserError,
-    AccessDeniedError,
-    IncompleteQuizError,
-)
+from app.services.exceptions import (AccessDeniedError,
+                                     CompanyNameAlreadyExistsError,
+                                     CompanyNotFoundError,
+                                     EmailAlreadyExistsError,
+                                     InactiveUserError, IncompleteQuizError,
+                                     IncorrectPasswordError,
+                                     MembershipAlreadyExistsError,
+                                     MembershipNotFoundError,
+                                     QuizNotFoundError, ResultsNotFoundError,
+                                     UnauthorizedError,
+                                     UsernameAlreadyExistsError,
+                                     UserNotFoundError)
 
 
 async def user_not_found_exception_handler(_: Request, exc: UserNotFoundError):

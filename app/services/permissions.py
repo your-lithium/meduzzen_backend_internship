@@ -1,7 +1,7 @@
 from uuid import UUID
 
-from app.services.exceptions import AccessDeniedError
 from app.db.models import Membership, StatusEnum
+from app.services.exceptions import AccessDeniedError
 
 
 class PermissionService:

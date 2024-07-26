@@ -1,10 +1,9 @@
 import pytest
-
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from tests import payload
 from app.db.repo.user import UserRepo
+from tests import payload
 
 
 def assert_user_matches_expected(user: dict, expected: dict):

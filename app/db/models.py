@@ -1,20 +1,12 @@
 import enum
+from datetime import datetime
+from uuid import UUID, uuid4
 
-from sqlalchemy import (
-    String,
-    Boolean,
-    ForeignKey,
-    Enum,
-    Integer,
-    CheckConstraint,
-    DateTime,
-    func,
-)
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy import (Boolean, CheckConstraint, DateTime, Enum, ForeignKey,
+                        Integer, String, func)
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.dialects.postgresql import JSONB
-from uuid import UUID, uuid4
-from datetime import datetime
+from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.database import Base
 from app.schemas.quiz_schemas import QuestionList

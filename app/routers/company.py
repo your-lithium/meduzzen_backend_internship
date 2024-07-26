@@ -1,17 +1,14 @@
-from fastapi import APIRouter, Depends, status
 from uuid import UUID
+
+from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.schemas.company_schemas import (
-    CompanyResponse,
-    CompanyCreateRequest,
-    CompanyUpdateRequest,
-)
-from app.services.company import get_company_service, CompanyService
 from app.db.database import get_session
 from app.db.models import User
+from app.schemas.company_schemas import (CompanyCreateRequest, CompanyResponse,
+                                         CompanyUpdateRequest)
 from app.services.auth import get_current_user
-
+from app.services.company import CompanyService, get_company_service
 
 router = APIRouter(prefix="/companies", tags=["Company Methods"])
 

@@ -1,16 +1,15 @@
 from uuid import UUID
-from sqlalchemy.ext.asyncio import AsyncSession
-from fastapi import Depends
 
-from app.db.models import User
-from app.schemas.user_schemas import UserUpdateRequest, SignUpRequest
-from app.db.repo.user import UserRepo
-from app.services.exceptions import (
-    UserNotFoundError,
-    EmailAlreadyExistsError,
-    UsernameAlreadyExistsError,
-)
+from fastapi import Depends
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.db.database import get_session
+from app.db.models import User
+from app.db.repo.user import UserRepo
+from app.schemas.user_schemas import SignUpRequest, UserUpdateRequest
+from app.services.exceptions import (EmailAlreadyExistsError,
+                                     UsernameAlreadyExistsError,
+                                     UserNotFoundError)
 from app.services.permissions import PermissionService
 
 

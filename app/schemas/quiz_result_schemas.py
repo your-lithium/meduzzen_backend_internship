@@ -1,6 +1,7 @@
-from pydantic import BaseModel, RootModel, ConfigDict
-from uuid import UUID
 from datetime import datetime
+from uuid import UUID
+
+from pydantic import BaseModel, ConfigDict, RootModel
 
 
 class QuizResultDetails(BaseModel):

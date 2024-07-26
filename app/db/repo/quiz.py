@@ -1,12 +1,13 @@
-from sqlalchemy.future import select
 from uuid import UUID
-from sqlalchemy.ext.asyncio import AsyncSession
-from fastapi import Depends
 
+from fastapi import Depends
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.future import select
+
+from app.core.logger import logger
 from app.db.database import get_session
 from app.db.models import Quiz
 from app.schemas.quiz_schemas import QuizCreateRequest, QuizUpdateRequest
-from app.core.logger import logger
 
 
 class QuizRepo:
