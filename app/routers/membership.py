@@ -1,14 +1,14 @@
-from fastapi import APIRouter, Depends, status
 from uuid import UUID
+
+from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.db.database import get_session
+from app.db.models import User
 from app.schemas.membership_schemas import MembershipResponse
 from app.schemas.user_schemas import UserResponse
-from app.services.membership import get_membership_service, MembershipService
-from app.db.database import get_session
-from app.db.models import User, Membership
 from app.services.auth import get_current_user
-
+from app.services.membership import MembershipService, get_membership_service
 
 router = APIRouter(prefix="/memberships", tags=["Membership Methods"])
 

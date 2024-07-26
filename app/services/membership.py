@@ -1,19 +1,18 @@
 from uuid import UUID
-from sqlalchemy.ext.asyncio import AsyncSession
-from fastapi import Depends
 
-from app.db.models import Membership, StatusEnum, User, Company
-from app.schemas.membership_schemas import MembershipActionRequest
-from app.db.repo.membership import MembershipRepo
-from app.services.exceptions import (
-    MembershipNotFoundError,
-    MembershipAlreadyExistsError,
-    AccessDeniedError,
-)
+from fastapi import Depends
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.db.database import get_session
+from app.db.models import Company, Membership, StatusEnum, User
+from app.db.repo.membership import MembershipRepo
+from app.schemas.membership_schemas import MembershipActionRequest
+from app.services.company import CompanyService, get_company_service
+from app.services.exceptions import (AccessDeniedError,
+                                     MembershipAlreadyExistsError,
+                                     MembershipNotFoundError)
 from app.services.permissions import PermissionService
-from app.services.company import get_company_service, CompanyService
-from app.services.user import get_user_service, UserService
+from app.services.user import UserService, get_user_service
 
 
 def get_membership_service(

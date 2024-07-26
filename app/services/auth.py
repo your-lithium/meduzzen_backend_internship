@@ -1,26 +1,23 @@
+import secrets
+from datetime import datetime, timedelta, timezone
+
 import bcrypt
 import jwt
 import requests
-import secrets
 from fastapi import Depends
-from sqlalchemy.ext.asyncio import AsyncSession
-from jwt import ExpiredSignatureError, InvalidTokenError, DecodeError
+from jwt import DecodeError, ExpiredSignatureError, InvalidTokenError
 from jwt.algorithms import RSAAlgorithm
 from pydantic import BaseModel, EmailStr
-from datetime import datetime, timedelta, timezone
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.models import User
-from app.schemas.user_schemas import SignInRequest, SignUpRequest
-from app.db.repo.user import UserRepo
-from app.services.exceptions import (
-    UserNotFoundError,
-    IncorrectPasswordError,
-    UnauthorizedError,
-    InactiveUserError,
-)
-from app.db.database import get_session
 from app.core.config import config
 from app.core.security import auth_scheme
+from app.db.database import get_session
+from app.db.models import User
+from app.db.repo.user import UserRepo
+from app.schemas.user_schemas import SignInRequest, SignUpRequest
+from app.services.exceptions import (InactiveUserError, IncorrectPasswordError,
+                                     UnauthorizedError, UserNotFoundError)
 
 
 def get_auth_service():

@@ -1,12 +1,15 @@
 from uuid import UUID
-from sqlalchemy.ext.asyncio import AsyncSession
-from fastapi import Depends
 
-from app.db.models import Company, User
-from app.schemas.company_schemas import CompanyCreateRequest, CompanyUpdateRequest
-from app.db.repo.company import CompanyRepo
-from app.services.exceptions import CompanyNotFoundError, CompanyNameAlreadyExistsError
+from fastapi import Depends
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.db.database import get_session
+from app.db.models import Company, User
+from app.db.repo.company import CompanyRepo
+from app.schemas.company_schemas import (CompanyCreateRequest,
+                                         CompanyUpdateRequest)
+from app.services.exceptions import (CompanyNameAlreadyExistsError,
+                                     CompanyNotFoundError)
 from app.services.permissions import PermissionService
 
 
