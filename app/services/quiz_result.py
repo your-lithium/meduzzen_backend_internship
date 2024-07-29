@@ -1,11 +1,9 @@
-import pandas as pd
-import json
-
 from datetime import datetime, timedelta
-from fastapi import Depends
-from io import StringIO
-from sqlalchemy.ext.asyncio import AsyncSession
 from uuid import UUID
+
+import pandas as pd
+from fastapi import Depends
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.database import get_session
 from app.db.models import Quiz, QuizResult, StatusEnum, User
@@ -16,8 +14,8 @@ from app.services.company import CompanyService, get_company_service
 from app.services.exceptions import (AccessDeniedError, IncompleteQuizError,
                                      ResultsNotFoundError)
 from app.services.membership import MembershipService, get_membership_service
-from app.services.redis_connect import redis_client
 from app.services.quiz import QuizService, get_quiz_service
+from app.services.redis_connect import redis_client
 from app.services.user import UserService, get_user_service
 
 
@@ -107,7 +105,7 @@ class QuizResultService:
         cursor = 0
 
         if user_id and company_id:
-            pattern = f"quiz_result:{user_id}:*"
+            pattern = f"quiz_result:{user_id}:{company_id}:*"
         elif user_id:
             pattern = f"quiz_result:{user_id}:*"
         elif company_id:
@@ -139,10 +137,8 @@ class QuizResultService:
     ) -> str:
         current_time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
         filename = f"{filename_prefix}_{current_time}.csv"
-        serialized_results = [result.to_dict() for result in quiz_results]
-        json_data = json.dumps(serialized_results)
-        f = StringIO(json_data)
-        df = pd.read_json(f, orient="records")
+        serialized_results = [result.model_dump() for result in quiz_results]
+        df = pd.DataFrame(serialized_results)
         df.to_csv(filename, index=False)
         return filename
 
@@ -235,7 +231,7 @@ class QuizResultService:
 
         return rating
 
-    async def get_user_results_48h(
+    async def get_latest_user_results(
         self,
         current_user: User,
         get_csv: bool = False,
@@ -248,7 +244,7 @@ class QuizResultService:
             )
         return results
 
-    async def get_company_results_48h(
+    async def get_latest_company_results(
         self,
         company_id: UUID,
         current_user: User,
@@ -267,7 +263,7 @@ class QuizResultService:
             )
         return results
 
-    async def get_company_user_results_48h(
+    async def get_latest_company_user_results(
         self,
         company_id: UUID,
         user_id: UUID,
@@ -291,7 +287,7 @@ class QuizResultService:
             )
         return results
 
-    async def get_quiz_results_48h(
+    async def get_latest_quiz_results(
         self,
         quiz_id: UUID,
         current_user: User,
