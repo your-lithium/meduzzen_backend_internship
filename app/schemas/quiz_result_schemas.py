@@ -1,18 +1,18 @@
-from pydantic import BaseModel, RootModel
-from uuid import UUID
 from datetime import datetime
+from uuid import UUID
+
+from pydantic import BaseModel, ConfigDict, RootModel
 
 
 class QuizResultDetails(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     user_id: UUID
     company_id: UUID
     quiz_id: UUID
     time: datetime
     answered: int
     correct: int
-
-    class Config:
-        from_attributes = True
 
 
 class Answers(RootModel):

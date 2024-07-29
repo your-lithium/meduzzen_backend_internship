@@ -1,21 +1,19 @@
-from fastapi import APIRouter, Depends, status
 from uuid import UUID
+
+from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.schemas.quiz_schemas import (
-    QuizResponse,
-    QuizCreateRequest,
-    QuizUpdateRequest,
-)
-from app.schemas.quiz_result_schemas import QuizResultDetails, Answers, MeanScore
-from app.services.quiz import get_quiz_service
-from app.services.quiz_result import get_quiz_result_service
 from app.db.database import get_session
 from app.db.models import User
+from app.schemas.quiz_result_schemas import (Answers, MeanScore,
+                                             QuizResultDetails)
+from app.schemas.quiz_schemas import (QuizCreateRequest, QuizResponse,
+                                      QuizUpdateRequest)
 from app.services.auth import get_current_user
+from app.services.quiz import QuizService, get_quiz_service
+from app.services.quiz_result import QuizResultService, get_quiz_result_service
 
-
-router = APIRouter(prefix="/quizzes")
+router = APIRouter(prefix="/quizzes", tags=["Quiz Methods"])
 
 
 @router.get("/{company_id}", response_model=list[QuizResponse])
@@ -23,7 +21,7 @@ async def get_quizzes_by_company(
     company_id: UUID,
     limit: int = 10,
     offset: int = 0,
-    quiz_service=Depends(get_quiz_service),
+    quiz_service: QuizService = Depends(get_quiz_service),
     session: AsyncSession = Depends(get_session),
 ):
     quizzes = await quiz_service.get_quizzes_by_company(
@@ -38,7 +36,7 @@ async def create_quiz(
     quiz: QuizCreateRequest,
     company_id: UUID,
     current_user: User = Depends(get_current_user),
-    quiz_service=Depends(get_quiz_service),
+    quiz_service: QuizService = Depends(get_quiz_service),
     session: AsyncSession = Depends(get_session),
 ):
     quiz = await quiz_service.create_quiz(
@@ -53,7 +51,7 @@ async def update_quiz(
     quiz_id: UUID,
     quiz_update: QuizUpdateRequest,
     current_user: User = Depends(get_current_user),
-    quiz_service=Depends(get_quiz_service),
+    quiz_service: QuizService = Depends(get_quiz_service),
     session: AsyncSession = Depends(get_session),
 ):
     quiz = await quiz_service.update_quiz(
@@ -70,7 +68,7 @@ async def update_quiz(
 async def delete_quiz(
     quiz_id: UUID,
     current_user: User = Depends(get_current_user),
-    quiz_service=Depends(get_quiz_service),
+    quiz_service: QuizService = Depends(get_quiz_service),
     session: AsyncSession = Depends(get_session),
 ):
     await quiz_service.delete_quiz(
@@ -83,7 +81,7 @@ async def answer_quiz(
     quiz_id: UUID,
     answers: Answers,
     current_user: User = Depends(get_current_user),
-    quiz_result_service=Depends(get_quiz_result_service),
+    quiz_result_service: QuizResultService = Depends(get_quiz_result_service),
     session: AsyncSession = Depends(get_session),
 ):
     result = await quiz_result_service.add_result(
@@ -97,7 +95,7 @@ async def answer_quiz(
 async def get_user_company_rating(
     user_id: UUID,
     company_id: UUID,
-    quiz_result_service=Depends(get_quiz_result_service),
+    quiz_result_service: QuizResultService = Depends(get_quiz_result_service),
     session: AsyncSession = Depends(get_session),
 ):
     rating = await quiz_result_service.get_user_rating(
@@ -110,7 +108,7 @@ async def get_user_company_rating(
 @router.get("/{user_id}/result", response_model=MeanScore)
 async def get_user_rating(
     user_id: UUID,
-    quiz_result_service=Depends(get_quiz_result_service),
+    quiz_result_service: QuizResultService = Depends(get_quiz_result_service),
     session: AsyncSession = Depends(get_session),
 ):
     rating = await quiz_result_service.get_user_rating(user_id=user_id, session=session)

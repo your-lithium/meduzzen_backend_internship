@@ -1,42 +1,32 @@
+import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-import uvicorn
 
-from app.routers import health_check, user, auth, company, membership, quiz
 from app.core.config import config
+from app.routers import auth, company, health_check, membership, quiz, user
 from app.routers.handlers import (
-    user_not_found_exception_handler,
-    company_not_found_exception_handler,
-    membership_not_found_exception_handler,
-    quiz_not_found_exception_handler,
-    results_not_found_exception_handler,
-    email_already_exists_exception_handler,
-    username_already_exists_exception_handler,
-    company_name_already_exists_exception_handler,
-    membership_already_exists_exception_handler,
-    incorrect_password_exception_handler,
-    unauthorized_exception_handler,
-    inactive_user_exception_handler,
     access_denied_exception_handler,
-    incomplete_quiz_exception_handler,
-)
-from app.services.exceptions import (
-    UserNotFoundError,
-    CompanyNotFoundError,
-    MembershipNotFoundError,
-    QuizNotFoundError,
-    ResultsNotFoundError,
-    EmailAlreadyExistsError,
-    UsernameAlreadyExistsError,
-    CompanyNameAlreadyExistsError,
-    MembershipAlreadyExistsError,
-    IncorrectPasswordError,
-    UnauthorizedError,
-    InactiveUserError,
-    AccessDeniedError,
-    IncompleteQuizError,
-)
-
+    company_name_already_exists_exception_handler,
+    company_not_found_exception_handler,
+    email_already_exists_exception_handler, inactive_user_exception_handler,
+    incomplete_quiz_exception_handler, incorrect_password_exception_handler,
+    membership_already_exists_exception_handler,
+    membership_not_found_exception_handler, quiz_not_found_exception_handler,
+    results_not_found_exception_handler, unauthorized_exception_handler,
+    user_not_found_exception_handler,
+    username_already_exists_exception_handler)
+from app.services.exceptions import (AccessDeniedError,
+                                     CompanyNameAlreadyExistsError,
+                                     CompanyNotFoundError,
+                                     EmailAlreadyExistsError,
+                                     InactiveUserError, IncompleteQuizError,
+                                     IncorrectPasswordError,
+                                     MembershipAlreadyExistsError,
+                                     MembershipNotFoundError,
+                                     QuizNotFoundError, ResultsNotFoundError,
+                                     UnauthorizedError,
+                                     UsernameAlreadyExistsError,
+                                     UserNotFoundError)
 
 app = FastAPI()
 

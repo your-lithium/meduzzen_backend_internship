@@ -1,26 +1,23 @@
+import secrets
+from datetime import datetime, timedelta, timezone
+
 import bcrypt
 import jwt
 import requests
-import secrets
 from fastapi import Depends
-from sqlalchemy.ext.asyncio import AsyncSession
-from jwt import ExpiredSignatureError, InvalidTokenError, DecodeError
+from jwt import DecodeError, ExpiredSignatureError, InvalidTokenError
 from jwt.algorithms import RSAAlgorithm
 from pydantic import BaseModel, EmailStr
-from datetime import datetime, timedelta, timezone
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.models import User
-from app.schemas.user_schemas import SignInRequest, SignUpRequest
-from app.db.repo.user import UserRepo
-from app.services.exceptions import (
-    UserNotFoundError,
-    IncorrectPasswordError,
-    UnauthorizedError,
-    InactiveUserError,
-)
-from app.db.database import get_session
 from app.core.config import config
 from app.core.security import auth_scheme
+from app.db.database import get_session
+from app.db.models import User
+from app.db.repo.user import UserRepo
+from app.schemas.user_schemas import SignInRequest, SignUpRequest
+from app.services.exceptions import (InactiveUserError, IncorrectPasswordError,
+                                     UnauthorizedError, UserNotFoundError)
 
 
 def get_auth_service():
@@ -58,6 +55,18 @@ class AuthService:
         algorithm: str,
         expires_delta: timedelta | None = None,
     ) -> str:
+        """Create a JWT access token.
+
+        Args:
+            data (dict): The data that the token should contain.
+            secret_key (str): The secret key for encoding.
+            algorithm (str): The encoding algorithm.
+            expires_delta (timedelta | None, optional):
+                How fast the token should expire. Defaults to None.
+
+        Returns:
+            str: The JWT access token.
+        """
         to_encode = data.copy()
 
         if expires_delta:
@@ -80,6 +89,26 @@ class AuthService:
         auth0_audience: str,
         session: AsyncSession = Depends(get_session),
     ) -> User:
+        """Decode a token to authenticate a User.
+
+        Args:
+            token (str): The JWT token to decode.
+            oauth2_secret_key (str): The OAuth2 secret key for decoding.
+            oauth2_algorithm (str): The OAuth2 algorithm for decoding.
+            auth0_domain (str): The Auth0 domain for decoding.
+            auth0_algorithms (list[str]): The Auth0 algorithms for decoding.
+            auth0_audience (str): The Auth0 audience for decoding.
+            session (AsyncSession):
+                The database session used for querying users.
+                Defaults to the session obtained through get_session.
+
+        Raises:
+            UserNotFoundError:
+                If the user OAuth2 token hasn't returned an existing user.
+
+        Returns:
+            User: The authenticated user.
+        """
         try:
             token_data = self.verify_email_password_token(
                 secret_key=oauth2_secret_key, algorithm=oauth2_algorithm, token=token
@@ -120,6 +149,35 @@ class AuthService:
         auth0_audience: str = config.auth0_audience,
         session: AsyncSession = Depends(get_session),
     ) -> User:
+        """Decode a token to authenticate an active User.
+
+        Args:
+            token (str): The JWT token to decode.
+            oauth2_secret_key (str, optional):
+                The OAuth2 secret key for decoding.
+                Defaults to config.oauth2_secret_key.
+            oauth2_algorithm (str, optional):
+                The OAuth2 algorithm for decoding.
+                Defaults to config.oauth2_algorithm.
+            auth0_domain (str, optional):
+                The Auth0 domain for decoding.
+                Defaults to config.auth0_domain.
+            auth0_algorithms (list[str], optional):
+                The Auth0 algorithms for decoding.
+                Defaults to config.auth0_algorithms.
+            auth0_audience (str, optional):
+                The Auth0 audience for decoding.
+                Defaults to config.auth0_audience.
+            session (AsyncSession):
+                The database session used for querying users.
+                Defaults to the session obtained through get_session.
+
+        Raises:
+            InactiveUserError: If the user found is inactive.
+
+        Returns:
+            User: The authenticated user.
+        """
         current_user: User = await self.get_current_user(
             token=token,
             oauth2_secret_key=oauth2_secret_key,
@@ -137,13 +195,28 @@ class AuthService:
 
     def verify_email_password_token(
         self,
+        token: str,
         secret_key: str,
         algorithm: str,
-        token: str,
     ) -> TokenData:
+        """Decode an email-password OAuth2 JWT token.
+
+        Args:
+            token (str): The JWT token to decode.
+            secret_key (str): The OAuth2 secret key for decoding.
+            algorithm (str): The OAuth2 algorithm for decoding.
+
+        Raises:
+            UnauthorizedError:
+                If the token contains no email, has expired, is invalid
+                or has failed to decode.
+
+        Returns:
+            TokenData: The decoded token data.
+        """
         try:
             payload = jwt.decode(token, secret_key, algorithms=[algorithm])
-            email: str = payload.get("sub")
+            email: str | None = payload.get("sub")
             if email is None:
                 raise UnauthorizedError
             token_data = TokenData(email=email)
@@ -162,6 +235,22 @@ class AuthService:
         algorithms: list[str],
         audience: str,
     ) -> TokenData:
+        """Decode a third-party Auth0 JWT token.
+
+        Args:
+            token (str): The JWT token to decode.
+            domain (str): The Auth0 domain for decoding.
+            algorithms (list[str]): The Auth0 algorithms for decoding.
+            audience (str): The Auth0 audience for decoding.
+
+        Raises:
+            UnauthorizedError:
+                If the token has expired, has failed to decode, has incorrect
+                claims or no matching decoding key.
+
+        Returns:
+            TokenData: The decoded token data.
+        """
         json_url = f"https://{domain}/.well-known/jwks.json"
         response = requests.get(json_url)
         jwks = response.json()
@@ -207,7 +296,21 @@ class AuthService:
         request: SignInRequest,
         session: AsyncSession = Depends(get_session),
     ) -> str:
+        """Handle a sign in request to give out a token.
 
+        Args:
+            request (SignInRequest): The request to handle.
+            session (AsyncSession):
+                The database session used for querying users.
+                Defaults to the session obtained through get_session.
+
+        Raises:
+            UserNotFoundError: If there's no user found with the given email.
+            IncorrectPasswordError: If the password provided doesn't match.
+
+        Returns:
+            str: The JWT token for OAuth2 email-password authentication.
+        """
         user = await UserRepo.get_user_by_email(
             user_email=request.email, session=session
         )

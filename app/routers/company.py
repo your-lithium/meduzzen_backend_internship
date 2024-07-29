@@ -1,26 +1,23 @@
-from fastapi import APIRouter, Depends, status
 from uuid import UUID
+
+from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.schemas.company_schemas import (
-    CompanyResponse,
-    CompanyCreateRequest,
-    CompanyUpdateRequest,
-)
-from app.services.company import get_company_service
 from app.db.database import get_session
 from app.db.models import User
+from app.schemas.company_schemas import (CompanyCreateRequest, CompanyResponse,
+                                         CompanyUpdateRequest)
 from app.services.auth import get_current_user
+from app.services.company import CompanyService, get_company_service
 
-
-router = APIRouter(prefix="/companies")
+router = APIRouter(prefix="/companies", tags=["Company Methods"])
 
 
 @router.get("", response_model=list[CompanyResponse])
 async def read_all_companies(
     limit: int = 10,
     offset: int = 0,
-    company_service=Depends(get_company_service),
+    company_service: CompanyService = Depends(get_company_service),
     session: AsyncSession = Depends(get_session),
 ):
     companies = await company_service.get_all_companies(
@@ -33,7 +30,7 @@ async def read_all_companies(
 @router.get("/{company_id}", response_model=CompanyResponse)
 async def read_company_by_id(
     company_id: UUID,
-    company_service=Depends(get_company_service),
+    company_service: CompanyService = Depends(get_company_service),
     session: AsyncSession = Depends(get_session),
 ):
     company = await company_service.get_company_by_id(
@@ -47,7 +44,7 @@ async def read_company_by_id(
 async def create_company(
     company: CompanyCreateRequest,
     current_user: User = Depends(get_current_user),
-    company_service=Depends(get_company_service),
+    company_service: CompanyService = Depends(get_company_service),
     session: AsyncSession = Depends(get_session),
 ):
     company = await company_service.create_company(
@@ -62,7 +59,7 @@ async def update_company(
     company_id: UUID,
     company_update: CompanyUpdateRequest,
     current_user: User = Depends(get_current_user),
-    company_service=Depends(get_company_service),
+    company_service: CompanyService = Depends(get_company_service),
     session: AsyncSession = Depends(get_session),
 ):
     company = await company_service.update_company(
@@ -79,7 +76,7 @@ async def update_company(
 async def delete_company(
     company_id: UUID,
     current_user: User = Depends(get_current_user),
-    company_service=Depends(get_company_service),
+    company_service: CompanyService = Depends(get_company_service),
     session: AsyncSession = Depends(get_session),
 ):
     await company_service.delete_company(

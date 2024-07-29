@@ -1,12 +1,14 @@
-from sqlalchemy.future import select
 from uuid import UUID
-from sqlalchemy.ext.asyncio import AsyncSession
-from fastapi import Depends
 
+from fastapi import Depends
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.future import select
+
+from app.core.logger import logger
 from app.db.database import get_session
 from app.db.models import Company, User
-from app.schemas.company_schemas import CompanyCreateRequest, CompanyUpdateRequest
-from app.core.logger import logger
+from app.schemas.company_schemas import (CompanyCreateRequest,
+                                         CompanyUpdateRequest)
 
 
 class CompanyRepo:
@@ -122,7 +124,7 @@ class CompanyRepo:
         """Update an existing company.
 
         Args:
-            existing_company (Company): The existing company to update
+            existing_company (Company): The existing company to update.
             company_update (CompanyUpdateRequest):
                 The details which to update in a company.
             session (AsyncSession):

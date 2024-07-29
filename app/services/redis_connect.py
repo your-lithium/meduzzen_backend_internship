@@ -5,9 +5,11 @@ from app.core.config import config
 
 class Redis_Client:
     def __init__(self):
-        self.redis_pool = ConnectionPool(host=config.redis_host,
-                                         port=config.redis_port,
-                                         password=config.redis_password)
+        self.redis_pool = ConnectionPool(
+            host=config.redis_host,
+            port=config.redis_port,
+            password=config.redis_password,
+        )
         self.redis_client = None
 
     async def connect(self):

@@ -1,13 +1,14 @@
-from sqlalchemy.future import select
 from uuid import UUID
-from sqlalchemy.ext.asyncio import AsyncSession
+
 from fastapi import Depends
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.future import select
 from sqlalchemy.sql import and_
 
+from app.core.logger import logger
 from app.db.database import get_session
 from app.db.models import Membership, StatusEnum, User
 from app.schemas.membership_schemas import MembershipActionRequest
-from app.core.logger import logger
 
 
 class MembershipRepo:
@@ -33,6 +34,17 @@ class MembershipRepo:
         membership_id: UUID,
         session: AsyncSession = Depends(get_session),
     ) -> Membership | None:
+        """Get details for one membership via its ID.
+
+        Args:
+            membership_id (UUID): The membership's ID.
+            session (AsyncSession):
+                The database session used for querying memberships.
+                Defaults to the session obtained through get_session.
+
+        Returns:
+            Membership | None: Membership details.
+        """
         result = await session.execute(
             select(Membership).where(Membership.id == membership_id)
         )
@@ -45,6 +57,18 @@ class MembershipRepo:
         parties: MembershipActionRequest,
         session: AsyncSession = Depends(get_session),
     ) -> Membership | None:
+        """Get details for a membership via its parties.
+
+        Args:
+            parties (MembershipActionRequest):
+                The parties (Company and User) which to check.
+            session (AsyncSession):
+                The database session used for querying memberships.
+                Defaults to the session obtained through get_session.
+
+        Returns:
+            Membership | None: Membership details.
+        """
         result = await session.execute(
             select(Membership).where(
                 and_(
@@ -62,6 +86,18 @@ class MembershipRepo:
         parties: MembershipActionRequest,
         session: AsyncSession = Depends(get_session),
     ) -> Membership:
+        """Send an invitation for a User to become a member of a Company.
+
+        Args:
+            parties (MembershipActionRequest):
+                The requested parties (Company and User).
+            session (AsyncSession):
+                The database session used for querying memberships.
+                Defaults to the session obtained through get_session.
+
+        Returns:
+            Membership: Details of the new invitation.
+        """
         logger.info(
             (
                 f"Received a request to invite user {parties.user_id} ",
@@ -89,9 +125,17 @@ class MembershipRepo:
 
     @staticmethod
     async def cancel_invitation(
-        membership=Membership,
+        membership: Membership,
         session: AsyncSession = Depends(get_session),
     ) -> None:
+        """Cancel an invitation of a User to a Company.
+
+        Args:
+            membership (Membership): The invitation which to cancel.
+            session (AsyncSession):
+                The database session used for querying memberships.
+                Defaults to the session obtained through get_session.
+        """
         logger.info(f"Received request to cancel invitation with ID {membership.id}")
 
         await session.delete(membership)
@@ -101,9 +145,20 @@ class MembershipRepo:
 
     @staticmethod
     async def accept_invitation(
-        membership=Membership,
+        membership: Membership,
         session: AsyncSession = Depends(get_session),
     ) -> Membership:
+        """Accept an invitation to join a Company.
+
+        Args:
+            membership (Membership): The invitation which to accept.
+            session (AsyncSession):
+                The database session used for querying memberships.
+                Defaults to the session obtained through get_session.
+
+        Returns:
+            Membership: The accepted invitation.
+        """
         logger.info(f"Received request to accept invitation with ID {membership.id}")
 
         setattr(membership, "status", StatusEnum.MEMBER)
@@ -117,9 +172,20 @@ class MembershipRepo:
 
     @staticmethod
     async def decline_invitation(
-        membership=Membership,
+        membership: Membership,
         session: AsyncSession = Depends(get_session),
     ) -> Membership:
+        """Decline an invitation to join a Company.
+
+        Args:
+            membership (Membership): The invitation which to decline.
+            session (AsyncSession):
+                The database session used for querying memberships.
+                Defaults to the session obtained through get_session.
+
+        Returns:
+            Membership: The declined invitation.
+        """
         logger.info(f"Received request to decline invitation with ID {membership.id}")
 
         setattr(membership, "status", StatusEnum.DECLINED)
@@ -133,9 +199,21 @@ class MembershipRepo:
 
     @staticmethod
     async def send_request(
-        parties=MembershipActionRequest,
+        parties: MembershipActionRequest,
         session: AsyncSession = Depends(get_session),
     ) -> Membership:
+        """Send a request to join a Company.
+
+        Args:
+            parties (MembershipActionRequest):
+                The requested parties (Company and User).
+            session (AsyncSession):
+                The database session used for querying memberships.
+                Defaults to the session obtained through get_session.
+
+        Returns:
+            Membership: Details of the new request.
+        """
         logger.info(
             (
                 f"Received request from user {parties.user_id} to ask to join ",
@@ -163,9 +241,17 @@ class MembershipRepo:
 
     @staticmethod
     async def cancel_request(
-        membership=Membership,
+        membership: Membership,
         session: AsyncSession = Depends(get_session),
     ) -> None:
+        """Cancel a request to join a Company.
+
+        Args:
+            membership (Membership): The request which to cancel.
+            session (AsyncSession):
+                The database session used for querying memberships.
+                Defaults to the session obtained through get_session.
+        """
         logger.info(f"Received request to cancel request with ID {membership.id}")
 
         await session.delete(membership)
@@ -175,9 +261,20 @@ class MembershipRepo:
 
     @staticmethod
     async def accept_request(
-        membership=Membership,
+        membership: Membership,
         session: AsyncSession = Depends(get_session),
     ) -> Membership:
+        """Accept a request to join a Company.
+
+        Args:
+            membership (Membership): The request which to accept.
+            session (AsyncSession):
+                The database session used for querying memberships.
+                Defaults to the session obtained through get_session.
+
+        Returns:
+            Membership: The accepted request.
+        """
         logger.info(f"Received request to accept request with ID {membership.id}")
 
         setattr(membership, "status", StatusEnum.MEMBER)
@@ -191,9 +288,20 @@ class MembershipRepo:
 
     @staticmethod
     async def reject_request(
-        membership=Membership,
+        membership: Membership,
         session: AsyncSession = Depends(get_session),
     ) -> Membership:
+        """Reject a request to join a Company.
+
+        Args:
+            membership (Membership): The request which to reject.
+            session (AsyncSession):
+                The database session used for querying memberships.
+                Defaults to the session obtained through get_session.
+
+        Returns:
+            Membership: The rejected request.
+        """
         logger.info(f"Received request to reject request with ID {membership.id}")
 
         setattr(membership, "status", StatusEnum.REJECTED)
@@ -207,9 +315,17 @@ class MembershipRepo:
 
     @staticmethod
     async def terminate_membership(
-        membership=Membership,
+        membership: Membership,
         session: AsyncSession = Depends(get_session),
     ) -> None:
+        """Terminate a membership.
+
+        Args:
+            membership (Membership): The membership which to terminate.
+            session (AsyncSession):
+                The database session used for querying memberships.
+                Defaults to the session obtained through get_session.
+        """
         logger.info(f"Received request to terminate membership with ID {membership.id}")
 
         await session.delete(membership)
@@ -224,6 +340,19 @@ class MembershipRepo:
         offset: int = 0,
         session: AsyncSession = Depends(get_session),
     ) -> list[Membership]:
+        """Get a User's requests to join Companies.
+
+        Args:
+            user_id (UUID): ID of the User to check.
+            limit (int, optional): How much requests to get. Defaults to 10.
+            offset (int, optional): Where to start getting requests. Defaults to 0.
+            session (AsyncSession):
+                The database session used for querying memberships.
+                Defaults to the session obtained through get_session.
+
+        Returns:
+            list[Membership]: The list of a User's requests.
+        """
         result = await session.execute(
             select(Membership)
             .where(
@@ -245,6 +374,19 @@ class MembershipRepo:
         offset: int = 0,
         session: AsyncSession = Depends(get_session),
     ) -> list[Membership]:
+        """Get a User's invitations to join Companies.
+
+        Args:
+            user_id (UUID): ID of the User to check.
+            limit (int, optional): How much invitations to get. Defaults to 10.
+            offset (int, optional): Where to start getting invitations. Defaults to 0.
+            session (AsyncSession):
+                The database session used for querying memberships.
+                Defaults to the session obtained through get_session.
+
+        Returns:
+            list[Membership]: The list of a User's invitations.
+        """
         result = await session.execute(
             select(Membership)
             .where(
@@ -266,6 +408,19 @@ class MembershipRepo:
         offset: int = 0,
         session: AsyncSession = Depends(get_session),
     ) -> list[Membership]:
+        """Get invitations to join a Company.
+
+        Args:
+            company_id (UUID): ID of the Company to check.
+            limit (int, optional): How much invitations to get. Defaults to 10.
+            offset (int, optional): Where to start getting invitations. Defaults to 0.
+            session (AsyncSession):
+                The database session used for querying memberships.
+                Defaults to the session obtained through get_session.
+
+        Returns:
+            list[Membership]: The list of a Company's invitations.
+        """
         result = await session.execute(
             select(Membership)
             .where(
@@ -287,6 +442,19 @@ class MembershipRepo:
         offset: int = 0,
         session: AsyncSession = Depends(get_session),
     ) -> list[Membership]:
+        """Get requests to join a Company.
+
+        Args:
+            company_id (UUID): ID of the Company to check.
+            limit (int, optional): How much requests to get. Defaults to 10.
+            offset (int, optional): Where to start getting requests. Defaults to 0.
+            session (AsyncSession):
+                The database session used for querying memberships.
+                Defaults to the session obtained through get_session.
+
+        Returns:
+            list[Membership]: The list of a Company's requests.
+        """
         result = await session.execute(
             select(Membership)
             .where(
@@ -308,6 +476,19 @@ class MembershipRepo:
         offset: int = 0,
         session: AsyncSession = Depends(get_session),
     ) -> list[User]:
+        """Get members of a Company.
+
+        Args:
+            company_id (UUID): ID of the Company to check.
+            limit (int, optional): How much members to get. Defaults to 10.
+            offset (int, optional): Where to start getting members. Defaults to 0.
+            session (AsyncSession):
+                The database session used for querying memberships.
+                Defaults to the session obtained through get_session.
+
+        Returns:
+            list[Membership]: The list of a Company's members.
+        """
         result = await session.execute(
             select(User)
             .join(Membership, User.id == Membership.user_id)
@@ -325,9 +506,20 @@ class MembershipRepo:
 
     @staticmethod
     async def appoint_admin(
-        membership=Membership,
+        membership: Membership,
         session: AsyncSession = Depends(get_session),
     ) -> Membership:
+        """Upgrade a User to an admin of a Company.
+
+        Args:
+            membership (Membership): The membership which to upgrade.
+            session (AsyncSession):
+                The database session used for querying memberships.
+                Defaults to the session obtained through get_session.
+
+        Returns:
+            Membership: The upgraded membership.
+        """
         logger.info(
             (
                 f"Received request to appoint user {membership.user_id} ",
@@ -351,9 +543,20 @@ class MembershipRepo:
 
     @staticmethod
     async def remove_admin(
-        membership=Membership,
+        membership: Membership,
         session: AsyncSession = Depends(get_session),
     ) -> Membership:
+        """Downgrade a User from being an admin of a Company.
+
+        Args:
+            membership (Membership): The membership which to downgrade.
+            session (AsyncSession):
+                The database session used for querying memberships.
+                Defaults to the session obtained through get_session.
+
+        Returns:
+            Membership: The downgraded membership.
+        """
         logger.info(
             (
                 f"Received request to remove user {membership.user_id} ",
@@ -382,6 +585,19 @@ class MembershipRepo:
         offset: int = 0,
         session: AsyncSession = Depends(get_session),
     ) -> list[User]:
+        """Get a list of admins in a company.
+
+        Args:
+            company_id (UUID): The company which to check.
+            limit (int, optional): How much admins to get. Defaults to 10.
+            offset (int, optional): Where to start getting admins. Defaults to 0.
+            session (AsyncSession):
+                The database session used for querying memberships.
+                Defaults to the session obtained through get_session.
+
+        Returns:
+            list[User]: The list of admins.
+        """
         result = await session.execute(
             select(User)
             .join(Membership, User.id == Membership.user_id)

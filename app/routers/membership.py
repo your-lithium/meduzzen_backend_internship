@@ -1,16 +1,16 @@
-from fastapi import APIRouter, Depends, status
 from uuid import UUID
+
+from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.db.database import get_session
+from app.db.models import User
 from app.schemas.membership_schemas import MembershipResponse
 from app.schemas.user_schemas import UserResponse
-from app.services.membership import get_membership_service, MembershipService
-from app.db.database import get_session
-from app.db.models import User, Membership
 from app.services.auth import get_current_user
+from app.services.membership import MembershipService, get_membership_service
 
-
-router = APIRouter(prefix="/memberships")
+router = APIRouter(prefix="/memberships", tags=["Membership Methods"])
 
 
 @router.post("/{company_id}/invitation/{user_id}", response_model=MembershipResponse)
@@ -275,7 +275,7 @@ async def appoint_admin(
     company_id: UUID,
     user_id: UUID,
     current_user: User = Depends(get_current_user),
-    membership_service=Depends(get_membership_service),
+    membership_service: MembershipService = Depends(get_membership_service),
     session: AsyncSession = Depends(get_session),
 ):
     membership = await membership_service.appoint_admin(
@@ -295,7 +295,7 @@ async def remove_admin(
     company_id: UUID,
     user_id: UUID,
     current_user: User = Depends(get_current_user),
-    membership_service=Depends(get_membership_service),
+    membership_service: MembershipService = Depends(get_membership_service),
     session: AsyncSession = Depends(get_session),
 ):
     membership = await membership_service.remove_admin(
@@ -313,7 +313,7 @@ async def get_admins_by_company(
     company_id: UUID,
     limit: int = 10,
     offset: int = 0,
-    membership_service=Depends(get_membership_service),
+    membership_service: MembershipService = Depends(get_membership_service),
     session: AsyncSession = Depends(get_session),
 ):
     admins = await membership_service.get_admins_by_company(

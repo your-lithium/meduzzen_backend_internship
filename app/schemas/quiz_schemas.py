@@ -1,5 +1,7 @@
-from pydantic import BaseModel, model_validator, field_validator, RootModel
 from uuid import UUID
+
+from pydantic import (BaseModel, ConfigDict, RootModel, field_validator,
+                      model_validator)
 from typing_extensions import Self
 
 
@@ -44,11 +46,10 @@ class AnswerList(RootModel):
 
 
 class Question(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     question: str
     answers: AnswerList
-
-    class Config:
-        from_attributes = True
 
 
 class QuestionList(RootModel):
@@ -56,15 +57,14 @@ class QuestionList(RootModel):
 
 
 class QuizResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: UUID
     company_id: UUID
     name: str
     description: str
     frequency: int
     questions: QuestionList
-
-    class Config:
-        from_attributes = True
 
 
 class QuestionsValidatorMixin:
