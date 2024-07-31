@@ -1,7 +1,9 @@
-from datetime import timedelta
+from datetime import datetime, timedelta
+from uuid import UUID
+
+import pandas as pd
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
-from uuid import UUID
 
 from app.db.database import get_session
 from app.db.models import Quiz, QuizResult, StatusEnum, User
@@ -12,8 +14,8 @@ from app.services.company import CompanyService, get_company_service
 from app.services.exceptions import (AccessDeniedError, IncompleteQuizError,
                                      ResultsNotFoundError)
 from app.services.membership import MembershipService, get_membership_service
-from app.services.redis_connect import redis_client
 from app.services.quiz import QuizService, get_quiz_service
+from app.services.redis_connect import redis_client
 from app.services.user import UserService, get_user_service
 
 
@@ -91,6 +93,54 @@ class QuizResultService:
         ttl = int(timedelta(hours=48).total_seconds())
         await redis_client.setex(key, value, ttl)
         await redis_client.close()
+
+    async def retrieve_all_quiz_results(
+        self,
+        user_id: UUID | None = None,
+        company_id: UUID | None = None,
+        quiz_id: UUID | None = None,
+    ) -> list[QuizResultDetails]:
+        await redis_client.connect()
+        keys = []
+        cursor = 0
+
+        if user_id and company_id:
+            pattern = f"quiz_result:{user_id}:{company_id}:*"
+        elif user_id:
+            pattern = f"quiz_result:{user_id}:*"
+        elif company_id:
+            pattern = f"quiz_result:*:{company_id}:*"
+        elif quiz_id:
+            pattern = f"quiz_result:*:*:{quiz_id}:*"
+
+        while True:
+            cursor, found_keys = await redis_client.redis_client.scan(
+                cursor, match=pattern
+            )
+            keys.extend(found_keys)
+            if cursor == 0:
+                break
+
+        quiz_results = []
+        for key in keys:
+            data = await redis_client.get(key)
+            if data:
+                quiz_results.append(QuizResultDetails.model_validate_json(data))
+
+        await redis_client.close()
+        return quiz_results
+
+    async def form_csv(
+        self,
+        quiz_results: list[QuizResultDetails],
+        filename_prefix: str,
+    ) -> str:
+        current_time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        filename = f"{filename_prefix}_{current_time}.csv"
+        serialized_results = [result.model_dump() for result in quiz_results]
+        df = pd.DataFrame(serialized_results)
+        df.to_csv(filename, index=False)
+        return filename
 
     async def add_result(
         self,
@@ -180,3 +230,84 @@ class QuizResultService:
         rating = total_correct / total_answered if total_answered > 0 else 0.0
 
         return rating
+
+    async def get_latest_user_results(
+        self,
+        current_user: User,
+        get_csv: bool = False,
+    ) -> list[QuizResultDetails] | str:
+        results = await self.retrieve_all_quiz_results(user_id=current_user.id)
+        if get_csv:
+            filename_prefix = str(current_user.id)
+            results = await self.form_csv(
+                quiz_results=results, filename_prefix=filename_prefix
+            )
+        return results
+
+    async def get_latest_company_results(
+        self,
+        company_id: UUID,
+        current_user: User,
+        session: AsyncSession = Depends(get_session),
+        get_csv: bool = False,
+    ) -> list[QuizResultDetails] | str:
+        await self._quiz_service.check_company_and_user(
+            company_id=company_id, current_user=current_user, session=session
+        )
+
+        results = await self.retrieve_all_quiz_results(company_id=company_id)
+        if get_csv:
+            filename_prefix = str(company_id)
+            results = await self.form_csv(
+                quiz_results=results, filename_prefix=filename_prefix
+            )
+        return results
+
+    async def get_latest_company_user_results(
+        self,
+        company_id: UUID,
+        user_id: UUID,
+        current_user: User,
+        session: AsyncSession = Depends(get_session),
+        get_csv: bool = False,
+    ) -> list[QuizResultDetails] | str:
+        await self._user_service.get_user_by_id(user_id=user_id, session=session)
+
+        await self._quiz_service.check_company_and_user(
+            company_id=company_id, current_user=current_user, session=session
+        )
+
+        results = await self.retrieve_all_quiz_results(
+            user_id=user_id, company_id=company_id
+        )
+        if get_csv:
+            filename_prefix = f"{company_id}_{user_id}"
+            results = await self.form_csv(
+                quiz_results=results, filename_prefix=filename_prefix
+            )
+        return results
+
+    async def get_latest_quiz_results(
+        self,
+        quiz_id: UUID,
+        current_user: User,
+        session: AsyncSession = Depends(get_session),
+        get_csv: bool = False,
+    ) -> list[QuizResultDetails] | str:
+        existing_quiz = await self._quiz_service.get_quiz_by_id(
+            quiz_id=quiz_id, session=session
+        )
+
+        await self._quiz_service.check_company_and_user(
+            company_id=existing_quiz.company_id,
+            current_user=current_user,
+            session=session,
+        )
+
+        results = await self.retrieve_all_quiz_results(quiz_id=quiz_id)
+        if get_csv:
+            filename_prefix = str(quiz_id)
+            results = await self.form_csv(
+                quiz_results=results, filename_prefix=filename_prefix
+            )
+        return results
