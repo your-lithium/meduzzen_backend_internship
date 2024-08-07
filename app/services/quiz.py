@@ -70,7 +70,7 @@ class QuizService:
                 owner_id=existing_company.owner_id,
                 membership=membership,
                 current_user_id=current_user.id,
-                operation="update quiz",
+                operation="update or view a quiz",
             )
 
     async def get_quizzes_by_company(

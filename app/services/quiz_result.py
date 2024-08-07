@@ -9,7 +9,10 @@ from app.db.database import get_session
 from app.db.models import Quiz, QuizResult, StatusEnum, User
 from app.db.repo.quiz_result import QuizResultRepo
 from app.schemas.membership_schemas import MembershipActionRequest
-from app.schemas.quiz_result_schemas import Answers, QuizResultDetails
+from app.schemas.quiz_result_schemas import (Answers, LatestQuizAnswer,
+                                             MeanScoreTimed, QuizResultDetails,
+                                             UserLatestQuizAnswers,
+                                             UserMeanScoreTimed)
 from app.services.company import CompanyService, get_company_service
 from app.services.exceptions import (AccessDeniedError, IncompleteQuizError,
                                      ResultsNotFoundError)
@@ -192,19 +195,27 @@ class QuizResultService:
         )
         return quiz_result
 
+    async def calculate_rating(
+        self,
+        quizzes: list[QuizResult],
+    ) -> float:
+        total_answered = sum(quiz.answered for quiz in quizzes)
+        total_correct = sum(quiz.correct for quiz in quizzes)
+
+        rating = total_correct / total_answered if total_answered > 0 else 0.0
+
+        return rating
+
     async def get_user_rating(
         self,
         user_id: UUID,
         company_id: UUID | None = None,
         session: AsyncSession = Depends(get_session),
     ) -> float:
-        """Get quiz results of one User.
-        Can be used both for overall results and per company.
+        """Get rating of one User.
 
         Args:
             user_id (UUID): The user which to check.
-            company_id (UUID | None, optional):
-                The company which to check. Defaults to None.
             session (AsyncSession):
                 The database session used for querying.
                 Defaults to the session obtained through get_session.
@@ -217,6 +228,39 @@ class QuizResultService:
         """
         quizzes = await QuizResultRepo.get_results_by_user(
             user_id=user_id,
+            session=session,
+        )
+
+        if not quizzes:
+            raise ResultsNotFoundError(user_id)
+
+        rating = await self.calculate_rating(quizzes=quizzes)
+
+        return rating
+
+    async def get_user_company_rating(
+        self,
+        user_id: UUID,
+        company_id: UUID | None = None,
+        session: AsyncSession = Depends(get_session),
+    ) -> float:
+        """Get quiz results of one User in one Company.
+
+        Args:
+            user_id (UUID): The user which to check.
+            company_id (UUID): The company which to check.
+            session (AsyncSession):
+                The database session used for querying.
+                Defaults to the session obtained through get_session.
+
+        Raises:
+            ResultsNotFoundError: If there were no results found.
+
+        Returns:
+            float: The obtained rating.
+        """
+        quizzes = await QuizResultRepo.get_results_by_parties(
+            user_id=user_id,
             company_id=company_id,
             session=session,
         )
@@ -224,10 +268,7 @@ class QuizResultService:
         if not quizzes:
             raise ResultsNotFoundError(user_id)
 
-        total_answered = sum(quiz.answered for quiz in quizzes)
-        total_correct = sum(quiz.correct for quiz in quizzes)
-
-        rating = total_correct / total_answered if total_answered > 0 else 0.0
+        rating = await self.calculate_rating(quizzes=quizzes)
 
         return rating
 
@@ -311,3 +352,163 @@ class QuizResultService:
                 quiz_results=results, filename_prefix=filename_prefix
             )
         return results
+
+    async def calculate_dynamics(
+        self,
+        quizzes: list[Quiz],
+    ) -> list[MeanScoreTimed]:
+        quizzes.sort(key=lambda quiz: quiz.time)
+
+        mean_scores_timed = []
+        processed_quizzes = []
+        for quiz in quizzes:
+            processed_quizzes.append(quiz)
+            mean_score = MeanScoreTimed(
+                time=quiz.time,
+                mean_score=await self.calculate_rating(processed_quizzes),
+            )
+            mean_scores_timed.append(mean_score)
+
+        return mean_scores_timed
+
+    async def get_user_dynamics(
+        self,
+        current_user: User,
+        session: AsyncSession = Depends(get_session),
+    ) -> list[MeanScoreTimed]:
+        quizzes = await QuizResultRepo.get_results_by_user(
+            user_id=current_user.id,
+            session=session,
+        )
+
+        if not quizzes:
+            raise ResultsNotFoundError(current_user.id)
+
+        mean_scores_timed = await self.calculate_dynamics(quizzes=quizzes)
+        return mean_scores_timed
+
+    async def get_current_user_latest_answers(
+        self,
+        current_user: User,
+        session: AsyncSession = Depends(get_session),
+    ) -> list[LatestQuizAnswer]:
+        quizzes = await QuizResultRepo.get_results_by_user(
+            user_id=current_user.id,
+            session=session,
+        )
+
+        if not quizzes:
+            raise ResultsNotFoundError(current_user.id)
+
+        latest_answers_dict = {}
+        for quiz in quizzes:
+            if (
+                quiz.quiz_id not in latest_answers_dict
+                or quiz.time > latest_answers_dict[quiz.quiz_id].time
+            ):
+                latest_answers_dict[quiz.quiz_id] = quiz
+
+        latest_answers = [
+            LatestQuizAnswer(quiz_id=quiz_id, time=quiz.time)
+            for quiz_id, quiz in latest_answers_dict.items()
+        ]
+
+        return latest_answers
+
+    async def get_company_dynamics(
+        self,
+        company_id: UUID,
+        current_user: User,
+        session: AsyncSession = Depends(get_session),
+    ) -> list[UserMeanScoreTimed]:
+        await self._quiz_service.check_company_and_user(
+            company_id=company_id, current_user=current_user, session=session
+        )
+
+        quizzes = await QuizResultRepo.get_results_by_company(
+            company_id=company_id,
+            session=session,
+        )
+
+        if not quizzes:
+            raise ResultsNotFoundError(current_user.id)
+
+        user_quizzes = {}
+        for quiz in quizzes:
+            user_quizzes.setdefault(quiz.user_id, []).append(quiz)
+
+        user_mean_scores_timed = [
+            UserMeanScoreTimed(
+                user_id=user_id,
+                scores=await self.calculate_dynamics(quizzes=user_quiz_list),
+            )
+            for user_id, user_quiz_list in user_quizzes.items()
+        ]
+
+        return user_mean_scores_timed
+
+    async def get_company_member_dynamics(
+        self,
+        company_id: UUID,
+        user_id: UUID,
+        current_user: User,
+        session: AsyncSession = Depends(get_session),
+    ) -> list[MeanScoreTimed]:
+        await self._user_service.get_user_by_id(user_id=user_id, session=session)
+        await self._quiz_service.check_company_and_user(
+            company_id=company_id, current_user=current_user, session=session
+        )
+
+        quizzes = await QuizResultRepo.get_results_by_user(
+            user_id=user_id,
+            session=session,
+        )
+
+        if not quizzes:
+            raise ResultsNotFoundError(user_id)
+
+        mean_scores_timed = await self.calculate_dynamics(quizzes=quizzes)
+        return mean_scores_timed
+
+    async def get_company_latest_answers(
+        self,
+        company_id: UUID,
+        current_user: User,
+        session: AsyncSession = Depends(get_session),
+    ) -> list[UserLatestQuizAnswers]:
+        await self._quiz_service.check_company_and_user(
+            company_id=company_id, current_user=current_user, session=session
+        )
+
+        quizzes = await QuizResultRepo.get_results_by_company(
+            company_id=company_id,
+            session=session,
+        )
+
+        if not quizzes:
+            raise ResultsNotFoundError(current_user.id)
+
+        user_quizzes: dict[UUID, list] = {}
+        for quiz in quizzes:
+            user_quizzes.setdefault(quiz.user_id, []).append(quiz)
+
+        user_latest_answers = []
+        for user_id, user_quiz_list in user_quizzes.items():
+            latest_answers_dict = {}
+            for quiz in user_quiz_list:
+                if (
+                    quiz.quiz_id not in latest_answers_dict
+                    or quiz.time > latest_answers_dict[quiz.quiz_id].time
+                ):
+                    latest_answers_dict[quiz.quiz_id] = quiz
+
+            latest_answers = [
+                LatestQuizAnswer(quiz_id=quiz_id, time=quiz.time)
+                for quiz_id, quiz in latest_answers_dict.items()
+            ]
+
+            user_latest_answers.append(
+                UserLatestQuizAnswers(user_id=user_id, latest_answers=latest_answers)
+            )
+
+        return user_latest_answers

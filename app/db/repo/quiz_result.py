@@ -56,16 +56,12 @@ class QuizResultRepo:
     @staticmethod
     async def get_results_by_user(
         user_id: UUID,
-        company_id: UUID | None = None,
         session: AsyncSession = Depends(get_session),
     ) -> list[QuizResult]:
         """Get quiz results of one User.
-        Can be used both for overall results and per company.
 
         Args:
             user_id (UUID): The user which to check.
-            company_id (UUID | None, optional):
-                The company which to check. Defaults to None.
             session (AsyncSession):
                 The database session used for querying quiz results.
                 Defaults to the session obtained through get_session.
@@ -73,19 +69,64 @@ class QuizResultRepo:
         Returns:
             list[QuizResult]: The results of a User.
         """
-        if company_id:
-            result = await session.execute(
-                select(QuizResult).where(
-                    and_(
-                        QuizResult.user_id == user_id,
-                        QuizResult.company_id == company_id,
-                    )
+        result = await session.execute(
+            select(QuizResult).where(QuizResult.user_id == user_id)
+        )
+        results = result.scalars().all()
+
+        return results
+
+    @staticmethod
+    async def get_results_by_company(
+        company_id: UUID,
+        session: AsyncSession = Depends(get_session),
+    ) -> list[QuizResult]:
+        """Get quiz results of Users in one Company.
+
+        Args:
+            company_id (UUID):
+                The company which to check.
+            session (AsyncSession):
+                The database session used for querying quiz results.
+                Defaults to the session obtained through get_session.
+
+        Returns:
+            list[QuizResult]: The results of Users in a Company.
+        """
+        result = await session.execute(
+            select(QuizResult).where(QuizResult.company_id == company_id)
+        )
+        results = result.scalars().all()
+
+        return results
+
+    @staticmethod
+    async def get_results_by_parties(
+        user_id: UUID,
+        company_id: UUID,
+        session: AsyncSession = Depends(get_session),
+    ) -> list[QuizResult]:
+        """Get quiz results of one User in one Company.
+
+        Args:
+            user_id (UUID): The user which to check.
+            company_id (UUID):
+                The company which to check.
+            session (AsyncSession):
+                The database session used for querying quiz results.
+                Defaults to the session obtained through get_session.
+
+        Returns:
+            list[QuizResult]: The results of a User in the Company.
+        """
+        result = await session.execute(
+            select(QuizResult).where(
+                and_(
+                    QuizResult.user_id == user_id,
+                    QuizResult.company_id == company_id,
                 )
             )
-        else:
-            result = await session.execute(
-                select(QuizResult).where(QuizResult.user_id == user_id)
-            )
+        )
         results = result.scalars().all()
 
         return results
