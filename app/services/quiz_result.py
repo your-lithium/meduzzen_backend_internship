@@ -87,6 +87,11 @@ class QuizResultService:
         return quiz
 
     async def store_quiz_result(self, quiz_result: QuizResultDetails):
+        """Store a quiz result in Redis DB.
+
+        Args:
+            quiz_result (QuizResultDetails): The quiz result to store.
+        """
         await redis_client.connect()
         key = (
             f"quiz_result:{quiz_result.user_id}:{quiz_result.company_id}:"
@@ -103,6 +108,20 @@ class QuizResultService:
         company_id: UUID | None = None,
         quiz_id: UUID | None = None,
     ) -> list[QuizResultDetails]:
+        """Retrieve all relevant quiz results stored in Redis DB.
+        Can be use for one User, one Company, one Quiz, or a User-Company pair.
+
+        Args:
+            user_id (UUID | None, optional):
+                The User for whom to retrieve data. Defaults to None.
+            company_id (UUID | None, optional):
+                The Company for which to retrieve data. Defaults to None.
+            quiz_id (UUID | None, optional):
+                The Quiz for which to retrieve data. Defaults to None.
+
+        Returns:
+            list[QuizResultDetails]: The retrieved data.
+        """
         await redis_client.connect()
         keys = []
         cursor = 0
@@ -138,6 +157,15 @@ class QuizResultService:
         quiz_results: list[QuizResultDetails],
         filename_prefix: str,
     ) -> str:
+        """Form a save a comma-separated value file with QuizResults.
+
+        Args:
+            quiz_results (list[QuizResultDetails]): The data which to save.
+            filename_prefix (str): The prefix for the filename.
+
+        Returns:
+            str: The resulting filename.
+        """
         current_time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
         filename = f"{filename_prefix}_{current_time}.csv"
         serialized_results = [result.model_dump() for result in quiz_results]
@@ -199,6 +227,14 @@ class QuizResultService:
         self,
         quizzes: list[QuizResult],
     ) -> float:
+        """Calculate a rating float from a list of QuizResults.
+
+        Args:
+            quizzes (list[QuizResult]): The results to calculate.
+
+        Returns:
+            float: The calculated rating.
+        """
         total_answered = sum(quiz.answered for quiz in quizzes)
         total_correct = sum(quiz.correct for quiz in quizzes)
 
@@ -209,7 +245,6 @@ class QuizResultService:
     async def get_user_rating(
         self,
         user_id: UUID,
-        company_id: UUID | None = None,
         session: AsyncSession = Depends(get_session),
     ) -> float:
         """Get rating of one User.
@@ -277,6 +312,16 @@ class QuizResultService:
         current_user: User,
         get_csv: bool = False,
     ) -> list[QuizResultDetails] | str:
+        """Get the latest results of one User from the Redis DB.
+
+        Args:
+            current_user (User): The User which to get the info for.
+            get_csv (bool, optional):
+                Whether or not to save the results to a CSV file. Defaults to False.
+
+        Returns:
+            list[QuizResultDetails] | str: The obtained results.
+        """
         results = await self.retrieve_all_quiz_results(user_id=current_user.id)
         if get_csv:
             filename_prefix = str(current_user.id)
@@ -289,9 +334,23 @@ class QuizResultService:
         self,
         company_id: UUID,
         current_user: User,
-        session: AsyncSession = Depends(get_session),
         get_csv: bool = False,
+        session: AsyncSession = Depends(get_session),
     ) -> list[QuizResultDetails] | str:
+        """Get the latest results of one Company from the Redis DB.
+
+        Args:
+            company_id (UUID): The Company which to get the info for.
+            current_user (User): The User to authorize.
+            get_csv (bool, optional):
+                Whether or not to save the results to a CSV file. Defaults to False.
+            session (AsyncSession, optional):
+                The database session used for querying.
+                Defaults to the session obtained through get_session.
+
+        Returns:
+            list[QuizResultDetails] | str: The obtained results.
+        """
         await self._quiz_service.check_company_and_user(
             company_id=company_id, current_user=current_user, session=session
         )
@@ -309,9 +368,24 @@ class QuizResultService:
         company_id: UUID,
         user_id: UUID,
         current_user: User,
-        session: AsyncSession = Depends(get_session),
         get_csv: bool = False,
+        session: AsyncSession = Depends(get_session),
     ) -> list[QuizResultDetails] | str:
+        """Get the latest results of one User in one Company from the Redis DB.
+
+        Args:
+            company_id (UUID): The Company which to get the info for.
+            user_id (UUID): The User which to get the info for.
+            current_user (User): The User to authorize.
+            get_csv (bool, optional):
+                Whether or not to save the results to a CSV file. Defaults to False.
+            session (AsyncSession, optional):
+                The database session used for querying.
+                Defaults to the session obtained through get_session.
+
+        Returns:
+            list[QuizResultDetails] | str: The obtained results.
+        """
         await self._user_service.get_user_by_id(user_id=user_id, session=session)
 
         await self._quiz_service.check_company_and_user(
@@ -332,9 +406,23 @@ class QuizResultService:
         self,
         quiz_id: UUID,
         current_user: User,
-        session: AsyncSession = Depends(get_session),
         get_csv: bool = False,
+        session: AsyncSession = Depends(get_session),
     ) -> list[QuizResultDetails] | str:
+        """Get the latest results of one Quiz from the Redis DB.
+
+        Args:
+            quiz_id (UUID): The Quiz which to get the info for.
+            current_user (User): The User to authorize.
+            get_csv (bool, optional):
+                Whether or not to save the results to a CSV file. Defaults to False.
+            session (AsyncSession, optional):
+                The database session used for querying.
+                Defaults to the session obtained through get_session.
+
+        Returns:
+            list[QuizResultDetails] | str: The obtained results.
+        """
         existing_quiz = await self._quiz_service.get_quiz_by_id(
             quiz_id=quiz_id, session=session
         )
@@ -357,6 +445,14 @@ class QuizResultService:
         self,
         quizzes: list[Quiz],
     ) -> list[MeanScoreTimed]:
+        """Calculate the changes in rating over time.
+
+        Args:
+            quizzes (list[Quiz]): The quizzes which to calculate the dynamics for.
+
+        Returns:
+            list[MeanScoreTimed]: The calculated dynamics.
+        """
         quizzes.sort(key=lambda quiz: quiz.time)
 
         mean_scores_timed = []
@@ -376,6 +472,20 @@ class QuizResultService:
         current_user: User,
         session: AsyncSession = Depends(get_session),
     ) -> list[MeanScoreTimed]:
+        """Calculate the changes of one User's rating over time.
+
+        Args:
+            current_user (User): The User which to calculate the dynamics for.
+            session (AsyncSession, optional):
+                The database session used for querying.
+                Defaults to the session obtained through get_session.
+
+        Raises:
+            ResultsNotFoundError: If the User hasn't completed any quizzes.
+
+        Returns:
+            list[MeanScoreTimed]: The calculated dynamics.
+        """
         quizzes = await QuizResultRepo.get_results_by_user(
             user_id=current_user.id,
             session=session,
@@ -392,6 +502,20 @@ class QuizResultService:
         current_user: User,
         session: AsyncSession = Depends(get_session),
     ) -> list[LatestQuizAnswer]:
+        """Get the latest times a User has completed any quiz they've taken before.
+
+        Args:
+            current_user (User): The User whom to get the data for.
+            session (AsyncSession, optional):
+                The database session used for querying.
+                Defaults to the session obtained through get_session.
+
+        Raises:
+            ResultsNotFoundError: If the User hasn't completed any quizzes.
+
+        Returns:
+            list[LatestQuizAnswer]: The resulting times for each quiz.
+        """
         quizzes = await QuizResultRepo.get_results_by_user(
             user_id=current_user.id,
             session=session,
@@ -421,6 +545,23 @@ class QuizResultService:
         current_user: User,
         session: AsyncSession = Depends(get_session),
     ) -> list[UserMeanScoreTimed]:
+        """Calculate the changes in ratings of all Users that've taken quizzes
+        in a Company. Only accounts for the Quizzes of this one Company.
+
+        Args:
+            company_id (UUID): The Company which to calculate ratings for.
+            current_user (User): The User to authorize.
+            session (AsyncSession, optional):
+                The database session used for querying.
+                Defaults to the session obtained through get_session.
+
+        Raises:
+            ResultsNotFoundError:
+                If there aren't any quizzes completed for the Company.
+
+        Returns:
+            list[UserMeanScoreTimed]: The resulting dynamics for each User.
+        """
         await self._quiz_service.check_company_and_user(
             company_id=company_id, current_user=current_user, session=session
         )
@@ -454,6 +595,24 @@ class QuizResultService:
         current_user: User,
         session: AsyncSession = Depends(get_session),
     ) -> list[MeanScoreTimed]:
+        """Calculate the changes in ratings of one User in a Company.
+        Only accounts for the Quizzes of this one Company.
+
+        Args:
+            company_id (UUID): The Company which to calculate ratings for.
+            user_id (UUID): The User which to calculate ratings for.
+            current_user (User): The User to authorize.
+            session (AsyncSession, optional):
+                The database session used for querying.
+                Defaults to the session obtained through get_session.
+
+        Raises:
+            ResultsNotFoundError:
+                If the User hasn't completed any quizzes in a Company.
+
+        Returns:
+            list[UserMeanScoreTimed]: The resulting dynamics for the User.
+        """
         await self._user_service.get_user_by_id(user_id=user_id, session=session)
         await self._quiz_service.check_company_and_user(
             company_id=company_id, current_user=current_user, session=session
@@ -476,6 +635,22 @@ class QuizResultService:
         current_user: User,
         session: AsyncSession = Depends(get_session),
     ) -> list[UserLatestQuizAnswers]:
+        """Get the latest times each User has answered any Quiz of the Company.
+
+        Args:
+            company_id (UUID): The Company which to retrieve the information for.
+            current_user (User): The User to authorize.
+            session (AsyncSession, optional):
+                The database session used for querying.
+                Defaults to the session obtained through get_session.
+
+        Raises:
+            ResultsNotFoundError:
+                If there aren't any quizzes completed for the Company.
+
+        Returns:
+            list[UserLatestQuizAnswers]: The resulting latest answers for each User.
+        """
         await self._quiz_service.check_company_and_user(
             company_id=company_id, current_user=current_user, session=session
         )
