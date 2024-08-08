@@ -82,3 +82,21 @@ class QuizResult(BaseId):
     )
     answered: Mapped[int] = mapped_column(Integer, nullable=False)
     correct: Mapped[int] = mapped_column(Integer, nullable=False)
+
+
+class NotificationStatusEnum(enum.Enum):
+    READ = "read"
+    UNREAD = "unread"
+
+
+class Notification(BaseId):
+    __tablename__ = "notification"
+
+    user_id: Mapped[UUID] = mapped_column(ForeignKey("user.id"), nullable=False)
+    time: Mapped[datetime] = mapped_column(
+        DateTime, nullable=False, server_default=func.now()
+    )
+    status: Mapped[NotificationStatusEnum] = mapped_column(
+        Enum(NotificationStatusEnum), nullable=False
+    )
+    text: Mapped[str] = mapped_column(String, nullable=False)

@@ -95,7 +95,7 @@ class UserService:
         if check_username is not None:
             raise UsernameAlreadyExistsError(object_value=user.username)
 
-        user: User | None = await UserRepo.create_user(user=user, session=session)
+        user: User = await UserRepo.create_user(user=user, session=session)
 
         return user
 

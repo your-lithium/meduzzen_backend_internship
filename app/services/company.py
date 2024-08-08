@@ -97,7 +97,7 @@ class CompanyService:
         if check_name is not None:
             raise CompanyNameAlreadyExistsError(object_value=company.name)
 
-        company: Company | None = await CompanyRepo.create_company(
+        company: Company = await CompanyRepo.create_company(
             company=company, owner=current_user, session=session
         )
 
