@@ -22,6 +22,17 @@ class NotificationService:
         user_id: UUID,
         session: AsyncSession = Depends(get_session),
     ) -> list[Notification]:
+        """Get the notifications left for the specific User.
+
+        Args:
+            user_id (UUID): The User for whom to retrieve notifications.
+            session (AsyncSession):
+                The database session used for querying.
+                Defaults to the session obtained through get_session.
+
+        Returns:
+            list[Notification]: The list of retrieved Notifications.
+        """
         notifications = await NotificationRepo.get_notifications_by_user(
             user_id=user_id, session=session
         )
@@ -33,6 +44,18 @@ class NotificationService:
         text: str,
         session: AsyncSession = Depends(get_session),
     ) -> Notification:
+        """Create a new Notification.
+
+        Args:
+            user_id (UUID): The User the new Notification is intended for.
+            text (str): The text of the new Notification.
+            session (AsyncSession):
+                The database session used for querying.
+                Defaults to the session obtained through get_session.
+
+        Returns:
+            Notification: The resulting new Notification.
+        """
         notification = NotificationCreateRequest(user_id=user_id, text=text)
         notification: Notification = await NotificationRepo.create_notification(
             notification=notification, session=session
@@ -46,6 +69,19 @@ class NotificationService:
         current_user: User,
         session: AsyncSession = Depends(get_session),
     ) -> Notification:
+        """Mark a Notification as either read or unread.
+
+        Args:
+            notification_id (UUID): The ID of the Notification to alter.
+            notification_status (NotificationStatusEnum): The status to set.
+            current_user (User): The User to autorize.
+            session (AsyncSession):
+                The database session used for querying.
+                Defaults to the session obtained through get_session.
+
+        Returns:
+            Notification: The updated Notification.
+        """
         existing_notification: Notification = (
             await NotificationRepo.get_notification_by_id(
                 notification_id=notification_id, session=session

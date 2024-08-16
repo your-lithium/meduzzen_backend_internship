@@ -17,7 +17,18 @@ class NotificationRepo:
     async def get_notification_by_id(
         notification_id: UUID,
         session: AsyncSession = Depends(get_session),
-    ) -> Notification:
+    ) -> Notification | None:
+        """Get details for one notification via its ID.
+
+        Args:
+            notification_id (UUID): The notification's ID.
+            session (AsyncSession):
+                The database session used for querying.
+                Defaults to the session obtained through get_session.
+
+        Returns:
+            Notification | None: Notification details.
+        """
         result = await session.execute(
             select(Notification).where(Notification.id == notification_id)
         )
@@ -30,6 +41,17 @@ class NotificationRepo:
         user_id: UUID,
         session: AsyncSession = Depends(get_session),
     ) -> list[Notification]:
+        """Get the notifications left for the specific User.
+
+        Args:
+            user_id (UUID): The User for whom to retrieve notifications.
+            session (AsyncSession):
+                The database session used for querying.
+                Defaults to the session obtained through get_session.
+
+        Returns:
+            list[Notification]: The list of retrieved Notifications.
+        """
         result = await session.execute(
             select(Notification).where(Notification.user_id == user_id)
         )
@@ -42,6 +64,18 @@ class NotificationRepo:
         notification: NotificationCreateRequest,
         session: AsyncSession = Depends(get_session),
     ) -> Notification:
+        """Create a new Notification.
+
+        Args:
+            notification (NotificationCreateRequest):
+                The details for the new Notification.
+            session (AsyncSession):
+                The database session used for querying.
+                Defaults to the session obtained through get_session.
+
+        Returns:
+            Notification: The resulting new Notification.
+        """
         logger.info("Received a notification creation request")
 
         new_notification = Notification(
@@ -63,6 +97,18 @@ class NotificationRepo:
         notification_status: NotificationStatusEnum,
         session: AsyncSession = Depends(get_session),
     ) -> Notification:
+        """Mark a Notification as either read or unread.
+
+        Args:
+            existing_notification (Notification): The Notification to alter.
+            notification_status (NotificationStatusEnum): The status to set.
+            session (AsyncSession):
+                The database session used for querying.
+                Defaults to the session obtained through get_session.
+
+        Returns:
+            Notification: The updated Notification.
+        """
         logger.info(
             f"Received request to update status of notification with "
             f"ID {existing_notification.id}"
