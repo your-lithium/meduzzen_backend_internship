@@ -6,10 +6,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.database import get_session
 from app.db.models import Company, User
 from app.db.repo.company import CompanyRepo
-from app.schemas.company_schemas import (CompanyCreateRequest,
-                                         CompanyUpdateRequest)
-from app.services.exceptions import (CompanyNameAlreadyExistsError,
-                                     CompanyNotFoundError)
+from app.schemas.company_schemas import CompanyCreateRequest, CompanyUpdateRequest
+from app.services.exceptions import CompanyNameAlreadyExistsError, CompanyNotFoundError
 from app.services.permissions import PermissionService
 
 
@@ -38,7 +36,7 @@ class CompanyService:
         Returns:
             list[Company]: The list of companies.
         """
-        companies: list[Company] = await CompanyRepo.get_all_companies(
+        companies: list[Company] = await CompanyRepo.get_all(
             limit=limit,
             offset=offset,
             session=session,
@@ -64,8 +62,8 @@ class CompanyService:
         Returns:
             Company: Company details.
         """
-        company: Company | None = await CompanyRepo.get_company_by_id(
-            company_id=company_id, session=session
+        company: Company | None = await CompanyRepo.get_by_id(
+            record_id=company_id, session=session
         )
 
         if company is None:
@@ -97,11 +95,11 @@ class CompanyService:
         if check_name is not None:
             raise CompanyNameAlreadyExistsError(object_value=company.name)
 
-        company: Company | None = await CompanyRepo.create_company(
+        new_company: Company = await CompanyRepo.create_company(
             company=company, owner=current_user, session=session
         )
 
-        return company
+        return new_company
 
     async def update_company(
         self,
@@ -175,7 +173,7 @@ class CompanyService:
             AccessDeniedError:
                 If the current authenticated user is not the company's owner.
         """
-        company: Company | None = await self.get_company_by_id(
+        company: Company = await self.get_company_by_id(
             company_id=company_id, session=session
         )
 
@@ -184,5 +182,4 @@ class CompanyService:
             current_user_id=current_user.id,
             operation="delete",
         )
-
-        await CompanyRepo.delete_company(company=company, session=session)
+        await CompanyRepo.delete(entity=company, session=session)

@@ -117,7 +117,9 @@ class IncorrectPasswordError(BaseError):
 
 
 class UnauthorizedError(BaseError):
-    def __init__(self, message: str = "Invalid authentication credentials"):
+    def __init__(
+        self, message: str | tuple[str, ...] = "Invalid authentication credentials"
+    ):
         self.message = message
         super().__init__(self.message)
 
@@ -134,7 +136,7 @@ class InactiveUserError(BaseError):
 
 
 class AccessDeniedError(BaseError):
-    def __init__(self, message: str = "Access denied"):
+    def __init__(self, message: str | tuple[str, ...] = "Access denied"):
         self.message = message
         super().__init__(self.message)
 
@@ -143,7 +145,10 @@ class AccessDeniedError(BaseError):
 
 
 class IncompleteQuizError(BaseError):
-    def __init__(self, message: str = "You must answer all questions in the quiz"):
+    def __init__(
+        self,
+        message: str | tuple[str, ...] = "You must answer all questions in the quiz",
+    ):
         self.message = message
         super().__init__(self.message)
 
