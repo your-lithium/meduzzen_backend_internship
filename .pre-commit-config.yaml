@@ -15,6 +15,7 @@ repos:
     rev: v1.10.1
     hooks:
     -   id: mypy
+        additional_dependencies: ['alembic', 'types-redis', 'types-requests']
   
   - repo: https://github.com/pycqa/isort
     rev: 5.13.2
