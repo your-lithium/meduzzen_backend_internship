@@ -1,95 +1,49 @@
+from typing import Type
 from uuid import UUID
 
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.future import select
 
-from app.core.logger import logger
 from app.db.database import get_session
 from app.db.models import Notification, NotificationStatusEnum
-from app.schemas.notification_schemas import NotificationCreateRequest
+from app.db.repo.base import BaseRepo
+from app.schemas.notification_schemas import (
+    NotificationCreateRequest,
+    NotificationUpdateRequest,
+)
 
 
-class NotificationRepo:
+class NotificationRepo(BaseRepo[Notification]):
     """Represents a repository pattern to perform CRUD on Notification model."""
 
-    @staticmethod
-    async def get_notification_by_id(
-        notification_id: UUID,
-        session: AsyncSession = Depends(get_session),
-    ) -> Notification | None:
-        """Get details for one notification via its ID.
-
-        Args:
-            notification_id (UUID): The notification's ID.
-            session (AsyncSession):
-                The database session used for querying.
-                Defaults to the session obtained through get_session.
-
-        Returns:
-            Notification | None: Notification details.
-        """
-        result = await session.execute(
-            select(Notification).where(Notification.id == notification_id)
-        )
-        notification = result.scalars().first()
-
-        return notification
+    @classmethod
+    def get_model(cls) -> Type[Notification]:
+        return Notification
 
     @staticmethod
     async def get_notifications_by_user(
         user_id: UUID,
         session: AsyncSession = Depends(get_session),
     ) -> list[Notification]:
-        """Get the notifications left for the specific User.
-
-        Args:
-            user_id (UUID): The User for whom to retrieve notifications.
-            session (AsyncSession):
-                The database session used for querying.
-                Defaults to the session obtained through get_session.
-
-        Returns:
-            list[Notification]: The list of retrieved Notifications.
-        """
-        result = await session.execute(
-            select(Notification).where(Notification.user_id == user_id)
+        return await NotificationRepo.get_all_by_fields(
+            fields=Notification.user_id,
+            values=user_id,
+            limit=None,
+            offset=0,
+            session=session,
         )
-        notifications = result.scalars().all()
-
-        return notifications
 
     @staticmethod
     async def create_notification(
         notification: NotificationCreateRequest,
         session: AsyncSession = Depends(get_session),
     ) -> Notification:
-        """Create a new Notification.
-
-        Args:
-            notification (NotificationCreateRequest):
-                The details for the new Notification.
-            session (AsyncSession):
-                The database session used for querying.
-                Defaults to the session obtained through get_session.
-
-        Returns:
-            Notification: The resulting new Notification.
-        """
-        logger.info("Received a notification creation request")
-
         new_notification = Notification(
             user_id=notification.user_id,
             status=NotificationStatusEnum.UNREAD,
             text=notification.text,
         )
-
-        session.add(new_notification)
-        await session.commit()
-        await session.refresh(new_notification)
-
-        logger.info("New notification created successfully")
-        return new_notification
+        return await NotificationRepo.create(entity=new_notification, session=session)
 
     @staticmethod
     async def update_notification_status(
@@ -97,29 +51,10 @@ class NotificationRepo:
         notification_status: NotificationStatusEnum,
         session: AsyncSession = Depends(get_session),
     ) -> Notification:
-        """Mark a Notification as either read or unread.
-
-        Args:
-            existing_notification (Notification): The Notification to alter.
-            notification_status (NotificationStatusEnum): The status to set.
-            session (AsyncSession):
-                The database session used for querying.
-                Defaults to the session obtained through get_session.
-
-        Returns:
-            Notification: The updated Notification.
-        """
-        logger.info(
-            f"Received request to update status of notification with "
-            f"ID {existing_notification.id}"
+        notification_update = NotificationUpdateRequest(status=notification_status)
+        update_data = notification_update.model_dump(
+            exclude_defaults=True, exclude_none=True, exclude_unset=True
         )
-
-        setattr(existing_notification, "status", notification_status)
-
-        await session.commit()
-        await session.refresh(existing_notification)
-
-        logger.info(
-            f"Notification with ID {existing_notification.id} updated successfully"
+        return await NotificationRepo.update(
+            entity=existing_notification, update_data=update_data, session=session
         )
-        return existing_notification

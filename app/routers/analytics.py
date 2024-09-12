@@ -5,10 +5,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.database import get_session
 from app.db.models import User
-from app.schemas.quiz_result_schemas import (LatestQuizAnswer, MeanScore,
-                                             MeanScoreTimed,
-                                             UserLatestQuizAnswers,
-                                             UserMeanScoreTimed)
+from app.schemas.quiz_result_schemas import (
+    LatestQuizAnswer,
+    MeanScore,
+    MeanScoreTimed,
+    UserLatestQuizAnswers,
+    UserMeanScoreTimed,
+)
 from app.services.auth import get_current_user
 from app.services.quiz_result import QuizResultService, get_quiz_result_service
 
@@ -22,7 +25,7 @@ async def get_user_company_rating(
     quiz_result_service: QuizResultService = Depends(get_quiz_result_service),
     session: AsyncSession = Depends(get_session),
 ):
-    rating = await quiz_result_service.get_user_rating(
+    rating = await quiz_result_service.get_user_company_rating(
         user_id=user_id, company_id=company_id, session=session
     )
     return rating

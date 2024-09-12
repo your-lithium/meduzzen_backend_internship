@@ -8,9 +8,11 @@ from app.db.models import Company, Membership, StatusEnum, User
 from app.db.repo.membership import MembershipRepo
 from app.schemas.membership_schemas import MembershipActionRequest
 from app.services.company import CompanyService, get_company_service
-from app.services.exceptions import (AccessDeniedError,
-                                     MembershipAlreadyExistsError,
-                                     MembershipNotFoundError)
+from app.services.exceptions import (
+    AccessDeniedError,
+    MembershipAlreadyExistsError,
+    MembershipNotFoundError,
+)
 from app.services.permissions import PermissionService
 from app.services.user import UserService, get_user_service
 
@@ -156,8 +158,8 @@ class MembershipService:
         Returns:
             Membership: Membership details.
         """
-        membership: Membership | None = await MembershipRepo.get_membership_by_id(
-            membership_id=membership_id, session=session
+        membership: Membership | None = await MembershipRepo.get_by_id(
+            record_id=membership_id, session=session
         )
 
         if membership is None:
@@ -294,10 +296,7 @@ class MembershipService:
                 f"user {parties.user_id} and company {parties.company_id}"
             )
         elif membership.status == StatusEnum.INVITED:
-            await MembershipRepo.cancel_invitation(
-                membership=membership,
-                session=session,
-            )
+            await MembershipRepo.delete(entity=membership, session=session)
         else:
             raise AccessDeniedError(
                 (
@@ -332,7 +331,9 @@ class MembershipService:
         Returns:
             Membership: The accepted invitation.
         """
-        parties = MembershipActionRequest(company_id=company_id, user_id=current_user)
+        parties = MembershipActionRequest(
+            company_id=company_id, user_id=current_user.id
+        )
         await self.check_parties_and_user(
             parties=parties,
             current_user=current_user,
@@ -347,8 +348,8 @@ class MembershipService:
                 f"user {parties.user_id} and company {parties.company_id}"
             )
         elif membership.status == StatusEnum.INVITED:
-            membership = await MembershipRepo.accept_invitation(
-                membership=membership, session=session
+            membership = await MembershipRepo.update_status(
+                membership=membership, status=StatusEnum.MEMBER, session=session
             )
             return membership
         else:
@@ -402,8 +403,9 @@ class MembershipService:
                 f"user {parties.user_id} and company {parties.company_id}"
             )
         elif membership.status == StatusEnum.INVITED:
-            membership = await MembershipRepo.decline_invitation(
+            membership = await MembershipRepo.update_status(
                 membership=membership,
+                status=StatusEnum.DECLINED,
                 session=session,
             )
             return membership
@@ -518,10 +520,7 @@ class MembershipService:
                 f"user {parties.user_id} and company {parties.company_id}"
             )
         elif membership.status == StatusEnum.REQUESTED:
-            await MembershipRepo.cancel_request(
-                membership=membership,
-                session=session,
-            )
+            await MembershipRepo.delete(entity=membership, session=session)
         else:
             raise AccessDeniedError(
                 (
@@ -572,8 +571,9 @@ class MembershipService:
                 f"user {parties.user_id} and company {parties.company_id}"
             )
         elif membership.status == StatusEnum.REQUESTED:
-            request = await MembershipRepo.accept_request(
+            request = await MembershipRepo.update_status(
                 membership=membership,
+                status=StatusEnum.MEMBER,
                 session=session,
             )
             return request
@@ -627,8 +627,9 @@ class MembershipService:
                 f"user {parties.user_id} and company {parties.company_id}"
             )
         elif membership.status == StatusEnum.REQUESTED:
-            request = await MembershipRepo.reject_request(
+            request = await MembershipRepo.update_status(
                 membership=membership,
+                status=StatusEnum.REJECTED,
                 session=session,
             )
             return request
@@ -662,9 +663,7 @@ class MembershipService:
             parties=parties, session=session
         )
         if membership.status == StatusEnum.MEMBER:
-            await MembershipRepo.terminate_membership(
-                membership=membership, session=session
-            )
+            await MembershipRepo.delete(entity=membership, session=session)
         else:
             raise AccessDeniedError(
                 (
@@ -947,8 +946,9 @@ class MembershipService:
             parties=parties, session=session
         )
         if membership.status == StatusEnum.MEMBER:
-            membership = await MembershipRepo.appoint_admin(
+            membership = await MembershipRepo.update_status(
                 membership=membership,
+                status=StatusEnum.ADMIN,
                 session=session,
             )
             return membership
@@ -996,8 +996,9 @@ class MembershipService:
             parties=parties, session=session
         )
         if membership.status == StatusEnum.ADMIN:
-            membership = await MembershipRepo.remove_admin(
+            membership = await MembershipRepo.update_status(
                 membership=membership,
+                status=StatusEnum.MEMBER,
                 session=session,
             )
             return membership

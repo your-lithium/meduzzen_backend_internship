@@ -17,3 +17,7 @@ class MembershipResponse(BaseModel):
 class MembershipActionRequest(BaseModel):
     company_id: UUID
     user_id: UUID
+
+
+class MembershipUpdateRequest(BaseModel):
+    status: StatusEnum

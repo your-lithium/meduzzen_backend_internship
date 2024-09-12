@@ -5,6 +5,7 @@ import bcrypt
 import jwt
 import requests
 from fastapi import Depends
+from fastapi.security import HTTPAuthorizationCredentials
 from jwt import DecodeError, ExpiredSignatureError, InvalidTokenError
 from jwt.algorithms import RSAAlgorithm
 from pydantic import BaseModel, EmailStr
@@ -16,8 +17,12 @@ from app.db.database import get_session
 from app.db.models import User
 from app.db.repo.user import UserRepo
 from app.schemas.user_schemas import SignInRequest, SignUpRequest
-from app.services.exceptions import (InactiveUserError, IncorrectPasswordError,
-                                     UnauthorizedError, UserNotFoundError)
+from app.services.exceptions import (
+    InactiveUserError,
+    IncorrectPasswordError,
+    UnauthorizedError,
+    UserNotFoundError,
+)
 
 
 def get_auth_service():
@@ -25,7 +30,7 @@ def get_auth_service():
 
 
 async def get_current_user(
-    token: str | None = Depends(auth_scheme),
+    token: HTTPAuthorizationCredentials = Depends(auth_scheme),
     auth_service=Depends(get_auth_service),
     session: AsyncSession = Depends(get_session),
 ) -> User:
@@ -287,9 +292,9 @@ class AuthService:
                     "Incorrect claims, please check the audience and issuer"
                 )
             except Exception as e:
-                return UnauthorizedError(f"Unable to parse token: {e}")
+                raise UnauthorizedError(f"Unable to parse token: {e}")
         else:
-            return UnauthorizedError("Unable to find appropriate key")
+            raise UnauthorizedError("Unable to find appropriate key")
 
     async def signin(
         self,

@@ -7,9 +7,11 @@ from app.db.database import get_session
 from app.db.models import User
 from app.db.repo.user import UserRepo
 from app.schemas.user_schemas import SignUpRequest, UserUpdateRequest
-from app.services.exceptions import (EmailAlreadyExistsError,
-                                     UsernameAlreadyExistsError,
-                                     UserNotFoundError)
+from app.services.exceptions import (
+    EmailAlreadyExistsError,
+    UsernameAlreadyExistsError,
+    UserNotFoundError,
+)
 from app.services.permissions import PermissionService
 
 
@@ -38,7 +40,7 @@ class UserService:
         Returns:
             list[User]: The list of users.
         """
-        users: list[User] = await UserRepo.get_all_users(
+        users: list[User] = await UserRepo.get_all(
             limit=limit, offset=offset, session=session
         )
         return users
@@ -60,9 +62,7 @@ class UserService:
         Returns:
             User: User details.
         """
-        user: User | None = await UserRepo.get_user_by_id(
-            user_id=user_id, session=session
-        )
+        user: User | None = await UserRepo.get_by_id(record_id=user_id, session=session)
 
         if user is None:
             raise UserNotFoundError(user_id)
@@ -95,9 +95,9 @@ class UserService:
         if check_username is not None:
             raise UsernameAlreadyExistsError(object_value=user.username)
 
-        user: User = await UserRepo.create_user(user=user, session=session)
+        new_user: User = await UserRepo.create_user(user=user, session=session)
 
-        return user
+        return new_user
 
     async def update_user(
         self,
@@ -133,10 +133,9 @@ class UserService:
             if check_username is not None:
                 raise UsernameAlreadyExistsError(object_value=user_update.username)
 
-        updated_user: User = await UserRepo.update_user(
+        updated_user = await UserRepo.update_user(
             existing_user=current_user, user_update=user_update, session=session
         )
-
         return updated_user
 
     async def delete_user(
@@ -159,5 +158,4 @@ class UserService:
         PermissionService.grant_user_permission(
             user_id=user_id, current_user_id=current_user.id, operation="delete"
         )
-
-        await UserRepo.delete_user(user=current_user, session=session)
+        await UserRepo.delete(entity=current_user, session=session)

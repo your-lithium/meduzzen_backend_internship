@@ -11,8 +11,7 @@ from app.schemas.quiz_schemas import QuizCreateRequest, QuizUpdateRequest
 from app.services.company import CompanyService, get_company_service
 from app.services.exceptions import MembershipNotFoundError, QuizNotFoundError
 from app.services.membership import MembershipService, get_membership_service
-from app.services.notification import (NotificationService,
-                                       get_notification_service)
+from app.services.notification import NotificationService, get_notification_service
 from app.services.permissions import PermissionService
 from app.services.user import UserService, get_user_service
 
@@ -127,9 +126,7 @@ class QuizService:
         Returns:
             Quiz: Quiz details.
         """
-        quiz: Quiz | None = await QuizRepo.get_quiz_by_id(
-            quiz_id=quiz_id, session=session
-        )
+        quiz: Quiz | None = await QuizRepo.get_by_id(record_id=quiz_id, session=session)
 
         if quiz is None:
             raise QuizNotFoundError(quiz_id)
@@ -162,7 +159,7 @@ class QuizService:
             session=session,
         )
 
-        quiz: Quiz = await QuizRepo.create_quiz(
+        new_quiz: Quiz = await QuizRepo.create_quiz(
             quiz=quiz, company_id=company_id, session=session
         )
 
@@ -178,8 +175,7 @@ class QuizService:
                 ),
                 session=session,
             )
-
-        return quiz
+        return new_quiz
 
     async def update_quiz(
         self,
@@ -240,4 +236,4 @@ class QuizService:
             session=session,
         )
 
-        await QuizRepo.delete_quiz(quiz=quiz, session=session)
+        await QuizRepo.delete(entity=quiz, session=session)

@@ -57,6 +57,14 @@ class ResultsNotFoundError(ObjectNotFoundError):
         )
 
 
+class NotificationNotFoundError(ObjectNotFoundError):
+    def __init__(self, identifier: Any, model_name: str = "notification"):
+        super().__init__(identifier, model_name)
+
+    def errors(self):
+        return f"{self.model_name} with given identifier - {self.identifier} not found"
+
+
 class ObjectAlreadyExistsError(BaseError):
     def __init__(self, object_value: Any, object_name: str, model_name: str) -> None:
         self.object_value = object_value
@@ -117,7 +125,9 @@ class IncorrectPasswordError(BaseError):
 
 
 class UnauthorizedError(BaseError):
-    def __init__(self, message: str = "Invalid authentication credentials"):
+    def __init__(
+        self, message: str | tuple[str, ...] = "Invalid authentication credentials"
+    ):
         self.message = message
         super().__init__(self.message)
 
@@ -134,7 +144,7 @@ class InactiveUserError(BaseError):
 
 
 class AccessDeniedError(BaseError):
-    def __init__(self, message: str = "Access denied"):
+    def __init__(self, message: str | tuple[str, ...] = "Access denied"):
         self.message = message
         super().__init__(self.message)
 
@@ -143,7 +153,10 @@ class AccessDeniedError(BaseError):
 
 
 class IncompleteQuizError(BaseError):
-    def __init__(self, message: str = "You must answer all questions in the quiz"):
+    def __init__(
+        self,
+        message: str | tuple[str, ...] = "You must answer all questions in the quiz",
+    ):
         self.message = message
         super().__init__(self.message)
 

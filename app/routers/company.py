@@ -5,8 +5,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.database import get_session
 from app.db.models import User
-from app.schemas.company_schemas import (CompanyCreateRequest, CompanyResponse,
-                                         CompanyUpdateRequest)
+from app.schemas.company_schemas import (
+    CompanyCreateRequest,
+    CompanyResponse,
+    CompanyUpdateRequest,
+)
 from app.services.auth import get_current_user
 from app.services.company import CompanyService, get_company_service
 

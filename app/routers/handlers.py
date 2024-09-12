@@ -2,18 +2,23 @@ from fastapi import Request
 from fastapi.responses import JSONResponse
 
 from app.core.logger import logger
-from app.services.exceptions import (AccessDeniedError,
-                                     CompanyNameAlreadyExistsError,
-                                     CompanyNotFoundError,
-                                     EmailAlreadyExistsError,
-                                     InactiveUserError, IncompleteQuizError,
-                                     IncorrectPasswordError,
-                                     MembershipAlreadyExistsError,
-                                     MembershipNotFoundError,
-                                     QuizNotFoundError, ResultsNotFoundError,
-                                     UnauthorizedError,
-                                     UsernameAlreadyExistsError,
-                                     UserNotFoundError)
+from app.services.exceptions import (
+    AccessDeniedError,
+    CompanyNameAlreadyExistsError,
+    CompanyNotFoundError,
+    EmailAlreadyExistsError,
+    InactiveUserError,
+    IncompleteQuizError,
+    IncorrectPasswordError,
+    MembershipAlreadyExistsError,
+    MembershipNotFoundError,
+    NotificationNotFoundError,
+    QuizNotFoundError,
+    ResultsNotFoundError,
+    UnauthorizedError,
+    UsernameAlreadyExistsError,
+    UserNotFoundError,
+)
 
 
 async def user_not_found_exception_handler(_: Request, exc: UserNotFoundError):
@@ -52,6 +57,16 @@ async def quiz_not_found_exception_handler(_: Request, exc: QuizNotFoundError):
 
 async def results_not_found_exception_handler(_: Request, exc: ResultsNotFoundError):
     logger.error(f"ResultsNotFoundError error: {exc.errors()}")
+    return JSONResponse(
+        status_code=404,
+        content={"detail": exc.errors()},
+    )
+
+
+async def notification_not_found_exception_handler(
+    _: Request, exc: NotificationNotFoundError
+):
+    logger.error(f"NotificationNotFoundError error: {exc.errors()}")
     return JSONResponse(
         status_code=404,
         content={"detail": exc.errors()},

@@ -19,3 +19,7 @@ class NotificationResponse(BaseModel):
 class NotificationCreateRequest(BaseModel):
     user_id: UUID
     text: str
+
+
+class NotificationUpdateRequest(BaseModel):
+    status: NotificationStatusEnum

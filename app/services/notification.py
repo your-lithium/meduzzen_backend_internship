@@ -7,6 +7,7 @@ from app.db.database import get_session
 from app.db.models import Notification, NotificationStatusEnum, User
 from app.db.repo.notification import NotificationRepo
 from app.schemas.notification_schemas import NotificationCreateRequest
+from app.services.exceptions import NotificationNotFoundError
 from app.services.permissions import PermissionService
 
 
@@ -41,7 +42,7 @@ class NotificationService:
     async def send_notification(
         self,
         user_id: UUID,
-        text: str,
+        text: str | tuple[str, ...],
         session: AsyncSession = Depends(get_session),
     ) -> Notification:
         """Create a new Notification.
@@ -57,10 +58,10 @@ class NotificationService:
             Notification: The resulting new Notification.
         """
         notification = NotificationCreateRequest(user_id=user_id, text=text)
-        notification: Notification = await NotificationRepo.create_notification(
+        new_notification: Notification = await NotificationRepo.create_notification(
             notification=notification, session=session
         )
-        return notification
+        return new_notification
 
     async def update_notification_status(
         self,
@@ -82,11 +83,12 @@ class NotificationService:
         Returns:
             Notification: The updated Notification.
         """
-        existing_notification: Notification = (
-            await NotificationRepo.get_notification_by_id(
-                notification_id=notification_id, session=session
-            )
+        existing_notification: Notification | None = await NotificationRepo.get_by_id(
+            record_id=notification_id, session=session
         )
+
+        if not existing_notification:
+            raise NotificationNotFoundError(identifier=notification_id)
 
         PermissionService.grant_user_permission(
             user_id=existing_notification.user_id,
