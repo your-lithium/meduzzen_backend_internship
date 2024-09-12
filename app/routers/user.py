@@ -5,8 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.database import get_session
 from app.db.models import User
-from app.schemas.user_schemas import (UserDetailResponse, UserResponse,
-                                      UserUpdateRequest)
+from app.schemas.user_schemas import UserDetailResponse, UserResponse, UserUpdateRequest
 from app.services.auth import get_current_user
 from app.services.user import UserService, get_user_service
 
@@ -28,7 +27,7 @@ async def read_all_users(
 
 
 @router.get("/me", response_model=UserDetailResponse)
-async def get_current_user(
+async def get_current_user_info(
     current_user: User = Depends(get_current_user),
 ):
     return current_user

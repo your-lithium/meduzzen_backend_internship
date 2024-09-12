@@ -3,9 +3,9 @@ from typing import Generic, Type, TypeVar
 from uuid import UUID
 
 from fastapi import Depends
-from sqlalchemy import Column
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
+from sqlalchemy.orm.attributes import InstrumentedAttribute
 
 from app.core.logger import logger
 from app.db.database import get_session
@@ -45,12 +45,12 @@ class BaseRepo(ABC, Generic[T]):
         model: Type[T] = cls.get_model()
         query = select(model).limit(limit).offset(offset)
         result = await session.execute(query)
-        return result.scalars().all()
+        return list(result.scalars().all())
 
     @classmethod
     async def get_all_by_fields(
         cls,
-        fields: Column | list[Column],
+        fields: InstrumentedAttribute | list[InstrumentedAttribute],
         values: object | list[object],
         limit: int | None = 10,
         offset: int = 0,
@@ -90,7 +90,7 @@ class BaseRepo(ABC, Generic[T]):
             query = query.offset(offset)
 
         result = await session.execute(query)
-        return result.scalars().all()
+        return list(result.scalars().all())
 
     @classmethod
     async def get_by_id(
@@ -115,7 +115,7 @@ class BaseRepo(ABC, Generic[T]):
     @classmethod
     async def get_by_fields(
         cls,
-        fields: Column | list[Column],
+        fields: InstrumentedAttribute | list[InstrumentedAttribute],
         values: object | list[object],
         session: AsyncSession = Depends(get_session),
     ) -> T | None:

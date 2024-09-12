@@ -145,7 +145,7 @@ async def reject_request(
     membership_service: MembershipService = Depends(get_membership_service),
     session: AsyncSession = Depends(get_session),
 ):
-    membership = await membership_service.decline_request(
+    membership = await membership_service.reject_request(
         company_id=company_id,
         user_id=user_id,
         current_user=current_user,

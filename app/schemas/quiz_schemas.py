@@ -1,7 +1,6 @@
 from uuid import UUID
 
-from pydantic import (BaseModel, ConfigDict, RootModel, field_validator,
-                      model_validator)
+from pydantic import BaseModel, ConfigDict, RootModel, field_validator, model_validator
 from typing_extensions import Self
 
 

@@ -9,13 +9,20 @@ from app.db.database import get_session
 from app.db.models import Quiz, QuizResult, StatusEnum, User
 from app.db.repo.quiz_result import QuizResultRepo
 from app.schemas.membership_schemas import MembershipActionRequest
-from app.schemas.quiz_result_schemas import (Answers, LatestQuizAnswer,
-                                             MeanScoreTimed, QuizResultDetails,
-                                             UserLatestQuizAnswers,
-                                             UserMeanScoreTimed)
+from app.schemas.quiz_result_schemas import (
+    Answers,
+    LatestQuizAnswer,
+    MeanScoreTimed,
+    QuizResultDetails,
+    UserLatestQuizAnswers,
+    UserMeanScoreTimed,
+)
 from app.services.company import CompanyService, get_company_service
-from app.services.exceptions import (AccessDeniedError, IncompleteQuizError,
-                                     ResultsNotFoundError)
+from app.services.exceptions import (
+    AccessDeniedError,
+    IncompleteQuizError,
+    ResultsNotFoundError,
+)
 from app.services.membership import MembershipService, get_membership_service
 from app.services.quiz import QuizService, get_quiz_service
 from app.services.redis_connect import redis_client
@@ -276,7 +283,7 @@ class QuizResultService:
     async def get_user_company_rating(
         self,
         user_id: UUID,
-        company_id: UUID | None = None,
+        company_id: UUID,
         session: AsyncSession = Depends(get_session),
     ) -> float:
         """Get quiz results of one User in one Company.
@@ -325,9 +332,10 @@ class QuizResultService:
         results = await self.retrieve_all_quiz_results(user_id=current_user.id)
         if get_csv:
             filename_prefix = str(current_user.id)
-            results = await self.form_csv(
+            results_csv = await self.form_csv(
                 quiz_results=results, filename_prefix=filename_prefix
             )
+            return results_csv
         return results
 
     async def get_latest_company_results(
@@ -358,9 +366,10 @@ class QuizResultService:
         results = await self.retrieve_all_quiz_results(company_id=company_id)
         if get_csv:
             filename_prefix = str(company_id)
-            results = await self.form_csv(
+            results_csv = await self.form_csv(
                 quiz_results=results, filename_prefix=filename_prefix
             )
+            return results_csv
         return results
 
     async def get_latest_company_user_results(
@@ -397,9 +406,10 @@ class QuizResultService:
         )
         if get_csv:
             filename_prefix = f"{company_id}_{user_id}"
-            results = await self.form_csv(
+            results_csv = await self.form_csv(
                 quiz_results=results, filename_prefix=filename_prefix
             )
+            return results_csv
         return results
 
     async def get_latest_quiz_results(
@@ -436,9 +446,10 @@ class QuizResultService:
         results = await self.retrieve_all_quiz_results(quiz_id=quiz_id)
         if get_csv:
             filename_prefix = str(quiz_id)
-            results = await self.form_csv(
+            results_csv = await self.form_csv(
                 quiz_results=results, filename_prefix=filename_prefix
             )
+            return results_csv
         return results
 
     async def calculate_dynamics(
@@ -524,7 +535,7 @@ class QuizResultService:
         if not quizzes:
             raise ResultsNotFoundError(current_user.id)
 
-        latest_answers_dict = {}
+        latest_answers_dict: dict[UUID, QuizResult] = {}
         for quiz in quizzes:
             if (
                 quiz.quiz_id not in latest_answers_dict
@@ -574,7 +585,7 @@ class QuizResultService:
         if not quizzes:
             raise ResultsNotFoundError(current_user.id)
 
-        user_quizzes = {}
+        user_quizzes: dict[UUID, QuizResult | list] = {}
         for quiz in quizzes:
             user_quizzes.setdefault(quiz.user_id, []).append(quiz)
 
@@ -669,7 +680,7 @@ class QuizResultService:
 
         user_latest_answers = []
         for user_id, user_quiz_list in user_quizzes.items():
-            latest_answers_dict = {}
+            latest_answers_dict: dict[UUID, QuizResult] = {}
             for quiz in user_quiz_list:
                 if (
                     quiz.quiz_id not in latest_answers_dict

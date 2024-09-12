@@ -1,4 +1,5 @@
 from redis.asyncio import ConnectionPool, Redis
+
 from app.core.config import config
 
 
