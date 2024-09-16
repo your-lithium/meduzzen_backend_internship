@@ -13,7 +13,7 @@ def assert_user_matches_expected(user: dict, expected: dict):
 
 
 @pytest.mark.asyncio
-async def test_create_user(client: AsyncClient, fill_db_with_users):
+async def test_create_user(fill_db_with_users, client: AsyncClient):
     response = await client.post("/auth/signup", json=payload.test_user_3.model_dump())
     assert response.status_code == 200
     user = response.json()
@@ -21,7 +21,7 @@ async def test_create_user(client: AsyncClient, fill_db_with_users):
 
 
 @pytest.mark.asyncio
-async def test_get_user_list(client: AsyncClient, fill_db_with_users):
+async def test_get_user_list(fill_db_with_users, client: AsyncClient):
     response = await client.get("/users")
     assert response.status_code == 200
 
@@ -33,7 +33,7 @@ async def test_get_user_list(client: AsyncClient, fill_db_with_users):
 
 @pytest.mark.asyncio
 async def test_get_user_by_id(
-    client: AsyncClient, test_session: AsyncSession, fill_db_with_users
+    fill_db_with_users, client: AsyncClient, test_session: AsyncSession
 ):
     user = await UserRepo.get_user_by_email(
         user_email=payload.test_user_1.email, session=test_session
@@ -49,7 +49,7 @@ async def test_get_user_by_id(
 
 @pytest.mark.asyncio
 async def test_update_user(
-    client: AsyncClient, test_session: AsyncSession, fill_db_with_users
+    fill_db_with_users, client: AsyncClient, test_session: AsyncSession
 ):
     user = await UserRepo.get_user_by_email(
         user_email=payload.test_user_1.email, session=test_session
@@ -67,7 +67,7 @@ async def test_update_user(
 
 @pytest.mark.asyncio
 async def test_delete_user(
-    client: AsyncClient, test_session: AsyncSession, fill_db_with_users
+    fill_db_with_users, client: AsyncClient, test_session: AsyncSession
 ):
     user = await UserRepo.get_user_by_email(
         user_email=payload.test_user_1.email, session=test_session

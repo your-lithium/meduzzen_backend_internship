@@ -2,13 +2,13 @@ import bcrypt
 import pytest
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from app.core.config import config
 from app.db.database import Base, get_session
 from app.db.models import User
 from app.main import app
+from app.services.auth import AuthService, get_current_user
 from tests import payload
 
 
@@ -31,7 +31,7 @@ async def test_session(prepare_db, engine):
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
-    TestingSessionLocal = sessionmaker(
+    TestingSessionLocal = async_sessionmaker(
         autocommit=False,
         autoflush=False,
         expire_on_commit=False,
@@ -57,8 +57,24 @@ def override_get_session(test_session):
 
 
 @pytest_asyncio.fixture(scope="function")
-async def client(override_get_session):
+async def override_get_current_user(test_session):
+    auth_service = AuthService()
+
+    token = await auth_service.signin(payload.test_user_1_signin, session=test_session)
+
+    async def _override_get_current_user():
+        user = await auth_service.get_current_active_user(
+            token=token, session=test_session
+        )
+        return user
+
+    return _override_get_current_user
+
+
+@pytest_asyncio.fixture(scope="function")
+async def client(override_get_session, override_get_current_user):
     app.dependency_overrides[get_session] = override_get_session
+    app.dependency_overrides[get_current_user] = override_get_current_user
     try:
         async with AsyncClient(
             transport=ASGITransport(app=app), base_url="http://testserver"
