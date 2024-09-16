@@ -1,12 +1,16 @@
+from typing import Any
+
 import bcrypt
 import pytest
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
+from pydantic import EmailStr
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from app.core.config import config
 from app.db.database import Base, get_session
-from app.db.models import User
+from app.db.models import Company, User
+from app.db.repo.user import UserRepo
 from app.main import app
 from app.services.auth import AuthService, get_current_user
 from tests import payload
@@ -15,6 +19,15 @@ from tests import payload
 def assert_real_matches_expected(real: dict, expected: dict):
     for key, value in expected.items():
         assert real[key] == value
+
+
+async def add_owner_id(
+    company: dict[str, Any], owner_email: EmailStr, session: AsyncSession
+):
+    owner = await UserRepo.get_user_by_email(user_email=owner_email, session=session)
+    assert isinstance(owner, User)
+    company["owner_id"] = str(owner.id)
+    return company
 
 
 @pytest_asyncio.fixture(scope="session")
@@ -102,5 +115,24 @@ async def fill_db_with_users(test_session: AsyncSession):
 
         db_user = User(**user)
         test_session.add(db_user)
+
+        await test_session.commit()
+
+
+@pytest_asyncio.fixture(scope="function")
+async def fill_db_with_companies(fill_db_with_users, test_session: AsyncSession):
+    companies = [
+        payload.test_company_1.model_dump(),
+        payload.test_company_2.model_dump(),
+    ]
+    owner_emails = [payload.test_user_1.email, payload.test_user_2.email]
+
+    for i, company in enumerate(companies):
+        company = await add_owner_id(
+            company=company, owner_email=owner_emails[i], session=test_session
+        )
+
+        db_company = Company(**company)
+        test_session.add(db_company)
 
         await test_session.commit()
