@@ -12,6 +12,11 @@ from app.services.auth import AuthService, get_current_user
 from tests import payload
 
 
+def assert_real_matches_expected(real: dict, expected: dict):
+    for key, value in expected.items():
+        assert real[key] == value
+
+
 @pytest_asyncio.fixture(scope="session")
 async def prepare_db():
     create_async_engine(
