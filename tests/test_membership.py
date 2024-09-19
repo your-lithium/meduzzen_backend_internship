@@ -22,8 +22,8 @@ async def test_send_invitation(
     assert response.status_code == 200
     membership = response.json()
     expected_membership = {
-        "company_id": str(company_id),
-        "user_id": str(user_id),
+        "company_id": company_id,
+        "user_id": user_id,
         "status": StatusEnum.INVITED.value,
     }
     assert_real_matches_expected(membership, expected_membership)
@@ -68,8 +68,8 @@ async def test_accept_invitation(
     assert response.status_code == 200
     updated_membership = response.json()
     expected_membership = {
-        "company_id": str(company_id),
-        "user_id": str(user_id),
+        "company_id": company_id,
+        "user_id": user_id,
         "status": StatusEnum.MEMBER.value,
     }
     assert_real_matches_expected(updated_membership, expected_membership)
@@ -94,8 +94,8 @@ async def test_decline_invitation(
     assert response.status_code == 200
     updated_membership = response.json()
     expected_membership = {
-        "company_id": str(company_id),
-        "user_id": str(user_id),
+        "company_id": company_id,
+        "user_id": user_id,
         "status": StatusEnum.DECLINED.value,
     }
     assert_real_matches_expected(updated_membership, expected_membership)
@@ -114,8 +114,8 @@ async def test_send_request(
     assert response.status_code == 200
     membership = response.json()
     expected_membership = {
-        "company_id": str(company_id),
-        "user_id": str(user_id),
+        "company_id": company_id,
+        "user_id": user_id,
         "status": StatusEnum.REQUESTED.value,
     }
     assert_real_matches_expected(membership, expected_membership)
@@ -160,8 +160,8 @@ async def test_accept_request(
     assert response.status_code == 200
     updated_membership = response.json()
     expected_membership = {
-        "company_id": str(company_id),
-        "user_id": str(user_id),
+        "company_id": company_id,
+        "user_id": user_id,
         "status": StatusEnum.MEMBER.value,
     }
     assert_real_matches_expected(updated_membership, expected_membership)
@@ -186,8 +186,8 @@ async def test_reject_request(
     assert response.status_code == 200
     updated_membership = response.json()
     expected_membership = {
-        "company_id": str(company_id),
-        "user_id": str(user_id),
+        "company_id": company_id,
+        "user_id": user_id,
         "status": StatusEnum.REJECTED.value,
     }
     assert_real_matches_expected(updated_membership, expected_membership)
@@ -247,8 +247,8 @@ async def test_get_current_users_requests(
     memberships = response.json()
     expected_memberships = [
         {
-            "company_id": str(company_id),
-            "user_id": str(user_id),
+            "company_id": company_id,
+            "user_id": user_id,
             "status": StatusEnum.REQUESTED.value,
         }
     ]
@@ -274,8 +274,8 @@ async def test_get_current_users_invitations(
     memberships = response.json()
     expected_memberships = [
         {
-            "company_id": str(company_id),
-            "user_id": str(user_id),
+            "company_id": company_id,
+            "user_id": user_id,
             "status": StatusEnum.INVITED.value,
         }
     ]
@@ -301,8 +301,8 @@ async def test_get_invitations_by_company(
     memberships = response.json()
     expected_memberships = [
         {
-            "company_id": str(company_id),
-            "user_id": str(user_id),
+            "company_id": company_id,
+            "user_id": user_id,
             "status": StatusEnum.INVITED.value,
         }
     ]
@@ -328,8 +328,8 @@ async def test_get_requests_by_company(
     memberships = response.json()
     expected_memberships = [
         {
-            "company_id": str(company_id),
-            "user_id": str(user_id),
+            "company_id": company_id,
+            "user_id": user_id,
             "status": StatusEnum.REQUESTED.value,
         }
     ]
@@ -353,8 +353,8 @@ async def test_get_members_by_company(
     memberships = response.json()
     expected_memberships = [
         {
-            "company_id": str(company_id),
-            "user_id": str(user_id),
+            "company_id": company_id,
+            "user_id": user_id,
             "status": StatusEnum.MEMBER.value,
         }
     ]
@@ -379,8 +379,8 @@ async def test_appoint_admin(
     assert response.status_code == 200
     updated_membership = response.json()
     expected_membership = {
-        "company_id": str(company_id),
-        "user_id": str(user_id),
+        "company_id": company_id,
+        "user_id": user_id,
         "status": StatusEnum.ADMIN.value,
     }
     assert_real_matches_expected(updated_membership, expected_membership)
@@ -403,8 +403,8 @@ async def test_remove_admin(
     assert response.status_code == 200
     updated_membership = response.json()
     expected_membership = {
-        "company_id": str(company_id),
-        "user_id": str(user_id),
+        "company_id": company_id,
+        "user_id": user_id,
         "status": StatusEnum.MEMBER.value,
     }
     assert_real_matches_expected(updated_membership, expected_membership)
@@ -426,8 +426,8 @@ async def test_get_admins_by_company(
     memberships = response.json()
     expected_memberships = [
         {
-            "company_id": str(company_id),
-            "user_id": str(user_id),
+            "company_id": company_id,
+            "user_id": user_id,
             "status": StatusEnum.ADMIN.value,
         }
     ]

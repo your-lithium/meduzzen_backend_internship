@@ -1,6 +1,3 @@
-from typing import Any
-from uuid import UUID
-
 import bcrypt
 import pytest
 import pytest_asyncio
@@ -23,25 +20,26 @@ def assert_real_matches_expected(real: dict, expected: dict):
         assert real[key] == value
 
 
-async def add_owner_id(
-    company: dict[str, Any], owner_email: EmailStr, session: AsyncSession
-):
-    owner = await UserRepo.get_user_by_email(user_email=owner_email, session=session)
-    assert isinstance(owner, User)
-    company["owner_id"] = str(owner.id)
-    return company
-
-
 async def get_user_and_company_ids(
-    user_email: EmailStr, company_name: str, session: AsyncSession
-) -> tuple[UUID, UUID]:
-    user = await UserRepo.get_user_by_email(user_email=user_email, session=session)
-    assert isinstance(user, User)
-    company = await CompanyRepo.get_company_by_name(
-        company_name=company_name, session=session
-    )
-    assert isinstance(company, Company)
-    return user.id, company.id
+    session: AsyncSession,
+    user_email: EmailStr | None = None,
+    company_name: str | None = None,
+) -> tuple[str | None, str | None]:
+    user = None
+    company = None
+
+    if user_email:
+        user = await UserRepo.get_user_by_email(user_email=user_email, session=session)
+
+    if company_name:
+        company = await CompanyRepo.get_company_by_name(
+            company_name=company_name, session=session
+        )
+
+    user_id = str(user.id) if user else None
+    company_id = str(company.id) if company else None
+
+    return user_id, company_id
 
 
 @pytest_asyncio.fixture(scope="session")
@@ -141,9 +139,9 @@ async def fill_db_with_companies(fill_db_with_users, test_session: AsyncSession)
     ]
     owner_emails = [payload.test_user_1.email, payload.test_user_2.email]
 
-    for i, company in enumerate(companies):
-        company = await add_owner_id(
-            company=company, owner_email=owner_emails[i], session=test_session
+    for company, owner_email in zip(companies, owner_emails):
+        company["owner_id"], _ = await get_user_and_company_ids(
+            user_email=owner_email, session=test_session
         )
 
         db_company = Company(**company)
@@ -160,9 +158,9 @@ async def fill_db_with_memberships(
     user_emails = [payload.test_user_2.email, payload.test_user_1.email]
     company_names = [payload.test_company_1.name, payload.test_company_2.name]
 
-    for user, company in zip(user_emails, company_names):
+    for user_email, company_name in zip(user_emails, company_names):
         user_id, company_id = await get_user_and_company_ids(
-            user_email=user, company_name=company, session=test_session
+            user_email=user_email, company_name=company_name, session=test_session
         )
         membership = Membership(company_id=company_id, user_id=user_id, status=status)
         test_session.add(membership)
