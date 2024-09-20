@@ -70,8 +70,9 @@ class QuestionsValidatorMixin:
     @field_validator("questions", mode="after")
     @classmethod
     def check_questions_quantity(cls, questions) -> Self:
-        if len(questions.root) < 2:
-            raise ValueError("There must be at least two questions.")
+        if questions:
+            if len(questions.root) < 2:
+                raise ValueError("There must be at least two questions.")
         return questions
 
 
