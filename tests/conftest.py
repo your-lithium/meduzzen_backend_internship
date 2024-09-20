@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_asyn
 
 from app.core.config import config
 from app.db.database import Base, get_session
-from app.db.models import Company, Membership, User
+from app.db.models import Company, Membership, Quiz, User
 from app.db.repo.company import CompanyRepo
 from app.db.repo.user import UserRepo
 from app.main import app
@@ -164,5 +164,30 @@ async def fill_db_with_memberships(
         )
         membership = Membership(company_id=company_id, user_id=user_id, status=status)
         test_session.add(membership)
+
+    await test_session.commit()
+
+
+@pytest_asyncio.fixture(scope="function")
+async def fill_db_with_quizzes(fill_db_with_companies, test_session: AsyncSession):
+    quizzes = [
+        payload.test_quiz_1.model_dump(),
+        payload.test_quiz_2.model_dump(),
+        payload.test_quiz_1.model_dump(),
+        payload.test_quiz_2.model_dump(),
+    ]
+    company_names = [
+        payload.test_company_1.name,
+        payload.test_company_1.name,
+        payload.test_company_2.name,
+        payload.test_company_2.name,
+    ]
+
+    for quiz, company_name in zip(quizzes, company_names):
+        _, quiz["company_id"] = await get_user_and_company_ids(
+            company_name=company_name, session=test_session
+        )
+        db_quiz = Quiz(**quiz)
+        test_session.add(db_quiz)
 
     await test_session.commit()
