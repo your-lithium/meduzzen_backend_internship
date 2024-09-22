@@ -1,13 +1,12 @@
-import alembic_postgresql_enum  # noqa
 import asyncio
-
-from alembic import context
 from logging.config import fileConfig
 
+import alembic_postgresql_enum  # noqa
 from sqlalchemy import pool
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
+from alembic import context
 from app.core.config import config as app_config
 from app.db import models  # noqa
 from app.db.database import Base

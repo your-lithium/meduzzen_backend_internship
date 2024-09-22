@@ -11,8 +11,11 @@ from app.db.repo.quiz_result import QuizResultRepo
 from app.schemas.membership_schemas import MembershipActionRequest
 from app.schemas.quiz_result_schemas import Answers, QuizResultDetails
 from app.services.company import CompanyService, get_company_service
-from app.services.exceptions import (AccessDeniedError, IncompleteQuizError,
-                                     ResultsNotFoundError)
+from app.services.exceptions import (
+    AccessDeniedError,
+    IncompleteQuizError,
+    ResultsNotFoundError,
+)
 from app.services.membership import MembershipService, get_membership_service
 from app.services.quiz import QuizService, get_quiz_service
 from app.services.redis_connect import redis_client
@@ -239,9 +242,10 @@ class QuizResultService:
         results = await self.retrieve_all_quiz_results(user_id=current_user.id)
         if get_csv:
             filename_prefix = str(current_user.id)
-            results = await self.form_csv(
+            results_csv = await self.form_csv(
                 quiz_results=results, filename_prefix=filename_prefix
             )
+            return results_csv
         return results
 
     async def get_latest_company_results(
@@ -258,9 +262,10 @@ class QuizResultService:
         results = await self.retrieve_all_quiz_results(company_id=company_id)
         if get_csv:
             filename_prefix = str(company_id)
-            results = await self.form_csv(
+            results_csv = await self.form_csv(
                 quiz_results=results, filename_prefix=filename_prefix
             )
+            return results_csv
         return results
 
     async def get_latest_company_user_results(
@@ -282,9 +287,10 @@ class QuizResultService:
         )
         if get_csv:
             filename_prefix = f"{company_id}_{user_id}"
-            results = await self.form_csv(
+            results_csv = await self.form_csv(
                 quiz_results=results, filename_prefix=filename_prefix
             )
+            return results_csv
         return results
 
     async def get_latest_quiz_results(
@@ -307,7 +313,8 @@ class QuizResultService:
         results = await self.retrieve_all_quiz_results(quiz_id=quiz_id)
         if get_csv:
             filename_prefix = str(quiz_id)
-            results = await self.form_csv(
+            results_csv = await self.form_csv(
                 quiz_results=results, filename_prefix=filename_prefix
             )
+            return results_csv
         return results

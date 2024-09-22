@@ -1,17 +1,20 @@
+from typing import Type
 from uuid import UUID
 
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.future import select
-from sqlalchemy.sql import and_
 
-from app.core.logger import logger
 from app.db.database import get_session
 from app.db.models import QuizResult
+from app.db.repo.base import BaseRepo
 
 
-class QuizResultRepo:
+class QuizResultRepo(BaseRepo[QuizResult]):
     """Represents a repository pattern to perform CRUD on QuizResult model."""
+
+    @classmethod
+    def get_model(cls) -> Type[QuizResult]:
+        return QuizResult
 
     @staticmethod
     async def add_result(
@@ -22,23 +25,6 @@ class QuizResultRepo:
         correct: int,
         session: AsyncSession = Depends(get_session),
     ) -> QuizResult:
-        """Add a new quiz result.
-
-        Args:
-            user_id (UUID): The user who answered the quiz.
-            company_id (UUID): The company that the quiz belongs to.
-            quiz_id (UUID): The quiz answered.
-            answered (int): The amount of answered questions.
-            correct (int): The amount of questions answered correctly.
-            session (AsyncSession):
-                The database session used for querying quiz results.
-                Defaults to the session obtained through get_session.
-
-        Returns:
-            QuizResult: The new result.
-        """
-        logger.info("Received a request to add a new quiz result")
-
         new_result = QuizResult(
             user_id=user_id,
             company_id=company_id,
@@ -46,12 +32,7 @@ class QuizResultRepo:
             answered=answered,
             correct=correct,
         )
-
-        session.add(new_result)
-        await session.commit()
-
-        logger.info("New quiz result added successfully")
-        return new_result
+        return await QuizResultRepo.create(entity=new_result, session=session)
 
     @staticmethod
     async def get_results_by_user(
@@ -59,33 +40,10 @@ class QuizResultRepo:
         company_id: UUID | None = None,
         session: AsyncSession = Depends(get_session),
     ) -> list[QuizResult]:
-        """Get quiz results of one User.
-        Can be used both for overall results and per company.
-
-        Args:
-            user_id (UUID): The user which to check.
-            company_id (UUID | None, optional):
-                The company which to check. Defaults to None.
-            session (AsyncSession):
-                The database session used for querying quiz results.
-                Defaults to the session obtained through get_session.
-
-        Returns:
-            list[QuizResult]: The results of a User.
-        """
-        if company_id:
-            result = await session.execute(
-                select(QuizResult).where(
-                    and_(
-                        QuizResult.user_id == user_id,
-                        QuizResult.company_id == company_id,
-                    )
-                )
-            )
-        else:
-            result = await session.execute(
-                select(QuizResult).where(QuizResult.user_id == user_id)
-            )
-        results = result.scalars().all()
-
-        return results
+        return await QuizResultRepo.get_all_by_fields(
+            fields=[QuizResult.user_id, QuizResult.company_id],
+            values=[user_id, company_id],
+            limit=None,
+            offset=0,
+            session=session,
+        )
