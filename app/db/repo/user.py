@@ -23,7 +23,7 @@ class UserRepo(BaseRepo[User]):
         user_email: EmailStr, session: AsyncSession = Depends(get_session)
     ) -> User | None:
         return await UserRepo.get_by_fields(
-            fields=User.email, values=user_email, session=session
+            fields=[User.email], values=[user_email], session=session
         )
 
     @staticmethod
@@ -31,7 +31,7 @@ class UserRepo(BaseRepo[User]):
         user_username: str, session: AsyncSession = Depends(get_session)
     ) -> User | None:
         return await UserRepo.get_by_fields(
-            fields=User.username, values=user_username, session=session
+            fields=[User.username], values=[user_username], session=session
         )
 
     @staticmethod
