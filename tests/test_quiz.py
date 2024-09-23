@@ -93,7 +93,7 @@ async def test_delete_quiz(
     fill_db_with_quizzes, client: AsyncClient, test_session: AsyncSession
 ):
     quiz = await QuizRepo.get_by_fields(
-        fields=Quiz.name, values=payload.test_quiz_1.name, session=test_session
+        fields=[Quiz.name], values=[payload.test_quiz_1.name], session=test_session
     )
     assert quiz is not None, "Quiz not found"
     quiz_id = quiz.id
