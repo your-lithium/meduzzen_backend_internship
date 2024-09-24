@@ -1,3 +1,5 @@
+from datetime import datetime, timedelta
+
 import bcrypt
 import pytest
 import pytest_asyncio
@@ -7,17 +9,25 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_asyn
 
 from app.core.config import config
 from app.db.database import Base, get_session
-from app.db.models import Company, Membership, Quiz, User
+from app.db.models import Company, Membership, Quiz, QuizResult, User
 from app.db.repo.company import CompanyRepo
+from app.db.repo.quiz import QuizRepo
 from app.db.repo.user import UserRepo
 from app.main import app
 from app.services.auth import AuthService, get_current_user
 from tests import payload
 
 
-def assert_real_matches_expected(real: dict, expected: dict):
+def assert_real_matches_expected(
+    real: dict, expected: dict, margin: timedelta = timedelta(seconds=2)
+):
     for key, value in expected.items():
-        assert real[key] == value
+        if key == "time":
+            actual_time = datetime.fromisoformat(real[key])
+            expected_time = datetime.fromisoformat(value)
+            assert abs(actual_time - expected_time) <= margin
+        else:
+            assert real[key] == value
 
 
 async def get_user_and_company_ids(
@@ -189,5 +199,57 @@ async def fill_db_with_quizzes(fill_db_with_companies, test_session: AsyncSessio
         )
         db_quiz = Quiz(**quiz)
         test_session.add(db_quiz)
+
+    await test_session.commit()
+
+
+@pytest_asyncio.fixture(scope="function")
+async def fill_db_with_quiz_results(fill_db_with_quizzes, test_session: AsyncSession):
+    user_emails = [
+        payload.test_user_2.email,
+        payload.test_user_1.email,
+        payload.test_user_2.email,
+        payload.test_user_1.email,
+        payload.test_user_2.email,
+        payload.test_user_1.email,
+    ]
+    company_names = [
+        payload.test_company_1.name,
+        payload.test_company_2.name,
+        payload.test_company_1.name,
+        payload.test_company_2.name,
+        payload.test_company_1.name,
+        payload.test_company_2.name,
+    ]
+    quiz_names = [
+        payload.test_quiz_1.name,
+        payload.test_quiz_2.name,
+        payload.test_quiz_1.name,
+        payload.test_quiz_2.name,
+        payload.test_quiz_2.name,
+        payload.test_quiz_1.name,
+    ]
+    correct_list = [2, 1, 0, 1, 1, 0]
+
+    for user_email, company_name, quiz_name, correct in zip(
+        user_emails, company_names, quiz_names, correct_list
+    ):
+        user_id, company_id = await get_user_and_company_ids(
+            user_email=user_email, company_name=company_name, session=test_session
+        )
+        quiz = await QuizRepo.get_by_fields(
+            fields=[Quiz.name, Quiz.company_id],
+            values=[quiz_name, company_id],
+            session=test_session,
+        )
+        quiz_id = str(quiz.id) if quiz else None
+        quiz_result = QuizResult(
+            user_id=user_id,
+            company_id=company_id,
+            quiz_id=quiz_id,
+            answered=2,
+            correct=correct,
+        )
+        test_session.add(quiz_result)
 
     await test_session.commit()

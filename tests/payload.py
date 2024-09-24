@@ -1,4 +1,5 @@
 from app.schemas.company_schemas import CompanyCreateRequest, CompanyUpdateRequest
+from app.schemas.quiz_result_schemas import Answers
 from app.schemas.quiz_schemas import (
     Answer,
     AnswerList,
@@ -184,6 +185,8 @@ expected_test_quiz_1_update = {
         },
     ],
 }
+test_quiz_1_answers = Answers([[1], [0, 2, 5]])
+expected_test_quiz_1_answers = {"answered": 2, "correct": 1}
 
 test_quiz_2 = QuizCreateRequest(
     name="test quiz 2",
@@ -304,3 +307,6 @@ expected_test_quiz_3 = {
         },
     ],
 }
+
+expected_test_user_1_rating = (1 + 1 + 0) / (2 * 3)
+expected_test_user_2_rating = (2 + 0 + 1) / (2 * 3)
