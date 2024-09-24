@@ -1,10 +1,13 @@
 services:
     primary:
         container_name: app
-        image: app:latest
+        build: 
+            context: .
         restart: always
         env_file:
             - .env
+        working_dir: /app
+        command: python -m app.main
         ports:
             - ${PORT}:${PORT}
         volumes:
