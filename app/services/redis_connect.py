@@ -13,7 +13,7 @@ class Redis_Client:
 
     async def close(self):
         if self.redis_client:
-            await self.redis_client.close()
+            await self.redis_client.aclose()
 
     async def setex(self, key, value, ttl):
         await self.redis_client.setex(key, ttl, value)
