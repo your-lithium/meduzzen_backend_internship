@@ -39,25 +39,26 @@ jobs:
         docker-compose --version
 
     - name: Create .env file
-      run: |
-        cp .env.sample .env
-        echo "HOST=${{ secrets.HOST }}" >> .env
-        echo "PORT=${{ secrets.PORT }}" >> .env
-        echo "OAUTH2_SECRET_KEY=${{ secrets.OAUTH2_SECRET_KEY }}" >> .env
-        echo "OAUTH2_ALGORITHM=${{ secrets.OAUTH2_ALGORITHM }}" >> .env
-        echo "OAUTH2_ACCESS_TOKEN_EXPIRE_DAYS=${{ secrets.OAUTH2_ACCESS_TOKEN_EXPIRE_DAYS }}" >> .env
-        echo "AUTH0_DOMAIN=${{ secrets.AUTH0_DOMAIN }}" >> .env
-        echo "AUTH0_AUDIENCE=${{ secrets.AUTH0_AUDIENCE }}" >> .env
-        echo "AUTH0_ALGORITHMS=${{ secrets.AUTH0_ALGORITHMS }}" >> .env
-        echo "POSTGRES_HOST=${{ secrets.POSTGRES_HOST }}" >> .env
-        echo "POSTGRES_PORT=${{ secrets.POSTGRES_PORT }}" >> .env
-        echo "POSTGRES_USER=${{ secrets.POSTGRES_USER }}" >> .env
-        echo "POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}" >> .env
-        echo "POSTGRES_NAME=${{ secrets.POSTGRES_NAME }}" >> .env
-        echo "POSTGRES_TEST_NAME=${{ secrets.POSTGRES_TEST_NAME }}" >> .env
-        echo "REDIS_HOST=${{ secrets.REDIS_HOST }}" >> .env
-        echo "REDIS_PORT=${{ secrets.REDIS_PORT }}" >> .env
-        echo "REDIS_PASSWORD=${{ secrets.REDIS_PASSWORD }}" >> .env
+      uses: SpicyPizza/create-envfile@v2.0
+      with:
+        envkey_HOST: ${{ secrets.HOST }}
+        envkey_PORT: ${{ secrets.PORT }}
+        envkey_OAUTH2_SECRET_KEY: ${{ secrets.OAUTH2_SECRET_KEY }}
+        envkey_OAUTH2_ALGORITHM: ${{ secrets.OAUTH2_ALGORITHM }}
+        envkey_OAUTH2_ACCESS_TOKEN_EXPIRE_DAYS: ${{ secrets.OAUTH2_ACCESS_TOKEN_EXPIRE_DAYS }}
+        envkey_AUTH0_DOMAIN: ${{ secrets.AUTH0_DOMAIN }}
+        envkey_AUTH0_AUDIENCE: ${{ secrets.AUTH0_AUDIENCE }}
+        envkey_AUTH0_ALGORITHMS: ${{ secrets.AUTH0_ALGORITHMS }}
+        envkey_POSTGRES_HOST: ${{ secrets.POSTGRES_HOST }}
+        envkey_POSTGRES_PORT: ${{ secrets.POSTGRES_PORT }}
+        envkey_POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
+        envkey_POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+        envkey_POSTGRES_NAME: ${{ secrets.POSTGRES_NAME }}
+        envkey_POSTGRES_TEST_NAME: ${{ secrets.POSTGRES_TEST_NAME }}
+        envkey_REDIS_HOST: ${{ secrets.REDIS_HOST }}
+        envkey_REDIS_PORT: ${{ secrets.REDIS_PORT }}
+        envkey_REDIS_PASSWORD: ${{ secrets.REDIS_PASSWORD }}
+        fail_on_empty: true
 
     - name: Start services with Docker Compose
       run: docker-compose up -d
