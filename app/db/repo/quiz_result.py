@@ -40,8 +40,8 @@ class QuizResultRepo(BaseRepo[QuizResult]):
         session: AsyncSession = Depends(get_session),
     ) -> list[QuizResult]:
         return await QuizResultRepo.get_all_by_fields(
-            fields=QuizResult.user_id,
-            values=user_id,
+            fields=[QuizResult.user_id],
+            values=[user_id],
             limit=None,
             offset=0,
             session=session,
@@ -53,8 +53,8 @@ class QuizResultRepo(BaseRepo[QuizResult]):
         session: AsyncSession = Depends(get_session),
     ) -> list[QuizResult]:
         return await QuizResultRepo.get_all_by_fields(
-            fields=QuizResult.company_id,
-            values=company_id,
+            fields=[QuizResult.company_id],
+            values=[company_id],
             limit=None,
             offset=0,
             session=session,
@@ -66,16 +66,9 @@ class QuizResultRepo(BaseRepo[QuizResult]):
         company_id: UUID,
         session: AsyncSession = Depends(get_session),
     ) -> list[QuizResult]:
-        fields = [QuizResult.user_id]
-        values = [user_id]
-
-        if company_id is not None:
-            fields.append(QuizResult.company_id)
-            values.append(company_id)
-
         return await QuizResultRepo.get_all_by_fields(
-            fields=fields,
-            values=values,
+            fields=[QuizResult.user_id, QuizResult.company_id],
+            values=[user_id, company_id],
             limit=None,
             offset=0,
             session=session,
