@@ -12,6 +12,12 @@ services:
             - ${PORT}:${PORT}
         volumes:
             - .:/app
+        healthcheck:
+            test: ["CMD", "curl", "-f", "http://localhost:${PORT}"]
+            interval: 30s
+            timeout: 10s
+            retries: 5
+            start_period: 10s
 
     postgres:
         container_name: postgres
@@ -23,6 +29,12 @@ services:
             - ${POSTGRES_PORT}:${POSTGRES_PORT}
         volumes:
             - postgres_data:/var/lib/postgresql/data
+        healthcheck:
+            test: ["CMD", "pg_isready", "-U", "${POSTGRES_USER}"]
+            interval: 10s
+            timeout: 5s
+            retries: 5
+            start_period: 30s
 
     redis:
         container_name: redis
@@ -32,6 +44,12 @@ services:
             - .env
         ports:
             - ${REDIS_PORT}:${REDIS_PORT}
+        healthcheck:
+            test: ["CMD", "redis-cli", "ping"]
+            interval: 10s
+            timeout: 5s
+            retries: 5
+            start_period: 10s
 
 volumes:
   postgres_data:
