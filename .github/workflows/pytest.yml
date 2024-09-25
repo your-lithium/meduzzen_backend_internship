@@ -58,6 +58,7 @@ jobs:
         envkey_REDIS_HOST: ${{ secrets.REDIS_HOST }}
         envkey_REDIS_PORT: ${{ secrets.REDIS_PORT }}
         envkey_REDIS_PASSWORD: ${{ secrets.REDIS_PASSWORD }}
+        envkey_LOG_DIR: ${{ secrets.LOG_DIR }}
         fail_on_empty: true
 
     - name: Start services with Docker Compose
