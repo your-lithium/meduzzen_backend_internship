@@ -26,8 +26,8 @@ class NotificationRepo(BaseRepo[Notification]):
         session: AsyncSession = Depends(get_session),
     ) -> list[Notification]:
         return await NotificationRepo.get_all_by_fields(
-            fields=Notification.user_id,
-            values=user_id,
+            fields=[Notification.user_id],
+            values=[user_id],
             limit=None,
             offset=0,
             session=session,
