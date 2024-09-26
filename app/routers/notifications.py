@@ -7,8 +7,7 @@ from app.db.database import get_session
 from app.db.models import NotificationStatusEnum, User
 from app.schemas.notification_schemas import NotificationResponse
 from app.services.auth import get_current_user
-from app.services.notification import (NotificationService,
-                                       get_notification_service)
+from app.services.notification import NotificationService, get_notification_service
 
 router = APIRouter(prefix="/notifications", tags=["Notification Methods"])
 
