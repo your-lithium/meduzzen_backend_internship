@@ -1,3 +1,4 @@
+from collections import defaultdict
 from datetime import datetime, timedelta
 from uuid import UUID
 
@@ -232,7 +233,7 @@ class QuizResultService:
 
     async def calculate_rating(
         self,
-        quizzes: list[QuizResult],
+        results: list[QuizResult],
     ) -> float:
         """Calculate a rating float from a list of QuizResults.
 
@@ -242,8 +243,8 @@ class QuizResultService:
         Returns:
             float: The calculated rating.
         """
-        total_answered = sum(quiz.answered for quiz in quizzes)
-        total_correct = sum(quiz.correct for quiz in quizzes)
+        total_answered = sum(result.answered for result in results)
+        total_correct = sum(result.correct for result in results)
 
         rating = total_correct / total_answered if total_answered > 0 else 0.0
 
@@ -268,15 +269,15 @@ class QuizResultService:
         Returns:
             float: The obtained rating.
         """
-        quizzes = await QuizResultRepo.get_results_by_user(
+        results = await QuizResultRepo.get_results_by_user(
             user_id=user_id,
             session=session,
         )
 
-        if not quizzes:
+        if not results:
             raise ResultsNotFoundError(user_id)
 
-        rating = await self.calculate_rating(quizzes=quizzes)
+        rating = await self.calculate_rating(results=results)
 
         return rating
 
@@ -301,16 +302,16 @@ class QuizResultService:
         Returns:
             float: The obtained rating.
         """
-        quizzes = await QuizResultRepo.get_results_by_parties(
+        results = await QuizResultRepo.get_results_by_parties(
             user_id=user_id,
             company_id=company_id,
             session=session,
         )
 
-        if not quizzes:
+        if not results:
             raise ResultsNotFoundError(user_id)
 
-        rating = await self.calculate_rating(quizzes=quizzes)
+        rating = await self.calculate_rating(results=results)
 
         return rating
 
@@ -452,26 +453,52 @@ class QuizResultService:
             return results_csv
         return results
 
+    async def find_latest_answers(
+        self, all_results: list[QuizResult]
+    ) -> list[LatestQuizAnswer]:
+        """Helper function to find the latest answers for each quiz answered.
+
+        Args:
+            all_results (list[QuizResult]): All of the quiz results.
+
+        Returns:
+            list[LatestQuizAnswer]: The resulting list of latest answers.
+        """
+        latest_answers_dict: dict[UUID, QuizResult] = {}
+        for answer in all_results:
+            if (
+                answer.quiz_id not in latest_answers_dict
+                or answer.time > latest_answers_dict[answer.quiz_id].time
+            ):
+                latest_answers_dict[answer.quiz_id] = answer
+
+        latest_answers = [
+            LatestQuizAnswer(quiz_id=quiz_id, time=answer.time)
+            for quiz_id, answer in latest_answers_dict.items()
+        ]
+
+        return latest_answers
+
     async def calculate_dynamics(
         self,
-        quizzes: list[Quiz],
+        results: list[QuizResult],
     ) -> list[MeanScoreTimed]:
         """Calculate the changes in rating over time.
 
         Args:
-            quizzes (list[Quiz]): The quizzes which to calculate the dynamics for.
+            results (list[QuizResult]): The results which to calculate the dynamics for.
 
         Returns:
             list[MeanScoreTimed]: The calculated dynamics.
         """
-        quizzes.sort(key=lambda quiz: quiz.time)
+        results.sort(key=lambda result: result.time)
 
         mean_scores_timed = []
         processed_quizzes = []
-        for quiz in quizzes:
-            processed_quizzes.append(quiz)
+        for result in results:
+            processed_quizzes.append(result)
             mean_score = MeanScoreTimed(
-                time=quiz.time,
+                time=result.time,
                 mean_score=await self.calculate_rating(processed_quizzes),
             )
             mean_scores_timed.append(mean_score)
@@ -497,15 +524,15 @@ class QuizResultService:
         Returns:
             list[MeanScoreTimed]: The calculated dynamics.
         """
-        quizzes = await QuizResultRepo.get_results_by_user(
+        results = await QuizResultRepo.get_results_by_user(
             user_id=current_user.id,
             session=session,
         )
 
-        if not quizzes:
+        if not results:
             raise ResultsNotFoundError(current_user.id)
 
-        mean_scores_timed = await self.calculate_dynamics(quizzes=quizzes)
+        mean_scores_timed = await self.calculate_dynamics(results=results)
         return mean_scores_timed
 
     async def get_current_user_latest_answers(
@@ -527,26 +554,15 @@ class QuizResultService:
         Returns:
             list[LatestQuizAnswer]: The resulting times for each quiz.
         """
-        quizzes = await QuizResultRepo.get_results_by_user(
+        all_answers = await QuizResultRepo.get_results_by_user(
             user_id=current_user.id,
             session=session,
         )
 
-        if not quizzes:
+        if not all_answers:
             raise ResultsNotFoundError(current_user.id)
 
-        latest_answers_dict: dict[UUID, QuizResult] = {}
-        for quiz in quizzes:
-            if (
-                quiz.quiz_id not in latest_answers_dict
-                or quiz.time > latest_answers_dict[quiz.quiz_id].time
-            ):
-                latest_answers_dict[quiz.quiz_id] = quiz
-
-        latest_answers = [
-            LatestQuizAnswer(quiz_id=quiz_id, time=quiz.time)
-            for quiz_id, quiz in latest_answers_dict.items()
-        ]
+        latest_answers = await self.find_latest_answers(all_results=all_answers)
 
         return latest_answers
 
@@ -577,24 +593,24 @@ class QuizResultService:
             company_id=company_id, current_user=current_user, session=session
         )
 
-        quizzes = await QuizResultRepo.get_results_by_company(
+        results = await QuizResultRepo.get_results_by_company(
             company_id=company_id,
             session=session,
         )
 
-        if not quizzes:
+        if not results:
             raise ResultsNotFoundError(current_user.id)
 
-        user_quizzes: dict[UUID, QuizResult | list] = {}
-        for quiz in quizzes:
-            user_quizzes.setdefault(quiz.user_id, []).append(quiz)
+        user_results = defaultdict(list)
+        for result in results:
+            user_results[result.user_id].append(result)
 
         user_mean_scores_timed = [
             UserMeanScoreTimed(
                 user_id=user_id,
-                scores=await self.calculate_dynamics(quizzes=user_quiz_list),
+                scores=await self.calculate_dynamics(results=result_list),
             )
-            for user_id, user_quiz_list in user_quizzes.items()
+            for user_id, result_list in user_results.items()
         ]
 
         return user_mean_scores_timed
@@ -629,15 +645,15 @@ class QuizResultService:
             company_id=company_id, current_user=current_user, session=session
         )
 
-        quizzes = await QuizResultRepo.get_results_by_user(
+        results = await QuizResultRepo.get_results_by_user(
             user_id=user_id,
             session=session,
         )
 
-        if not quizzes:
+        if not results:
             raise ResultsNotFoundError(user_id)
 
-        mean_scores_timed = await self.calculate_dynamics(quizzes=quizzes)
+        mean_scores_timed = await self.calculate_dynamics(results=results)
         return mean_scores_timed
 
     async def get_company_latest_answers(
@@ -666,35 +682,28 @@ class QuizResultService:
             company_id=company_id, current_user=current_user, session=session
         )
 
-        quizzes = await QuizResultRepo.get_results_by_company(
+        results = await QuizResultRepo.get_results_by_company(
             company_id=company_id,
             session=session,
         )
 
-        if not quizzes:
+        if not results:
             raise ResultsNotFoundError(current_user.id)
 
-        user_quizzes: dict[UUID, list] = {}
-        for quiz in quizzes:
-            user_quizzes.setdefault(quiz.user_id, []).append(quiz)
+        user_results: dict[UUID, list] = {}
+        for result in results:
+            user_results.setdefault(result.user_id, []).append(result)
 
-        user_latest_answers = []
-        for user_id, user_quiz_list in user_quizzes.items():
-            latest_answers_dict: dict[UUID, QuizResult] = {}
-            for quiz in user_quiz_list:
-                if (
-                    quiz.quiz_id not in latest_answers_dict
-                    or quiz.time > latest_answers_dict[quiz.quiz_id].time
-                ):
-                    latest_answers_dict[quiz.quiz_id] = quiz
-
-            latest_answers = [
-                LatestQuizAnswer(quiz_id=quiz_id, time=quiz.time)
-                for quiz_id, quiz in latest_answers_dict.items()
-            ]
-
-            user_latest_answers.append(
-                UserLatestQuizAnswers(user_id=user_id, latest_answers=latest_answers)
+        latest_answers = []
+        for user_id, user_result_list in user_results.items():
+            user_latest_answers = await self.find_latest_answers(
+                all_results=user_result_list
             )
 
-        return user_latest_answers
+            latest_answers.append(
+                UserLatestQuizAnswers(
+                    user_id=user_id, latest_answers=user_latest_answers
+                )
+            )
+
+        return latest_answers

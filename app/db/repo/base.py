@@ -50,8 +50,8 @@ class BaseRepo(ABC, Generic[T]):
     @classmethod
     async def get_all_by_fields(
         cls,
-        fields: InstrumentedAttribute | list[InstrumentedAttribute],
-        values: object | list[object],
+        fields: list[InstrumentedAttribute],
+        values: list[object],
         limit: int | None = 10,
         offset: int = 0,
         session: AsyncSession = Depends(get_session),
@@ -59,8 +59,8 @@ class BaseRepo(ABC, Generic[T]):
         """Get a list of entities of a model via one or more of its fields.
 
         Args:
-            fields (Column | list[Column]): The field/fields to check.
-            value (object | list[object]): The value/values to check.
+            fields (list[InstrumentedAttribute]): The fields to check.
+            value (list[object]): The values to check.
             limit (int | None, optional):
                 How many entities to get. Defaults to 10.
                 If None, retrieve all records.
@@ -76,12 +76,7 @@ class BaseRepo(ABC, Generic[T]):
         """
         model: Type[T] = cls.get_model()
 
-        if not isinstance(fields, list):
-            fields = [fields]
-        if not isinstance(values, list):
-            values = [values]
         where_clause = [cond == val for cond, val in zip(fields, values)]
-
         query = select(model).where(*where_clause)
 
         if limit is not None:
@@ -115,15 +110,15 @@ class BaseRepo(ABC, Generic[T]):
     @classmethod
     async def get_by_fields(
         cls,
-        fields: InstrumentedAttribute | list[InstrumentedAttribute],
-        values: object | list[object],
+        fields: list[InstrumentedAttribute],
+        values: list[object],
         session: AsyncSession = Depends(get_session),
     ) -> T | None:
         """Get one entity of a model via one or more of its fields.
 
         Args:
-            fields (Column | list[Column]): The field/fields to check.
-            values (object | list[object]): The value/values to check.
+            fields (list[InstrumentedAttribute]): The fields to check.
+            values (list[object]): The values to check.
             session (AsyncSession, optional):
                 The database session used for querying entities.
                 Defaults to Depends(get_session).
@@ -133,13 +128,9 @@ class BaseRepo(ABC, Generic[T]):
         """
         model: Type[T] = cls.get_model()
 
-        if not isinstance(fields, list):
-            fields = [fields]
-        if not isinstance(values, list):
-            values = [values]
         where_clause = [cond == val for cond, val in zip(fields, values)]
-
         query = select(model).where(*where_clause)
+
         result = await session.execute(query)
         entity: T | None = result.scalars().first()
         return entity

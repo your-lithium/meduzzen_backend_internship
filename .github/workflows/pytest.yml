@@ -1,0 +1,98 @@
+name: pytest
+
+on:
+  push:
+    branches:
+      - '*'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    
+    - name: Cache pip dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pytest
+
+    - name: Set up Docker Compose
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y docker-compose
+        docker-compose --version
+
+    - name: Create .env file
+      uses: SpicyPizza/create-envfile@v2.0
+      with:
+        envkey_HOST: ${{ secrets.HOST }}
+        envkey_PORT: ${{ secrets.PORT }}
+        envkey_OAUTH2_SECRET_KEY: ${{ secrets.OAUTH2_SECRET_KEY }}
+        envkey_OAUTH2_ALGORITHM: ${{ secrets.OAUTH2_ALGORITHM }}
+        envkey_OAUTH2_ACCESS_TOKEN_EXPIRE_DAYS: ${{ secrets.OAUTH2_ACCESS_TOKEN_EXPIRE_DAYS }}
+        envkey_AUTH0_DOMAIN: ${{ secrets.AUTH0_DOMAIN }}
+        envkey_AUTH0_AUDIENCE: ${{ secrets.AUTH0_AUDIENCE }}
+        envkey_AUTH0_ALGORITHMS: ${{ secrets.AUTH0_ALGORITHMS }}
+        envkey_POSTGRES_HOST: ${{ secrets.POSTGRES_HOST }}
+        envkey_POSTGRES_PORT: ${{ secrets.POSTGRES_PORT }}
+        envkey_POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
+        envkey_POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+        envkey_POSTGRES_NAME: ${{ secrets.POSTGRES_NAME }}
+        envkey_POSTGRES_TEST_NAME: ${{ secrets.POSTGRES_TEST_NAME }}
+        envkey_REDIS_HOST: ${{ secrets.REDIS_HOST }}
+        envkey_REDIS_PORT: ${{ secrets.REDIS_PORT }}
+        envkey_REDIS_PASSWORD: ${{ secrets.REDIS_PASSWORD }}
+        envkey_LOG_DIR: ${{ secrets.LOG_DIR }}
+        fail_on_empty: true
+
+    - name: Start services with Docker Compose
+      run: docker-compose up -d
+      
+    - name: Wait for services to be healthy
+      run: |
+        for i in {1..10}; do
+          if docker inspect --format '{{json .State.Health.Status}}' $(docker-compose ps -q postgres) | grep '"healthy"' && \
+             docker inspect --format '{{json .State.Health.Status}}' $(docker-compose ps -q redis) | grep '"healthy"'; then
+             break
+          else
+             sleep 5
+          fi
+        done
+
+    - name: Create test database
+      run: |
+        docker exec $(docker-compose ps -q postgres) psql -U ${{ secrets.POSTGRES_USER }} -c "CREATE DATABASE \"${{ secrets.POSTGRES_TEST_NAME }}\";"
+
+    - name: Run tests with pytest
+      run: |
+        pytest --junitxml=test-results.xml
+      env:
+        DATABASE_URL: "postgresql://${{ secrets.POSTGRES_USER }}:${{ secrets.POSTGRES_PASSWORD }}@localhost:${{ secrets.POSTGRES_PORT }}/${{ secrets.POSTGRES_TEST_NAME }}"
+        REDIS_URL: "redis://${{ secrets.REDIS_HOST }}:${{ secrets.REDIS_PORT }}"
+
+    - name: Upload Test Results
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: test-results
+        path: test-results.xml
+
+    - name: Shutdown Docker Compose
+      if: always()
+      run: docker-compose down
