@@ -9,7 +9,7 @@ from app.routers import (
     company,
     health_check,
     membership,
-    notifications,
+    notification,
     quiz,
     user,
 )
@@ -72,7 +72,7 @@ app.include_router(company.router)
 app.include_router(membership.router)
 app.include_router(quiz.router)
 app.include_router(analytics.router)
-app.include_router(notifications.router)
+app.include_router(notification.router)
 
 app.add_exception_handler(UserNotFoundError, user_not_found_exception_handler)
 app.add_exception_handler(CompanyNotFoundError, company_not_found_exception_handler)
