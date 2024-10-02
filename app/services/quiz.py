@@ -169,9 +169,9 @@ class QuizService:
         for member in members:
             await self._notification_service.send_notification(
                 user_id=member.id,
-                text=(
-                    f"There's a new quiz {quiz.id} created by company {company_id}. "
-                    "You should take it!",
+                text=str(
+                    f"There's a new quiz {new_quiz.id} created "
+                    f"by company {company_id}. You should take it!",
                 ),
                 session=session,
             )
