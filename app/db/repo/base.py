@@ -60,7 +60,7 @@ class BaseRepo(ABC, Generic[T]):
 
         Args:
             fields (list[InstrumentedAttribute]): The fields to check.
-            value (list[object]): The values to check.
+            value (Sequence[object]): The values to check.
             limit (int | None, optional):
                 How many entities to get. Defaults to 10.
                 If None, retrieve all records.
@@ -118,7 +118,7 @@ class BaseRepo(ABC, Generic[T]):
 
         Args:
             fields (list[InstrumentedAttribute]): The fields to check.
-            values (list[object]): The values to check.
+            values (Sequence[object]): The values to check.
             session (AsyncSession, optional):
                 The database session used for querying entities.
                 Defaults to Depends(get_session).
