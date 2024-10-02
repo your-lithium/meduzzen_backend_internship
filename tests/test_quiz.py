@@ -2,15 +2,20 @@ import pytest
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.models import Quiz
+from app.db.models import Notification, Quiz, StatusEnum
+from app.db.repo.notification import NotificationRepo
 from app.db.repo.quiz import QuizRepo
 from tests import payload
 from tests.conftest import assert_real_matches_expected, get_user_and_company_ids
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize("fill_db_with_memberships", [StatusEnum.MEMBER], indirect=True)
 async def test_create_quiz(
-    fill_db_with_quizzes, client: AsyncClient, test_session: AsyncSession
+    fill_db_with_quizzes,
+    fill_db_with_memberships,
+    client: AsyncClient,
+    test_session: AsyncSession,
 ):
     _, company_id = await get_user_and_company_ids(
         company_name=payload.test_company_1.name, session=test_session
@@ -25,6 +30,18 @@ async def test_create_quiz(
         "company_id": company_id,
     }
     assert_real_matches_expected(quiz, expected_quiz)
+
+    notifications = await NotificationRepo.get_all_by_fields(
+        fields=[Notification.text],
+        values=[
+            (
+                f"There's a new quiz {quiz['id']} created by company {company_id}. "
+                "You should take it!"
+            )
+        ],
+        session=test_session,
+    )
+    assert notifications != []
 
 
 @pytest.mark.asyncio
