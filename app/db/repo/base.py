@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Generic, Type, TypeVar
+from typing import Generic, Sequence, Type, TypeVar
 from uuid import UUID
 
 from fastapi import Depends
@@ -51,7 +51,7 @@ class BaseRepo(ABC, Generic[T]):
     async def get_all_by_fields(
         cls,
         fields: list[InstrumentedAttribute],
-        values: list[object],
+        values: Sequence[object],
         limit: int | None = 10,
         offset: int = 0,
         session: AsyncSession = Depends(get_session),
@@ -111,7 +111,7 @@ class BaseRepo(ABC, Generic[T]):
     async def get_by_fields(
         cls,
         fields: list[InstrumentedAttribute],
-        values: list[object],
+        values: Sequence[object],
         session: AsyncSession = Depends(get_session),
     ) -> T | None:
         """Get one entity of a model via one or more of its fields.
