@@ -38,6 +38,8 @@ async def test_get_quizzes_by_company(
     assert response.status_code == 200
 
     quizzes = response.json()
+    assert quizzes != []
+
     expected_quizzes = [
         payload.expected_test_quiz_1,
         payload.expected_test_quiz_2,

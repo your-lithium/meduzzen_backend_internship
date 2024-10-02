@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.database import get_session
 from app.db.models import Company, Membership, StatusEnum, User
 from app.db.repo.membership import MembershipRepo
+from app.db.repo.user import UserRepo
 from app.schemas.membership_schemas import MembershipActionRequest
 from app.services.company import CompanyService, get_company_service
 from app.services.exceptions import (
@@ -874,12 +875,19 @@ class MembershipService:
         Returns:
             list[User]: The list of a Company's members.
         """
-        members = await MembershipRepo.get_members_by_company(
+        memberships = await MembershipRepo.get_memberships_by_company(
             company_id=company_id,
             limit=limit,
             offset=offset,
             session=session,
         )
+        members: list[User] = []
+        for membership in memberships:
+            member = await UserRepo.get_by_id(
+                record_id=membership.user_id, session=session
+            )
+            if member:
+                members.append(member)
         return members
 
     async def get_all_members_by_company(
@@ -1031,10 +1039,17 @@ class MembershipService:
         Returns:
             list[User]: The list of admins.
         """
-        admins = await MembershipRepo.get_admins_by_company(
+        admin_memberships = await MembershipRepo.get_admin_memberships_by_company(
             company_id=company_id,
             limit=limit,
             offset=offset,
             session=session,
         )
+        admins: list[User] = []
+        for membership in admin_memberships:
+            admin = await UserRepo.get_by_id(
+                record_id=membership.user_id, session=session
+            )
+            if admin:
+                admins.append(admin)
         return admins
