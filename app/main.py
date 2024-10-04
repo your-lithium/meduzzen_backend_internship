@@ -1,3 +1,5 @@
+from contextlib import asynccontextmanager
+
 import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -47,8 +49,17 @@ from app.services.exceptions import (
     UsernameAlreadyExistsError,
     UserNotFoundError,
 )
+from app.utils.apscheduler import scheduler
 
-app = FastAPI()
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    scheduler.start()
+    yield
+    scheduler.shutdown()
+
+
+app = FastAPI(lifespan=lifespan)
 
 origins = [
     "http://localhost.tiangolo.com",

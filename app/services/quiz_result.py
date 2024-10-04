@@ -7,7 +7,7 @@ from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.database import get_session
-from app.db.models import Quiz, QuizResult, StatusEnum, User
+from app.db.models import Company, Quiz, QuizResult, StatusEnum, User
 from app.db.repo.quiz_result import QuizResultRepo
 from app.schemas.membership_schemas import MembershipActionRequest
 from app.schemas.quiz_result_schemas import (
@@ -25,9 +25,10 @@ from app.services.exceptions import (
     ResultsNotFoundError,
 )
 from app.services.membership import MembershipService, get_membership_service
+from app.services.notification import NotificationService, get_notification_service
 from app.services.quiz import QuizService, get_quiz_service
-from app.services.redis_connect import redis_client
 from app.services.user import UserService, get_user_service
+from app.utils.redis import redis_client
 
 
 def get_quiz_result_service(
@@ -35,9 +36,14 @@ def get_quiz_result_service(
     company_service=Depends(get_company_service),
     membership_service=Depends(get_membership_service),
     quiz_service=Depends(get_quiz_service),
+    notification_service=Depends(get_notification_service),
 ):
     return QuizResultService(
-        user_service, company_service, membership_service, quiz_service
+        user_service,
+        company_service,
+        membership_service,
+        quiz_service,
+        notification_service,
     )
 
 
@@ -50,11 +56,13 @@ class QuizResultService:
         company_service: CompanyService,
         membership_service: MembershipService,
         quiz_service: QuizService,
+        notification_service: NotificationService,
     ) -> None:
         self._user_service = user_service
         self._company_service = company_service
         self._membership_service = membership_service
         self._quiz_service = quiz_service
+        self._notification_service = notification_service
 
     async def check_company_member_and_quiz(
         self,
@@ -707,3 +715,97 @@ class QuizResultService:
             )
 
         return latest_answers
+
+    async def check_quiz_schedule(
+        self,
+        session: AsyncSession = Depends(get_session),
+    ) -> None:
+        now = datetime.now()
+
+        limit = 100
+        offset = 0
+        all_companies: list[Company] = []
+        while True:
+            companies = await self._company_service.get_all_companies(
+                limit=100, offset=offset, session=session
+            )
+            if not companies:
+                break
+            all_companies.extend(companies)
+            offset += limit
+
+        for company in all_companies:
+            owner = await self._user_service.get_user_by_id(
+                user_id=company.owner_id, session=session
+            )
+            members = await self._membership_service.get_all_members_by_company(
+                company_id=company.id, session=session
+            )
+
+            offset = 0
+            quizzes: list[Quiz] = []
+            while True:
+                quizzes_batch = await self._quiz_service.get_quizzes_by_company(
+                    company_id=company.id, limit=limit, offset=offset, session=session
+                )
+                if not quizzes_batch:
+                    break
+                quizzes.extend(quizzes_batch)
+                offset += limit
+
+            company_latest_answers = await self.get_company_latest_answers(
+                company_id=company.id, current_user=owner, session=session
+            )
+
+            for member in members:
+                latest_answers: UserLatestQuizAnswers | None = next(
+                    (
+                        answer
+                        for answer in company_latest_answers
+                        if answer.user_id == member.id
+                    ),
+                    None,
+                )
+
+                if latest_answers:
+                    for quiz in quizzes:
+                        latest_answer: LatestQuizAnswer | None = next(
+                            (
+                                answer
+                                for answer in latest_answers.latest_answers
+                                if answer.quiz_id == quiz.id
+                            ),
+                            None,
+                        )
+
+                        if latest_answer:
+                            days_gone = (now - latest_answer.time).days
+                            if days_gone >= quiz.frequency:
+                                await self._notification_service.send_notification(
+                                    user_id=member.id,
+                                    text=str(
+                                        f"You haven't taken quiz {quiz.id} from "
+                                        f"company {company.id} in a long time. "
+                                        "Please take it."
+                                    ),
+                                    session=session,
+                                )
+                        else:
+                            await self._notification_service.send_notification(
+                                user_id=member.id,
+                                text=str(
+                                    f"You haven't ever taken quiz {quiz.id} from "
+                                    f"company {company.id}. Please take it."
+                                ),
+                                session=session,
+                            )
+                else:
+                    for quiz in quizzes:
+                        await self._notification_service.send_notification(
+                            user_id=member.id,
+                            text=str(
+                                f"You haven't ever taken quiz {quiz.id} from "
+                                f"company {company.id}. Please take it."
+                            ),
+                            session=session,
+                        )
