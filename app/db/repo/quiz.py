@@ -25,8 +25,8 @@ class QuizRepo(BaseRepo[Quiz]):
         session: AsyncSession = Depends(get_session),
     ) -> list[Quiz]:
         return await QuizRepo.get_all_by_fields(
-            fields=Quiz.company_id,
-            values=company_id,
+            fields=[Quiz.company_id],
+            values=[company_id],
             limit=limit,
             offset=offset,
             session=session,

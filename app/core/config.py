@@ -24,6 +24,8 @@ class AppConfig(BaseSettings):
     redis_port: int
     redis_password: str
 
+    log_dir: str
+
     @property
     def postgres_url(self) -> str:
         return (

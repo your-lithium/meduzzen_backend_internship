@@ -37,7 +37,33 @@ class QuizResultRepo(BaseRepo[QuizResult]):
     @staticmethod
     async def get_results_by_user(
         user_id: UUID,
-        company_id: UUID | None = None,
+        session: AsyncSession = Depends(get_session),
+    ) -> list[QuizResult]:
+        return await QuizResultRepo.get_all_by_fields(
+            fields=[QuizResult.user_id],
+            values=[user_id],
+            limit=None,
+            offset=0,
+            session=session,
+        )
+
+    @staticmethod
+    async def get_results_by_company(
+        company_id: UUID,
+        session: AsyncSession = Depends(get_session),
+    ) -> list[QuizResult]:
+        return await QuizResultRepo.get_all_by_fields(
+            fields=[QuizResult.company_id],
+            values=[company_id],
+            limit=None,
+            offset=0,
+            session=session,
+        )
+
+    @staticmethod
+    async def get_results_by_parties(
+        user_id: UUID,
+        company_id: UUID,
         session: AsyncSession = Depends(get_session),
     ) -> list[QuizResult]:
         return await QuizResultRepo.get_all_by_fields(

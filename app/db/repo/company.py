@@ -21,8 +21,8 @@ class CompanyRepo(BaseRepo[Company]):
         limit: int = 10, offset: int = 0, session: AsyncSession = Depends(get_session)
     ) -> list[Company]:
         return await CompanyRepo.get_all_by_fields(
-            fields=Company.is_public,
-            values=True,
+            fields=[Company.is_public],
+            values=[True],
             limit=limit,
             offset=offset,
             session=session,
@@ -33,7 +33,7 @@ class CompanyRepo(BaseRepo[Company]):
         company_name: str, session: AsyncSession = Depends(get_session)
     ) -> Company | None:
         return await CompanyRepo.get_by_fields(
-            fields=Company.name, values=company_name, session=session
+            fields=[Company.name], values=[company_name], session=session
         )
 
     @staticmethod
