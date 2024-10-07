@@ -3,7 +3,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import config
-from app.routers import auth, company, health_check, membership, quiz, user
+from app.routers import analytics, auth, company, health_check, membership, quiz, user
 from app.routers.handlers import (
     access_denied_exception_handler,
     company_name_already_exists_exception_handler,
@@ -60,6 +60,7 @@ app.include_router(auth.router)
 app.include_router(company.router)
 app.include_router(membership.router)
 app.include_router(quiz.router)
+app.include_router(analytics.router)
 
 app.add_exception_handler(UserNotFoundError, user_not_found_exception_handler)
 app.add_exception_handler(CompanyNotFoundError, company_not_found_exception_handler)
