@@ -18,7 +18,9 @@ class CompanyRepo(BaseRepo[Company]):
 
     @staticmethod
     async def get_all(
-        limit: int = 10, offset: int = 0, session: AsyncSession = Depends(get_session)
+        limit: int | None = 10,
+        offset: int = 0,
+        session: AsyncSession = Depends(get_session),
     ) -> list[Company]:
         return await CompanyRepo.get_all_by_fields(
             fields=[Company.is_public],

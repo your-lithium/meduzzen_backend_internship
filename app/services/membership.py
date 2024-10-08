@@ -858,7 +858,7 @@ class MembershipService:
     async def get_members_by_company(
         self,
         company_id: UUID,
-        limit: int = 10,
+        limit: int | None = 10,
         offset: int = 0,
         session: AsyncSession = Depends(get_session),
     ) -> list[User]:
@@ -866,8 +866,11 @@ class MembershipService:
 
         Args:
             company_id (UUID): ID of the Company to check.
-            limit (int, optional): How much members to get. Defaults to 10.
-            offset (int, optional): Where to start getting members. Defaults to 0.
+            limit (int, optional):
+                How much members to get. Defaults to 10.
+                If None, retrieve all records.
+            offset (int, optional):
+                Where to start getting members. Defaults to 0.
             session (AsyncSession):
                 The database session used for querying.
                 Defaults to the session obtained through get_session.
@@ -889,35 +892,6 @@ class MembershipService:
             if member:
                 members.append(member)
         return members
-
-    async def get_all_members_by_company(
-        self, company_id: UUID, session: AsyncSession = Depends(get_session)
-    ) -> list[User]:
-        """Get all members of a Company.
-
-        Args:
-            company_id (UUID): ID of the Company to check.
-            session (AsyncSession):
-                The database session used for querying.
-                Defaults to the session obtained through get_session.
-
-        Returns:
-            list[User]: The full list of a Company's members.
-        """
-        limit = 100
-        offset = 0
-        all_members = []
-
-        while True:
-            members = await self.get_members_by_company(
-                company_id, limit, offset, session
-            )
-            if not members:
-                break
-            all_members.extend(members)
-            offset += limit
-
-        return all_members
 
     async def appoint_admin(
         self,
