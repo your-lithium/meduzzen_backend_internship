@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.database import get_session
 from app.db.models import User
-from app.schemas.quiz_result_schemas import Answers, MeanScore, QuizResultDetails
+from app.schemas.quiz_result_schemas import Answers, QuizResultDetails
 from app.schemas.quiz_schemas import QuizCreateRequest, QuizResponse, QuizUpdateRequest
 from app.services.auth import get_current_user
 from app.services.quiz import QuizService, get_quiz_service
@@ -88,31 +88,6 @@ async def answer_quiz(
     )
 
     return result
-
-
-@router.get("/{user_id}/result/{company_id}", response_model=MeanScore)
-async def get_user_company_rating(
-    user_id: UUID,
-    company_id: UUID,
-    quiz_result_service: QuizResultService = Depends(get_quiz_result_service),
-    session: AsyncSession = Depends(get_session),
-):
-    rating = await quiz_result_service.get_user_rating(
-        user_id=user_id, company_id=company_id, session=session
-    )
-
-    return rating
-
-
-@router.get("/{user_id}/result", response_model=MeanScore)
-async def get_user_rating(
-    user_id: UUID,
-    quiz_result_service: QuizResultService = Depends(get_quiz_result_service),
-    session: AsyncSession = Depends(get_session),
-):
-    rating = await quiz_result_service.get_user_rating(user_id=user_id, session=session)
-
-    return rating
 
 
 @router.get("/results/me", response_model=list[QuizResultDetails])
