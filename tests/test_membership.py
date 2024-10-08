@@ -245,6 +245,8 @@ async def test_get_current_users_requests(
     assert response.status_code == 200
 
     memberships = response.json()
+    assert memberships != []
+
     expected_memberships = [
         {
             "company_id": company_id,
@@ -272,6 +274,8 @@ async def test_get_current_users_invitations(
     assert response.status_code == 200
 
     memberships = response.json()
+    assert memberships != []
+
     expected_memberships = [
         {
             "company_id": company_id,
@@ -299,6 +303,8 @@ async def test_get_invitations_by_company(
     assert response.status_code == 200
 
     memberships = response.json()
+    assert memberships != []
+
     expected_memberships = [
         {
             "company_id": company_id,
@@ -326,6 +332,8 @@ async def test_get_requests_by_company(
     assert response.status_code == 200
 
     memberships = response.json()
+    assert memberships != []
+
     expected_memberships = [
         {
             "company_id": company_id,
@@ -347,19 +355,15 @@ async def test_get_members_by_company(
         company_name=payload.test_company_1.name,
         session=test_session,
     )
-    response = await client.get(f"/memberships/{company_id}/requests")
+    response = await client.get(f"/memberships/{company_id}/members")
     assert response.status_code == 200
 
-    memberships = response.json()
-    expected_memberships = [
-        {
-            "company_id": company_id,
-            "user_id": user_id,
-            "status": StatusEnum.MEMBER.value,
-        }
-    ]
-    for membership, expected_membership in zip(memberships, expected_memberships):
-        assert_real_matches_expected(membership, expected_membership)
+    members = response.json()
+    assert members != []
+
+    expected_members = [payload.expected_test_user_2]
+    for member, expected_member in zip(members, expected_members):
+        assert_real_matches_expected(member, expected_member)
 
 
 @pytest.mark.asyncio
@@ -420,16 +424,12 @@ async def test_get_admins_by_company(
         company_name=payload.test_company_1.name,
         session=test_session,
     )
-    response = await client.get(f"/memberships/{company_id}/requests")
+    response = await client.get(f"/memberships/{company_id}/admins")
     assert response.status_code == 200
 
-    memberships = response.json()
-    expected_memberships = [
-        {
-            "company_id": company_id,
-            "user_id": user_id,
-            "status": StatusEnum.ADMIN.value,
-        }
-    ]
-    for membership, expected_membership in zip(memberships, expected_memberships):
-        assert_real_matches_expected(membership, expected_membership)
+    admins = response.json()
+    assert admins != []
+
+    expected_admins = [payload.expected_test_user_2]
+    for admin, expected_admin in zip(admins, expected_admins):
+        assert_real_matches_expected(admin, expected_admin)

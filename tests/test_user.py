@@ -22,6 +22,8 @@ async def test_get_user_list(fill_db_with_users, client: AsyncClient):
     assert response.status_code == 200
 
     users = response.json()
+    assert users != []
+
     expected_values = [payload.expected_test_user_1, payload.expected_test_user_2]
     for i, user in enumerate(users):
         assert_real_matches_expected(user, expected_values[i])

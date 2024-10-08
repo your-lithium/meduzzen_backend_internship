@@ -21,6 +21,9 @@ from tests import payload
 def assert_real_matches_expected(
     real: dict, expected: dict, margin: timedelta = timedelta(seconds=2)
 ):
+    common_keys = set(real.keys()).intersection(set(expected.keys()))
+    assert common_keys, "No matching keys between real and expected."
+
     for key, value in expected.items():
         if key == "time":
             actual_time = datetime.fromisoformat(real[key])

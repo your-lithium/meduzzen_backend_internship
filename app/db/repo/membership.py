@@ -5,7 +5,7 @@ from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.database import get_session
-from app.db.models import Membership, StatusEnum, User
+from app.db.models import Membership, StatusEnum
 from app.db.repo.base import BaseRepo
 from app.schemas.membership_schemas import (
     MembershipActionRequest,
@@ -116,12 +116,12 @@ class MembershipRepo(BaseRepo[Membership]):
         )
 
     @staticmethod
-    async def get_members_by_company(
+    async def get_memberships_by_company(
         company_id: UUID,
         limit: int = 10,
         offset: int = 0,
         session: AsyncSession = Depends(get_session),
-    ) -> list[User]:
+    ) -> list[Membership]:
         return await MembershipRepo.get_all_by_fields(
             fields=[Membership.company_id, Membership.status],
             values=[company_id, StatusEnum.MEMBER],
@@ -145,12 +145,12 @@ class MembershipRepo(BaseRepo[Membership]):
         )
 
     @staticmethod
-    async def get_admins_by_company(
+    async def get_admin_memberships_by_company(
         company_id: UUID,
         limit: int | None = 10,
         offset: int = 0,
         session: AsyncSession = Depends(get_session),
-    ) -> list[User]:
+    ) -> list[Membership]:
         return await MembershipRepo.get_all_by_fields(
             fields=[Membership.company_id, Membership.status],
             values=[company_id, StatusEnum.ADMIN],

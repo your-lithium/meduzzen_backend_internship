@@ -34,6 +34,8 @@ async def test_get_company_list(
     assert response.status_code == 200
 
     companies = response.json()
+    assert companies != []
+
     expected_companies = [
         payload.expected_test_company_1,
         payload.expected_test_company_2,
