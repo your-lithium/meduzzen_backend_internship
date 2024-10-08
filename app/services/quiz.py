@@ -82,7 +82,7 @@ class QuizService:
     async def get_quizzes_by_company(
         self,
         company_id: UUID,
-        limit: int = 10,
+        limit: int | None = 10,
         offset: int = 0,
         session: AsyncSession = Depends(get_session),
     ) -> list[Quiz]:
@@ -90,8 +90,11 @@ class QuizService:
 
         Args:
             company_id (UUID): The ID of the company to check.
-            limit (int, optional): How much quizzes to get. Defaults to 10.
-            offset (int, optional): Where to start getting quizzes. Defaults to 0.
+            limit (int | None, optional):
+                How much quizzes to get. Defaults to 10.
+                If None, retrieve all records.
+            offset (int, optional):
+                Where to start getting quizzes. Defaults to 0.
             session (AsyncSession):
                 The database session used for querying.
                 Defaults to the session obtained through get_session.

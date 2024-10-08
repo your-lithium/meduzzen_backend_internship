@@ -20,7 +20,7 @@ class QuizRepo(BaseRepo[Quiz]):
     @staticmethod
     async def get_quizzes_by_company(
         company_id: UUID,
-        limit: int = 10,
+        limit: int | None = 10,
         offset: int = 0,
         session: AsyncSession = Depends(get_session),
     ) -> list[Quiz]:

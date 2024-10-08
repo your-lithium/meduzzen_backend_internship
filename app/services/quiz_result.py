@@ -8,7 +8,7 @@ from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.database import get_session
-from app.db.models import Company, Quiz, QuizResult, StatusEnum, User
+from app.db.models import Quiz, QuizResult, StatusEnum, User
 from app.db.repo.quiz_result import QuizResultRepo
 from app.schemas.membership_schemas import MembershipActionRequest
 from app.schemas.quiz_result_schemas import (
@@ -725,19 +725,11 @@ class QuizResultService:
     ) -> None:
         now = datetime.now(ZoneInfo("Europe/Kyiv"))
 
-        limit = 100
-        offset = 0
-        all_companies: list[Company] = []
-        while True:
-            companies = await self._company_service.get_all_companies(
-                limit=100, offset=offset, session=session
-            )
-            if not companies:
-                break
-            all_companies.extend(companies)
-            offset += limit
+        companies = await self._company_service.get_all_companies(
+            limit=None, offset=0, session=session
+        )
 
-        for company in all_companies:
+        for company in companies:
             owner = await self._user_service.get_user_by_id(
                 user_id=company.owner_id, session=session
             )
@@ -745,16 +737,9 @@ class QuizResultService:
                 company_id=company.id, session=session
             )
 
-            offset = 0
-            quizzes: list[Quiz] = []
-            while True:
-                quizzes_batch = await self._quiz_service.get_quizzes_by_company(
-                    company_id=company.id, limit=limit, offset=offset, session=session
-                )
-                if not quizzes_batch:
-                    break
-                quizzes.extend(quizzes_batch)
-                offset += limit
+            quizzes = await self._quiz_service.get_quizzes_by_company(
+                company_id=company.id, limit=None, offset=0, session=session
+            )
 
             company_latest_answers = await self.get_company_latest_answers(
                 company_id=company.id, current_user=owner, session=session
