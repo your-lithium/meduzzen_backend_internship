@@ -1,4 +1,5 @@
 from datetime import datetime
+from zoneinfo import ZoneInfo
 
 import pytest
 from httpx import AsyncClient
@@ -14,7 +15,7 @@ from tests.conftest import assert_real_matches_expected, get_user_and_company_id
 async def test_get_current_user_notifications(
     fill_db_with_notifications, client: AsyncClient, test_session: AsyncSession
 ):
-    time = datetime.now()
+    time = datetime.now(ZoneInfo("Europe/Kyiv"))
     user_id, _ = await get_user_and_company_ids(
         user_email=payload.test_user_1.email, session=test_session
     )

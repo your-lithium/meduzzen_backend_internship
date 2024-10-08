@@ -1,6 +1,7 @@
 from collections import defaultdict
 from datetime import datetime, timedelta
 from uuid import UUID
+from zoneinfo import ZoneInfo
 
 import pandas as pd
 from fastapi import Depends
@@ -182,7 +183,9 @@ class QuizResultService:
         Returns:
             str: The resulting filename.
         """
-        current_time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        current_time = datetime.now(ZoneInfo("Europe/Kyiv")).strftime(
+            "%Y-%m-%d_%H-%M-%S"
+        )
         filename = f"{filename_prefix}_{current_time}.csv"
         serialized_results = [result.model_dump() for result in quiz_results]
         df = pd.DataFrame(serialized_results)
@@ -720,7 +723,7 @@ class QuizResultService:
         self,
         session: AsyncSession = Depends(get_session),
     ) -> None:
-        now = datetime.now()
+        now = datetime.now(ZoneInfo("Europe/Kyiv"))
 
         limit = 100
         offset = 0
@@ -738,7 +741,7 @@ class QuizResultService:
             owner = await self._user_service.get_user_by_id(
                 user_id=company.owner_id, session=session
             )
-            members = await self._membership_service.get_all_members_by_company(
+            members = await self._membership_service.get_members_by_company(
                 company_id=company.id, session=session
             )
 
