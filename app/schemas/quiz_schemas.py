@@ -1,19 +1,19 @@
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, RootModel, field_validator, model_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    RootModel,
+    field_validator,
+    model_validator,
+)
 from typing_extensions import Self
 
 
 class Answer(BaseModel):
-    options: dict[int, str]
+    options: dict[int, str] = Field(..., min_length=2)
     correct: list[int]
-
-    @field_validator("options", mode="after")
-    @classmethod
-    def check_options_quantity(cls, options) -> Self:
-        if len(options) < 2:
-            raise ValueError("There must be at least two answer options.")
-        return options
 
     @model_validator(mode="after")
     @classmethod
@@ -52,7 +52,7 @@ class Question(BaseModel):
 
 
 class QuestionList(RootModel):
-    root: list[Question]
+    root: list[Question] = Field(..., min_length=2)
 
 
 class QuizResponse(BaseModel):
@@ -66,24 +66,14 @@ class QuizResponse(BaseModel):
     questions: QuestionList
 
 
-class QuestionsValidatorMixin:
-    @field_validator("questions", mode="after")
-    @classmethod
-    def check_questions_quantity(cls, questions) -> Self:
-        if questions:
-            if len(questions.root) < 2:
-                raise ValueError("There must be at least two questions.")
-        return questions
-
-
-class QuizCreateRequest(BaseModel, QuestionsValidatorMixin):
+class QuizCreateRequest(BaseModel):
     name: str
     description: str
     frequency: int
     questions: QuestionList
 
 
-class QuizUpdateRequest(BaseModel, QuestionsValidatorMixin):
+class QuizUpdateRequest(BaseModel):
     name: str | None = None
     description: str | None = None
     frequency: int | None = None

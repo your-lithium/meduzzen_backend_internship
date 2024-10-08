@@ -163,8 +163,8 @@ class QuizService:
             quiz=quiz, company_id=company_id, session=session
         )
 
-        members = await self._membership_service.get_all_members_by_company(
-            company_id=company_id, session=session
+        members = await self._membership_service.get_members_by_company(
+            company_id=company_id, limit=None, offset=0, session=session
         )
         for member in members:
             await self._notification_service.send_notification(

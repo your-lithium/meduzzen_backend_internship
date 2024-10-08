@@ -20,15 +20,18 @@ class CompanyService:
 
     async def get_all_companies(
         self,
-        limit: int = 10,
+        limit: int | None = 10,
         offset: int = 0,
         session: AsyncSession = Depends(get_session),
     ) -> list[Company]:
         """Get a list of companies.
 
         Args:
-            limit (int, optional): How much companies to get. Defaults to 10.
-            offset (int, optional): Where to start getting companies. Defaults to 0.
+            limit (int | None, optional):
+                How much companies to get. Defaults to 10.
+                If None, retrieve all records.
+            offset (int, optional):
+                Where to start getting companies. Defaults to 0.
             session (AsyncSession):
                 The database session used for querying companies.
                 Defaults to the session obtained through get_session.
