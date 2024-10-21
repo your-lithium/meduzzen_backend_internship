@@ -11,6 +11,7 @@ from app.schemas.quiz_schemas import QuizCreateRequest, QuizUpdateRequest
 from app.services.company import CompanyService, get_company_service
 from app.services.exceptions import MembershipNotFoundError, QuizNotFoundError
 from app.services.membership import MembershipService, get_membership_service
+from app.services.notification import NotificationService, get_notification_service
 from app.services.permissions import PermissionService
 from app.services.user import UserService, get_user_service
 
@@ -19,8 +20,11 @@ def get_quiz_service(
     user_service=Depends(get_user_service),
     company_service=Depends(get_company_service),
     membership_service=Depends(get_membership_service),
+    notification_service=Depends(get_notification_service),
 ):
-    return QuizService(user_service, company_service, membership_service)
+    return QuizService(
+        user_service, company_service, membership_service, notification_service
+    )
 
 
 class QuizService:
@@ -31,10 +35,12 @@ class QuizService:
         user_service: UserService,
         company_service: CompanyService,
         membership_service: MembershipService,
+        notification_service: NotificationService,
     ) -> None:
         self._user_service = user_service
         self._company_service = company_service
         self._membership_service = membership_service
+        self._notification_service = notification_service
 
     async def check_company_and_user(
         self,
@@ -156,6 +162,19 @@ class QuizService:
         new_quiz: Quiz = await QuizRepo.create_quiz(
             quiz=quiz, company_id=company_id, session=session
         )
+
+        members = await self._membership_service.get_members_by_company(
+            company_id=company_id, limit=None, offset=0, session=session
+        )
+        for member in members:
+            await self._notification_service.send_notification(
+                user_id=member.id,
+                text=str(
+                    f"There's a new quiz {new_quiz.id} created "
+                    f"by company {company_id}. You should take it!",
+                ),
+                session=session,
+            )
         return new_quiz
 
     async def update_quiz(

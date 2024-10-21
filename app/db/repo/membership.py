@@ -118,7 +118,7 @@ class MembershipRepo(BaseRepo[Membership]):
     @staticmethod
     async def get_memberships_by_company(
         company_id: UUID,
-        limit: int = 10,
+        limit: int | None = 10,
         offset: int = 0,
         session: AsyncSession = Depends(get_session),
     ) -> list[Membership]:

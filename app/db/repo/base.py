@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
-from typing import Generic, Sequence, Type, TypeVar
+from collections.abc import Sequence
+from typing import Generic, Type, TypeVar
 from uuid import UUID
 
 from fastapi import Depends
@@ -26,15 +27,19 @@ class BaseRepo(ABC, Generic[T]):
     @classmethod
     async def get_all(
         cls,
-        limit: int = 10,
+        limit: int | None = 10,
         offset: int = 0,
         session: AsyncSession = Depends(get_session),
     ) -> list[T]:
         """Get a list of entities for one model.
 
         Args:
-            limit (int, optional): How many entities to get. Defaults to 10.
-            offset (int, optional): Where to start getting entities. Defaults to 0.
+            limit (int | None, optional):
+                How many entities to get. Defaults to 10.
+                If None, retrieve all records.
+            offset (int, optional):
+                Where to start getting entities.
+                Defaults to 0.
             session (AsyncSession, optional):
                 The database session used for querying entities.
                 Defaults to Depends(get_session).
@@ -43,7 +48,11 @@ class BaseRepo(ABC, Generic[T]):
             list[T]: The list of retrieved entities.
         """
         model: Type[T] = cls.get_model()
-        query = select(model).limit(limit).offset(offset)
+        query = select(model).offset(offset)
+
+        if limit is not None:
+            query = query.limit(limit)
+
         result = await session.execute(query)
         return list(result.scalars().all())
 
@@ -66,7 +75,7 @@ class BaseRepo(ABC, Generic[T]):
                 If None, retrieve all records.
             offset (int, optional):
                 Where to start getting entities.
-                Defaults to 0. If None, start from the beginning.
+                Defaults to 0.
             session (AsyncSession, optional):
                 The database session used for querying entities.
                 Defaults to Depends(get_session).
@@ -77,12 +86,10 @@ class BaseRepo(ABC, Generic[T]):
         model: Type[T] = cls.get_model()
 
         where_clause = [cond == val for cond, val in zip(fields, values)]
-        query = select(model).where(*where_clause)
+        query = select(model).where(*where_clause).offset(offset)
 
         if limit is not None:
             query = query.limit(limit)
-        if offset is not None:
-            query = query.offset(offset)
 
         result = await session.execute(query)
         return list(result.scalars().all())

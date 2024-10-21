@@ -52,7 +52,7 @@ class Question(BaseModel):
 
 
 class QuestionList(RootModel):
-    root: list[Question] = Field(..., min_items=2)
+    root: list[Question] = Field(..., min_length=2)
 
 
 class QuizResponse(BaseModel):

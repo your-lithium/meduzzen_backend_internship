@@ -57,6 +57,14 @@ class ResultsNotFoundError(ObjectNotFoundError):
         )
 
 
+class NotificationNotFoundError(ObjectNotFoundError):
+    def __init__(self, identifier: Any, model_name: str = "notification"):
+        super().__init__(identifier, model_name)
+
+    def errors(self):
+        return f"{self.model_name} with given identifier - {self.identifier} not found"
+
+
 class ObjectAlreadyExistsError(BaseError):
     def __init__(self, object_value: Any, object_name: str, model_name: str) -> None:
         self.object_value = object_value

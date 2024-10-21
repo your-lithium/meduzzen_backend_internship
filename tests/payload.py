@@ -312,3 +312,10 @@ expected_test_user_1_rating = (1 + 1 + 0) / (2 * 3)
 expected_test_user_2_rating = (2 + 0 + 1) / (2 * 3)
 expected_test_user_1_dynamics_scores = [1 / 2, (1 + 1) / (2 * 2), (1 + 1 + 0) / (2 * 3)]
 expected_test_user_2_dynamics_scores = [2 / 2, (2 + 0) / (2 * 2), (2 + 0 + 1) / (2 * 3)]
+
+expected_test_notification_1 = {"text": "This is notification #1", "status": "read"}
+expected_test_notification_2 = {"text": "This is notification #3", "status": "unread"}
+expected_test_notification_2_update = {
+    "text": "This is notification #3",
+    "status": "read",
+}

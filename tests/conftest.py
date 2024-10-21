@@ -9,7 +9,15 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_asyn
 
 from app.core.config import config
 from app.db.database import Base, get_session
-from app.db.models import Company, Membership, Quiz, QuizResult, User
+from app.db.models import (
+    Company,
+    Membership,
+    Notification,
+    NotificationStatusEnum,
+    Quiz,
+    QuizResult,
+    User,
+)
 from app.db.repo.company import CompanyRepo
 from app.db.repo.quiz import QuizRepo
 from app.db.repo.user import UserRepo
@@ -254,5 +262,40 @@ async def fill_db_with_quiz_results(fill_db_with_quizzes, test_session: AsyncSes
             correct=correct,
         )
         test_session.add(quiz_result)
+
+    await test_session.commit()
+
+
+@pytest_asyncio.fixture(scope="function")
+async def fill_db_with_notifications(fill_db_with_users, test_session: AsyncSession):
+    user_emails = [
+        payload.test_user_1.email,
+        payload.test_user_2.email,
+        payload.test_user_1.email,
+        payload.test_user_2.email,
+    ]
+    notification_texts = [
+        "This is notification #1",
+        "This is notification #2",
+        "This is notification #3",
+        "This is notification #4",
+    ]
+    statuses = [
+        NotificationStatusEnum.READ,
+        NotificationStatusEnum.READ,
+        NotificationStatusEnum.UNREAD,
+        NotificationStatusEnum.UNREAD,
+    ]
+
+    for user_email, notification_text, status in zip(
+        user_emails, notification_texts, statuses
+    ):
+        user_id, _ = await get_user_and_company_ids(
+            user_email=user_email, session=test_session
+        )
+        notification = Notification(
+            user_id=user_id, status=status, text=notification_text
+        )
+        test_session.add(notification)
 
     await test_session.commit()

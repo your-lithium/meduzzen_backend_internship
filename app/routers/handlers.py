@@ -12,6 +12,7 @@ from app.services.exceptions import (
     IncorrectPasswordError,
     MembershipAlreadyExistsError,
     MembershipNotFoundError,
+    NotificationNotFoundError,
     QuizNotFoundError,
     ResultsNotFoundError,
     UnauthorizedError,
@@ -56,6 +57,16 @@ async def quiz_not_found_exception_handler(_: Request, exc: QuizNotFoundError):
 
 async def results_not_found_exception_handler(_: Request, exc: ResultsNotFoundError):
     logger.error(f"ResultsNotFoundError error: {exc.errors()}")
+    return JSONResponse(
+        status_code=404,
+        content={"detail": exc.errors()},
+    )
+
+
+async def notification_not_found_exception_handler(
+    _: Request, exc: NotificationNotFoundError
+):
+    logger.error(f"NotificationNotFoundError error: {exc.errors()}")
     return JSONResponse(
         status_code=404,
         content={"detail": exc.errors()},
