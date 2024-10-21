@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from zoneinfo import ZoneInfo
 
 import bcrypt
 import pytest
@@ -34,7 +35,9 @@ def assert_real_matches_expected(
 
     for key, value in expected.items():
         if key == "time":
-            actual_time = datetime.fromisoformat(real[key])
+            actual_time = datetime.fromisoformat(real[key]).replace(
+                tzinfo=ZoneInfo("Europe/Kyiv")
+            )
             expected_time = datetime.fromisoformat(value)
             assert abs(actual_time - expected_time) <= margin
         else:

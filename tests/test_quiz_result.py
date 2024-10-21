@@ -1,4 +1,5 @@
 from datetime import datetime
+from zoneinfo import ZoneInfo
 
 import pytest
 from httpx import AsyncClient
@@ -30,7 +31,7 @@ async def test_answer_quiz(
     )
     assert quiz is not None, "Quiz not found"
     quiz_id = quiz.id
-    time = datetime.now()
+    time = datetime.now(ZoneInfo("Europe/Kyiv"))
     response = await client.post(
         f"/quizzes/{quiz_id}/answer", json=payload.test_quiz_1_answers.model_dump()
     )

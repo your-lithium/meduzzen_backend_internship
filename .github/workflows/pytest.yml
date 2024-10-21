@@ -78,6 +78,7 @@ jobs:
     - name: Create test database
       run: |
         docker exec $(docker-compose ps -q postgres) psql -U ${{ secrets.POSTGRES_USER }} -c "CREATE DATABASE \"${{ secrets.POSTGRES_TEST_NAME }}\";"
+        docker exec $(docker-compose ps -q postgres) psql -U ${{ secrets.POSTGRES_USER }} -c "ALTER DATABASE \"${{ secrets.POSTGRES_TEST_NAME }}\" SET timezone TO 'Europe/Kyiv';"      
 
     - name: Run tests with pytest
       run: |

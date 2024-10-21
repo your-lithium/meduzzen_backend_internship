@@ -1,5 +1,6 @@
 from datetime import datetime
 from uuid import UUID
+from zoneinfo import ZoneInfo
 
 import pytest
 from httpx import AsyncClient
@@ -55,7 +56,7 @@ async def test_get_current_user_dynamics(
     client: AsyncClient,
     test_session: AsyncSession,
 ):
-    time = datetime.now()
+    time = datetime.now(ZoneInfo("Europe/Kyiv"))
     response = await client.get("/analytics/me/dynamics")
     assert response.status_code == 200
     mean_scores_timed = response.json()
@@ -97,7 +98,10 @@ async def test_get_current_user_latest_answers(
             latest_answers_by_quiz[answer.quiz_id] = answer
 
     expected_latest_answers = [
-        {"quiz_id": str(quiz_id), "time": answer.time.isoformat()}
+        {
+            "quiz_id": str(quiz_id),
+            "time": answer.time.replace(tzinfo=ZoneInfo("Europe/Kyiv")).isoformat(),
+        }
         for quiz_id, answer in latest_answers_by_quiz.items()
     ]
 
@@ -113,7 +117,7 @@ async def test_get_company_dynamics(
     client: AsyncClient,
     test_session: AsyncSession,
 ):
-    time = datetime.now()
+    time = datetime.now(ZoneInfo("Europe/Kyiv"))
     user_id, company_id = await get_user_and_company_ids(
         user_email=payload.test_user_2.email,
         company_name=payload.test_company_1.name,
@@ -143,7 +147,7 @@ async def test_get_company_member_dynamics(
     client: AsyncClient,
     test_session: AsyncSession,
 ):
-    time = datetime.now()
+    time = datetime.now(ZoneInfo("Europe/Kyiv"))
     user_id, company_id = await get_user_and_company_ids(
         user_email=payload.test_user_2.email,
         company_name=payload.test_company_1.name,
@@ -192,7 +196,10 @@ async def test_get_company_latest_answers(
             latest_answers_by_quiz[answer.quiz_id] = answer
 
     expected_latest_answers = [
-        {"quiz_id": str(quiz_id), "time": answer.time.isoformat()}
+        {
+            "quiz_id": str(quiz_id),
+            "time": answer.time.replace(tzinfo=ZoneInfo("Europe/Kyiv")).isoformat(),
+        }
         for quiz_id, answer in latest_answers_by_quiz.items()
     ]
 

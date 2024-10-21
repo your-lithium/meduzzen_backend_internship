@@ -1,6 +1,7 @@
 from collections import defaultdict
 from datetime import datetime, timedelta
 from uuid import UUID
+from zoneinfo import ZoneInfo
 
 import pandas as pd
 from fastapi import Depends
@@ -25,9 +26,10 @@ from app.services.exceptions import (
     ResultsNotFoundError,
 )
 from app.services.membership import MembershipService, get_membership_service
+from app.services.notification import NotificationService, get_notification_service
 from app.services.quiz import QuizService, get_quiz_service
-from app.services.redis_connect import redis_client
 from app.services.user import UserService, get_user_service
+from app.utils.redis import redis_client
 
 
 def get_quiz_result_service(
@@ -35,9 +37,14 @@ def get_quiz_result_service(
     company_service=Depends(get_company_service),
     membership_service=Depends(get_membership_service),
     quiz_service=Depends(get_quiz_service),
+    notification_service=Depends(get_notification_service),
 ):
     return QuizResultService(
-        user_service, company_service, membership_service, quiz_service
+        user_service,
+        company_service,
+        membership_service,
+        quiz_service,
+        notification_service,
     )
 
 
@@ -50,11 +57,13 @@ class QuizResultService:
         company_service: CompanyService,
         membership_service: MembershipService,
         quiz_service: QuizService,
+        notification_service: NotificationService,
     ) -> None:
         self._user_service = user_service
         self._company_service = company_service
         self._membership_service = membership_service
         self._quiz_service = quiz_service
+        self._notification_service = notification_service
 
     async def check_company_member_and_quiz(
         self,
@@ -174,7 +183,9 @@ class QuizResultService:
         Returns:
             str: The resulting filename.
         """
-        current_time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        current_time = datetime.now(ZoneInfo("Europe/Kyiv")).strftime(
+            "%Y-%m-%d_%H-%M-%S"
+        )
         filename = f"{filename_prefix}_{current_time}.csv"
         serialized_results = [result.model_dump() for result in quiz_results]
         df = pd.DataFrame(serialized_results)
@@ -707,3 +718,82 @@ class QuizResultService:
             )
 
         return latest_answers
+
+    async def check_quiz_schedule(
+        self,
+        session: AsyncSession = Depends(get_session),
+    ) -> None:
+        now = datetime.now(ZoneInfo("Europe/Kyiv"))
+
+        companies = await self._company_service.get_all_companies(
+            limit=None, offset=0, session=session
+        )
+
+        for company in companies:
+            owner = await self._user_service.get_user_by_id(
+                user_id=company.owner_id, session=session
+            )
+            members = await self._membership_service.get_members_by_company(
+                company_id=company.id, session=session
+            )
+
+            quizzes = await self._quiz_service.get_quizzes_by_company(
+                company_id=company.id, limit=None, offset=0, session=session
+            )
+
+            company_latest_answers = await self.get_company_latest_answers(
+                company_id=company.id, current_user=owner, session=session
+            )
+
+            for member in members:
+                latest_answers: UserLatestQuizAnswers | None = next(
+                    (
+                        answer
+                        for answer in company_latest_answers
+                        if answer.user_id == member.id
+                    ),
+                    None,
+                )
+
+                if latest_answers:
+                    for quiz in quizzes:
+                        latest_answer: LatestQuizAnswer | None = next(
+                            (
+                                answer
+                                for answer in latest_answers.latest_answers
+                                if answer.quiz_id == quiz.id
+                            ),
+                            None,
+                        )
+
+                        if latest_answer:
+                            days_gone = (now - latest_answer.time).days
+                            if days_gone >= quiz.frequency:
+                                await self._notification_service.send_notification(
+                                    user_id=member.id,
+                                    text=str(
+                                        f"You haven't taken quiz {quiz.id} from "
+                                        f"company {company.id} in a long time. "
+                                        "Please take it."
+                                    ),
+                                    session=session,
+                                )
+                        else:
+                            await self._notification_service.send_notification(
+                                user_id=member.id,
+                                text=str(
+                                    f"You haven't ever taken quiz {quiz.id} from "
+                                    f"company {company.id}. Please take it."
+                                ),
+                                session=session,
+                            )
+                else:
+                    for quiz in quizzes:
+                        await self._notification_service.send_notification(
+                            user_id=member.id,
+                            text=str(
+                                f"You haven't ever taken quiz {quiz.id} from "
+                                f"company {company.id}. Please take it."
+                            ),
+                            session=session,
+                        )
