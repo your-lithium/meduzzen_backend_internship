@@ -1,0 +1,55 @@
+services:
+    primary:
+        container_name: app
+        build: 
+            context: .
+        restart: always
+        env_file:
+            - .env
+        working_dir: /app
+        command: python -m app.main
+        ports:
+            - ${PORT}:${PORT}
+        volumes:
+            - .:/app
+        healthcheck:
+            test: ["CMD", "curl", "-f", "http://localhost:${PORT}"]
+            interval: 30s
+            timeout: 10s
+            retries: 5
+            start_period: 10s
+
+    postgres:
+        container_name: postgres
+        image: postgres:latest
+        restart: always
+        env_file:
+            - .env
+        ports:
+            - ${POSTGRES_PORT}:${POSTGRES_PORT}
+        volumes:
+            - postgres_data:/var/lib/postgresql/data
+        healthcheck:
+            test: ["CMD", "pg_isready", "-U", "${POSTGRES_USER}"]
+            interval: 10s
+            timeout: 5s
+            retries: 5
+            start_period: 30s
+
+    redis:
+        container_name: redis
+        image: redis:latest
+        restart: always
+        env_file:
+            - .env
+        ports:
+            - ${REDIS_PORT}:${REDIS_PORT}
+        healthcheck:
+            test: ["CMD", "redis-cli", "ping"]
+            interval: 10s
+            timeout: 5s
+            retries: 5
+            start_period: 10s
+
+volumes:
+  postgres_data:
