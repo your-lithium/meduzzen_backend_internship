@@ -393,7 +393,7 @@ class QuizService:
         await self.notify_members_of_created_quiz(
             new_quiz_id=new_quiz.id, company_id=company_id, session=session
         )
-        return quiz
+        return new_quiz
 
     async def update_quiz_from_import(
         self,
@@ -472,8 +472,7 @@ class QuizService:
                 nrows=4,
                 dtype=object,
             )
-        except Exception as e:
-            print(e)
+        except ValueError:
             raise UnsupportedFileFormatError
 
         info_range = quiz_sheet.iloc[:, 1]
