@@ -1,15 +1,28 @@
+import re
+from io import BytesIO
 from uuid import UUID
 
-from fastapi import Depends
+import pandas as pd
+from fastapi import Depends, UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.database import get_session
 from app.db.models import Company, Membership, Quiz, User
 from app.db.repo.quiz import QuizRepo
 from app.schemas.membership_schemas import MembershipActionRequest
-from app.schemas.quiz_schemas import QuizCreateRequest, QuizUpdateRequest
+from app.schemas.quiz_schemas import (
+    Answer,
+    Question,
+    QuestionList,
+    QuizCreateRequest,
+    QuizUpdateRequest,
+)
 from app.services.company import CompanyService, get_company_service
-from app.services.exceptions import MembershipNotFoundError, QuizNotFoundError
+from app.services.exceptions import (
+    MembershipNotFoundError,
+    QuizNotFoundError,
+    UnsupportedFileFormatError,
+)
 from app.services.membership import MembershipService, get_membership_service
 from app.services.notification import NotificationService, get_notification_service
 from app.services.permissions import PermissionService
@@ -136,6 +149,25 @@ class QuizService:
 
         return quiz
 
+    async def notify_members_of_created_quiz(
+        self,
+        new_quiz: Quiz,
+        company_id: UUID,
+        session: AsyncSession = Depends(get_session),
+    ) -> None:
+        members = await self._membership_service.get_members_by_company(
+            company_id=company_id, limit=None, offset=0, session=session
+        )
+        for member in members:
+            await self._notification_service.send_notification(
+                user_id=member.id,
+                text=str(
+                    f"There's a new quiz {new_quiz.id} created "
+                    f"by company {company_id}. You should take it!",
+                ),
+                session=session,
+            )
+
     async def create_quiz(
         self,
         quiz: QuizCreateRequest,
@@ -166,18 +198,9 @@ class QuizService:
             quiz=quiz, company_id=company_id, session=session
         )
 
-        members = await self._membership_service.get_members_by_company(
-            company_id=company_id, limit=None, offset=0, session=session
+        await self.notify_members_of_created_quiz(
+            new_quiz=new_quiz, company_id=company_id, session=session
         )
-        for member in members:
-            await self._notification_service.send_notification(
-                user_id=member.id,
-                text=str(
-                    f"There's a new quiz {new_quiz.id} created "
-                    f"by company {company_id}. You should take it!",
-                ),
-                session=session,
-            )
         return new_quiz
 
     async def update_quiz(
@@ -240,3 +263,151 @@ class QuizService:
         )
 
         await QuizRepo.delete(entity=quiz, session=session)
+
+    async def extract_answers_from_import(
+        self, question_column: pd.Series
+    ) -> tuple[dict[int, str], list[int]]:
+        options = {
+            index: text.strip()
+            for index, text in enumerate(question_column[2].split(";"))
+        }
+        correct = [
+            index
+            for index, text in options.items()
+            if text in re.split(r";\s*", question_column[3])
+        ]
+        return options, correct
+
+    async def extract_full_questions_from_import(
+        self, questions_range: pd.DataFrame
+    ) -> list[Question]:
+        questions = []
+        for _, question_column in questions_range.items():
+            options, correct = await self.extract_answers_from_import(
+                question_column=question_column
+            )
+            questions.append(
+                Question(
+                    question=question_column[1],
+                    answers=[Answer(options=options, correct=correct)],
+                )
+            )
+        return questions
+
+    async def extract_and_compare_questions_from_import(
+        self, questions_range: pd.DataFrame, existing_questions: QuestionList
+    ) -> list[Question]:
+        questions = []
+        for i, question_column in questions_range.items():
+            if pd.isna(question_column[0]):
+                continue
+            elif question_column[1:3].isna().any():
+                questions.append(existing_questions[i - 3])
+            else:
+                options, correct = await self.extract_answers_from_import(
+                    question_column=question_column
+                )
+                questions.append(
+                    Question(
+                        question=question_column[1],
+                        answers=[Answer(options=options, correct=correct)],
+                    )
+                )
+        return questions
+
+    async def create_quiz_from_import(
+        self,
+        info_range: pd.Series,
+        questions_range: pd.DataFrame,
+        company_id: UUID,
+        session: AsyncSession = Depends(get_session),
+    ) -> Quiz:
+        questions = await self.extract_full_questions_from_import(
+            questions_range=questions_range
+        )
+        quiz = QuizCreateRequest(
+            name=info_range.iloc[1],
+            description=info_range.iloc[2],
+            frequency=info_range.iloc[3],
+            questions=questions,
+        )
+
+        new_quiz: Quiz = await QuizRepo.create_quiz(
+            quiz=quiz, company_id=company_id, session=session
+        )
+        await self.notify_members_of_created_quiz(
+            new_quiz=new_quiz, company_id=company_id, session=session
+        )
+        return quiz
+
+    async def update_quiz_from_import(
+        self,
+        info_range: pd.Series,
+        questions_range: pd.DataFrame,
+        existing_quiz: Quiz,
+        session: AsyncSession = Depends(get_session),
+    ) -> Quiz:
+        questions = await self.extract_and_compare_questions_from_import(
+            questions_range=questions_range, existing_questions=existing_quiz.questions
+        )
+        quiz_update = QuizUpdateRequest(
+            name=None if pd.isna(info_range.iloc[1]) else info_range.iloc[1],
+            description=None if pd.isna(info_range.iloc[2]) else info_range.iloc[2],
+            frequency=None if pd.isna(info_range.iloc[3]) else info_range.iloc[3],
+            questions=questions,
+        )
+
+        updated_quiz: Quiz = await QuizRepo.update_quiz(
+            existing_quiz=existing_quiz,
+            quiz_update=quiz_update,
+            session=session,
+        )
+        return updated_quiz
+
+    async def import_quiz(
+        self,
+        company_id: UUID,
+        quiz_table: UploadFile,
+        current_user: User,
+        session: AsyncSession = Depends(get_session),
+    ) -> Quiz:
+        await self.check_company_and_user(
+            company_id=company_id,
+            current_user=current_user,
+            session=session,
+        )
+
+        file_contents = await quiz_table.read()
+        try:
+            quiz_sheet = pd.read_excel(
+                io=BytesIO(file_contents),
+                sheet_name="Quiz",
+                header=None,
+                nrows=4,
+                dtype=object,
+            )
+        except Exception as e:
+            print(e)
+            raise UnsupportedFileFormatError
+
+        info_range = quiz_sheet.iloc[:, 1]
+        questions_range = quiz_sheet.iloc[:, 3:]
+
+        quiz_id = info_range.iloc[0]
+        if pd.isna(quiz_id):
+            new_quiz = await self.create_quiz_from_import(
+                info_range=info_range,
+                questions_range=questions_range,
+                company_id=company_id,
+                session=session,
+            )
+            return new_quiz
+        else:
+            existing_quiz = await self.get_quiz_by_id(quiz_id=quiz_id, session=session)
+            updated_quiz = await self.update_quiz_from_import(
+                info_range=info_range,
+                questions_range=questions_range,
+                existing_quiz=existing_quiz,
+                session=session,
+            )
+            return updated_quiz
