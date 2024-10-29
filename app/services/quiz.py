@@ -151,10 +151,20 @@ class QuizService:
 
     async def notify_members_of_created_quiz(
         self,
-        new_quiz: Quiz,
+        new_quiz_id: UUID,
         company_id: UUID,
         session: AsyncSession = Depends(get_session),
     ) -> None:
+        """Send notifications to all members of the Company about the new Quiz
+        they should take.
+
+        Args:
+            new_quiz_id (UUID): The ID of the new Quiz.
+            company_id (UUID): The ID of the Company.
+            session (AsyncSession):
+                The database session used for querying.
+                Defaults to the session obtained through get_session.
+        """
         members = await self._membership_service.get_members_by_company(
             company_id=company_id, limit=None, offset=0, session=session
         )
@@ -162,7 +172,7 @@ class QuizService:
             await self._notification_service.send_notification(
                 user_id=member.id,
                 text=str(
-                    f"There's a new quiz {new_quiz.id} created "
+                    f"There's a new quiz {new_quiz_id} created "
                     f"by company {company_id}. You should take it!",
                 ),
                 session=session,
@@ -199,7 +209,7 @@ class QuizService:
         )
 
         await self.notify_members_of_created_quiz(
-            new_quiz=new_quiz, company_id=company_id, session=session
+            new_quiz_id=new_quiz.id, company_id=company_id, session=session
         )
         return new_quiz
 
@@ -267,6 +277,16 @@ class QuizService:
     async def extract_answers_from_import(
         self, question_column: pd.Series
     ) -> tuple[dict[int, str], list[int]]:
+        """Parse the answer options and correct options from the user data.
+        Splits by semicolons, strips of whitespaces, transforms the human-readable
+        format into the format for Answer schema.
+
+        Args:
+            question_column (pd.Series): The question column with data.
+
+        Returns:
+            tuple[dict[int, str], list[int]]: The extracted options and correct options.
+        """
         options = {
             index: text.strip()
             for index, text in enumerate(question_column[2].split(";"))
@@ -281,6 +301,16 @@ class QuizService:
     async def extract_full_questions_from_import(
         self, questions_range: pd.DataFrame
     ) -> list[Question]:
+        """Extracts the full questions from imported data.
+        Implies all questions are supposed to be parsed and added.
+        Used for quiz creation only.
+
+        Args:
+            questions_range (pd.DataFrame): The questions range from the imported data.
+
+        Returns:
+            list[Question]: The extracted questions.
+        """
         questions = []
         for _, question_column in questions_range.items():
             options, correct = await self.extract_answers_from_import(
@@ -297,6 +327,18 @@ class QuizService:
     async def extract_and_compare_questions_from_import(
         self, questions_range: pd.DataFrame, existing_questions: QuestionList
     ) -> list[Question]:
+        """Extracts and compares the questions from the imported data with the original
+        ones. Implies there may be questions the user wants to leave as they are,
+        ones they want to delete, and ones they want to update.
+        Used for quiz updates only.
+
+        Args:
+            questions_range (pd.DataFrame): The questions range from the imported data.
+            existing_questions (QuestionList): The questions from the original quiz.
+
+        Returns:
+            list[Question]: The extracted questions.
+        """
         questions = []
         for i, question_column in questions_range.items():
             if pd.isna(question_column[0]):
@@ -322,6 +364,19 @@ class QuizService:
         company_id: UUID,
         session: AsyncSession = Depends(get_session),
     ) -> Quiz:
+        """Create a new Quiz from the imported data.
+
+        Args:
+            info_range (pd.Series): The main info range from the imported data.
+            questions_range (pd.DataFrame): The questions range from the imported data.
+            company_id (UUID): The Company to add the Quiz for.
+            session (AsyncSession):
+                The database session used for querying.
+                Defaults to the session obtained through get_session.
+
+        Returns:
+            Quiz: The newly created Quiz.
+        """
         questions = await self.extract_full_questions_from_import(
             questions_range=questions_range
         )
@@ -336,7 +391,7 @@ class QuizService:
             quiz=quiz, company_id=company_id, session=session
         )
         await self.notify_members_of_created_quiz(
-            new_quiz=new_quiz, company_id=company_id, session=session
+            new_quiz_id=new_quiz.id, company_id=company_id, session=session
         )
         return quiz
 
@@ -347,6 +402,19 @@ class QuizService:
         existing_quiz: Quiz,
         session: AsyncSession = Depends(get_session),
     ) -> Quiz:
+        """Update an existing Quiz with new info from the imported data.
+
+        Args:
+            info_range (pd.Series): The main info range from the imported data.
+            questions_range (pd.DataFrame): The questions range from the imported data.
+            existing_quiz (Quiz): The existing Quiz to be updated.
+            session (AsyncSession):
+                The database session used for querying.
+                Defaults to the session obtained through get_session.
+
+        Returns:
+            Quiz: The newly updated Quiz.
+        """
         questions = await self.extract_and_compare_questions_from_import(
             questions_range=questions_range, existing_questions=existing_quiz.questions
         )
@@ -371,6 +439,24 @@ class QuizService:
         current_user: User,
         session: AsyncSession = Depends(get_session),
     ) -> Quiz:
+        """Import a Quiz from an Excel file.
+        Checks if a new Quiz is supposed to be created or and existing one — updated.
+
+        Args:
+            company_id (UUID): The Company to update the Quiz for.
+            quiz_table (UploadFile): The file with data to import.
+            current_user (User): The current user to authorize as an owner or admin.
+            session (AsyncSession):
+                The database session used for querying.
+                Defaults to the session obtained through get_session.
+
+        Raises:
+            UnsupportedFileFormatError:
+                If the imported file is not supported by pandas.read_excel().
+
+        Returns:
+            Quiz: The resulting created or updated quiz.
+        """
         await self.check_company_and_user(
             company_id=company_id,
             current_user=current_user,
