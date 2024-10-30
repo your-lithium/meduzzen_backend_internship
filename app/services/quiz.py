@@ -2,8 +2,8 @@ import re
 from io import BytesIO
 from uuid import UUID
 
-import pandas as pd
 from fastapi import Depends, UploadFile
+from openpyxl import load_workbook
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.database import get_session
@@ -274,14 +274,14 @@ class QuizService:
         await QuizRepo.delete(entity=quiz, session=session)
 
     async def extract_answers_from_import(
-        self, question_column: pd.Series
+        self, question_column: list[str]
     ) -> tuple[dict[int, str], list[int]]:
         """Parse the answer options and correct options from the user data.
         Splits by semicolons, strips of whitespaces, transforms the human-readable
         format into the format for Answer schema.
 
         Args:
-            question_column (pd.Series): The question column with data.
+            question_column (list[str]): The question column with data.
 
         Returns:
             tuple[dict[int, str], list[int]]: The extracted options and correct options.
@@ -298,20 +298,21 @@ class QuizService:
         return options, correct
 
     async def extract_full_questions_from_import(
-        self, questions_range: pd.DataFrame
+        self, questions_range: list[list[str]]
     ) -> list[Question]:
         """Extracts the full questions from imported data.
         Implies all questions are supposed to be parsed and added.
         Used for quiz creation only.
 
         Args:
-            questions_range (pd.DataFrame): The questions range from the imported data.
+            questions_range (list[list[str]]):
+                The questions range from the imported data.
 
         Returns:
             list[Question]: The extracted questions.
         """
         questions = []
-        for _, question_column in questions_range.items():
+        for question_column in questions_range:
             options, correct = await self.extract_answers_from_import(
                 question_column=question_column
             )
@@ -324,7 +325,7 @@ class QuizService:
         return questions
 
     async def extract_and_compare_questions_from_import(
-        self, questions_range: pd.DataFrame, existing_questions: QuestionList
+        self, questions_range: list[list[str]], existing_questions: QuestionList
     ) -> list[Question]:
         """Extracts and compares the questions from the imported data with the original
         ones. Implies there may be questions the user wants to leave as they are,
@@ -332,18 +333,19 @@ class QuizService:
         Used for quiz updates only.
 
         Args:
-            questions_range (pd.DataFrame): The questions range from the imported data.
+            questions_range (list[list[str]]):
+                The questions range from the imported data.
             existing_questions (QuestionList): The questions from the original quiz.
 
         Returns:
             list[Question]: The extracted questions.
         """
         questions = []
-        for i, question_column in questions_range.items():
-            if pd.isna(question_column[0]):
+        for i, question_column in enumerate(questions_range):
+            if not question_column[0]:
                 continue
-            elif question_column[1:3].isna().any():
-                questions.append(existing_questions[i - 3])
+            elif any(item is None for item in question_column[1:3]):
+                questions.append(existing_questions[i])
             else:
                 options, correct = await self.extract_answers_from_import(
                     question_column=question_column
@@ -358,16 +360,17 @@ class QuizService:
 
     async def create_quiz_from_import(
         self,
-        info_range: pd.Series,
-        questions_range: pd.DataFrame,
+        info_range: list[str],
+        questions_range: list[list[str]],
         company_id: UUID,
         session: AsyncSession = Depends(get_session),
     ) -> Quiz:
         """Create a new Quiz from the imported data.
 
         Args:
-            info_range (pd.Series): The main info range from the imported data.
-            questions_range (pd.DataFrame): The questions range from the imported data.
+            info_range (list[str]): The main info range from the imported data.
+            questions_range (list[list[str]]):
+                The questions range from the imported data.
             company_id (UUID): The Company to add the Quiz for.
             session (AsyncSession):
                 The database session used for querying.
@@ -380,9 +383,9 @@ class QuizService:
             questions_range=questions_range
         )
         quiz = QuizCreateRequest(
-            name=info_range.iloc[1],
-            description=info_range.iloc[2],
-            frequency=info_range.iloc[3],
+            name=info_range[1],
+            description=info_range[2],
+            frequency=info_range[3],
             questions=questions,
         )
 
@@ -396,16 +399,17 @@ class QuizService:
 
     async def update_quiz_from_import(
         self,
-        info_range: pd.Series,
-        questions_range: pd.DataFrame,
+        info_range: list[str],
+        questions_range: list[list[str]],
         existing_quiz: Quiz,
         session: AsyncSession = Depends(get_session),
     ) -> Quiz:
         """Update an existing Quiz with new info from the imported data.
 
         Args:
-            info_range (pd.Series): The main info range from the imported data.
-            questions_range (pd.DataFrame): The questions range from the imported data.
+            info_range (list[str]): The main info range from the imported data.
+            questions_range (list[list[str]]):
+                The questions range from the imported data.
             existing_quiz (Quiz): The existing Quiz to be updated.
             session (AsyncSession):
                 The database session used for querying.
@@ -418,9 +422,9 @@ class QuizService:
             questions_range=questions_range, existing_questions=existing_quiz.questions
         )
         quiz_update = QuizUpdateRequest(
-            name=None if pd.isna(info_range.iloc[1]) else info_range.iloc[1],
-            description=None if pd.isna(info_range.iloc[2]) else info_range.iloc[2],
-            frequency=None if pd.isna(info_range.iloc[3]) else info_range.iloc[3],
+            name=info_range[1] if info_range[1] else None,
+            description=info_range[2] if info_range[2] else None,
+            frequency=info_range[3] if info_range[3] else None,
             questions=questions,
         )
 
@@ -451,7 +455,7 @@ class QuizService:
 
         Raises:
             UnsupportedFileFormatError:
-                If the imported file is not supported by pandas.read_excel().
+                If the imported file is not supported by openpyxl.load_workbook().
 
         Returns:
             Quiz: The resulting created or updated quiz.
@@ -464,21 +468,19 @@ class QuizService:
 
         file_contents = await quiz_table.read()
         try:
-            quiz_sheet = pd.read_excel(
-                io=BytesIO(file_contents),
-                sheet_name="Quiz",
-                header=None,
-                nrows=4,
-                dtype=object,
-            )
+            workbook = load_workbook(filename=BytesIO(file_contents), data_only=True)
+            quiz_sheet = workbook["Quiz"]
         except ValueError:
             raise UnsupportedFileFormatError
 
-        info_range = quiz_sheet.iloc[:, 1]
-        questions_range = quiz_sheet.iloc[:, 3:]
+        info_range = [quiz_sheet.cell(row=i, column=2).value for i in range(1, 5)]
+        questions_range = [
+            [quiz_sheet.cell(row=i, column=j).value for i in range(1, 5)]
+            for j in range(4, quiz_sheet.max_column + 1)
+        ]
 
-        quiz_id = info_range.iloc[0]
-        if pd.isna(quiz_id):
+        quiz_id = info_range[0]
+        if not quiz_id:
             new_quiz = await self.create_quiz_from_import(
                 info_range=info_range,
                 questions_range=questions_range,
