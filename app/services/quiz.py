@@ -168,15 +168,14 @@ class QuizService:
         members = await self._membership_service.get_members_by_company(
             company_id=company_id, limit=None, offset=0, session=session
         )
-        for member in members:
-            await self._notification_service.send_notification(
-                user_id=member.id,
-                text=str(
-                    f"There's a new quiz {new_quiz_id} created "
-                    f"by company {company_id}. You should take it!",
-                ),
-                session=session,
-            )
+        await self._notification_service.bulk_send_notifications(
+            users=members,
+            text=str(
+                f"There's a new quiz {new_quiz_id} created "
+                f"by company {company_id}. You should take it!",
+            ),
+            session=session,
+        )
 
     async def create_quiz(
         self,
