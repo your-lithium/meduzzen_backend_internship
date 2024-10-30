@@ -1,6 +1,8 @@
-import pandas as pd
+from io import BytesIO
+
 import pytest
 from httpx import AsyncClient
+from openpyxl import load_workbook
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models import Notification, Quiz, StatusEnum
@@ -180,24 +182,18 @@ async def test_import_update_quiz(
     quiz_id = quiz.id
 
     file_path = "tests/payload_files/quiz_update.xlsx"
-    df = pd.read_excel(
-        file_path,
-        sheet_name="Quiz",
-        header=None,
-        nrows=4,
-        dtype=object,
-    )
-    df.at[0, 1] = quiz_id
-    with pd.ExcelWriter(
-        file_path, engine="openpyxl", mode="a", if_sheet_exists="overlay"
-    ) as writer:
-        df.to_excel(writer, sheet_name="Quiz", index=False, header=False)
+    workbook = load_workbook(filename=file_path)
+    sheet = workbook["Quiz"]
 
-    with open(file_path, "rb") as file:
+    sheet.cell(row=1, column=2).value = str(quiz_id)
+
+    with BytesIO() as file_stream:
+        workbook.save(file_stream)
+        file_stream.seek(0)
         files = {
             "quiz_table": (
                 "file.xlsx",
-                file,
+                file_stream,
                 "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             ),
         }
