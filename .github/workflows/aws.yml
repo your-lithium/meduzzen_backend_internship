@@ -63,7 +63,7 @@ jobs:
           username: ${{ secrets.AWS_USER }}
           key: ${{ secrets.AWS_SSH }}
           source: ".env"
-          target: "/ubuntu/meduzzen-internship"
+          target: "/ubuntu/meduzzen_internship"
 
       - name: Build Docker image
         run:
@@ -71,7 +71,7 @@ jobs:
       
       - name: Archive Docker image
         run:
-          docker save meduzzen_internship-primary | gzip > meduzzen-internship.tar.gz
+          docker save meduzzen_internship-primary | gzip > meduzzen_internship.tar.gz
       
       - name: Copy Docker image
         uses: appleboy/ssh-action@master
@@ -79,8 +79,8 @@ jobs:
           host: ${{ secrets.AWS_IP }}
           username: ${{ secrets.AWS_USER }}
           key: ${{ secrets.AWS_SSH }}
-          source: "meduzzen-internship.tar.gz"
-          target: "/ubuntu/meduzzen-internship"
+          source: "meduzzen_internship.tar.gz"
+          target: "/ubuntu/meduzzen_internship"
       
       - name: Deploy new Docker image
         uses: appleboy/ssh-action@master
@@ -89,7 +89,7 @@ jobs:
           username: ${{ secrets.AWS_USER }}
           key: ${{ secrets.AWS_SSH }}
           script: |
-            sudo docker load < /tmp/meduzzen-internship/meduzzen-internship.tar.gz
+            sudo docker load < /ubuntu/meduzzen_internship/meduzzen_internship.tar.gz
             docker stop app || true
             docker rm app || true
             sudo docker run -d \
