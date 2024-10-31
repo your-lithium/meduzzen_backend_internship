@@ -64,9 +64,11 @@ jobs:
           key: ${{ secrets.AWS_SSH }}
           source: ".env"
           target: "/ubuntu/meduzzen_internship"
-
+      
+      - name: Check for Dockerfile
+        run: ls -la $GITHUB_WORKSPACE
+      
       - name: Build Docker image
-        working-directory: ${{ github.workspace }}
         run:
           docker build . -t meduzzen_internship-primary
       
