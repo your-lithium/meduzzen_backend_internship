@@ -76,11 +76,11 @@ jobs:
       
       - name: Build Docker image
         run:
-          docker build . -t meduzzen_internship-primary
+          docker build . -t meduzzen_internship-primary:latest
       
       - name: Archive Docker image
         run:
-          docker save meduzzen_internship-primary | gzip > meduzzen_internship.tar.gz
+          docker save meduzzen_internship-primary:latest | gzip > meduzzen_internship.tar.gz
       
       - name: Copy Docker image and .env file to server
         uses: appleboy/scp-action@master
@@ -126,4 +126,4 @@ jobs:
               --env-file /home/ubuntu/meduzzen_internship/.env \
               --name app \
               -p 80:80 \
-              meduzzen_internship-primary
+              meduzzen_internship-primary:latest
