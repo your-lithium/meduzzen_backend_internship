@@ -99,7 +99,7 @@ jobs:
           key: ${{ secrets.AWS_SSH }}
           script: |
             ls -al
-            cd ..
+            cd meduzzen_internship
             ls -al
       
       - name: Deploy new Docker image
