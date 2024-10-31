@@ -49,13 +49,13 @@ jobs:
         envkey_AUTH0_DOMAIN: ${{ secrets.AUTH0_DOMAIN }}
         envkey_AUTH0_AUDIENCE: ${{ secrets.AUTH0_AUDIENCE }}
         envkey_AUTH0_ALGORITHMS: ${{ secrets.AUTH0_ALGORITHMS }}
-        envkey_POSTGRES_HOST: ${{ secrets.POSTGRES_HOST }}
+        envkey_POSTGRES_HOST: ${{ secrets.POSTGRES_TEST_HOST }}
         envkey_POSTGRES_PORT: ${{ secrets.POSTGRES_PORT }}
         envkey_POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
         envkey_POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
         envkey_POSTGRES_NAME: ${{ secrets.POSTGRES_NAME }}
         envkey_POSTGRES_TEST_NAME: ${{ secrets.POSTGRES_TEST_NAME }}
-        envkey_REDIS_HOST: ${{ secrets.REDIS_HOST }}
+        envkey_REDIS_HOST: ${{ secrets.REDIS_TEST_HOST }}
         envkey_REDIS_PORT: ${{ secrets.REDIS_PORT }}
         envkey_REDIS_PASSWORD: ${{ secrets.REDIS_PASSWORD }}
         envkey_LOG_DIR: ${{ secrets.LOG_DIR }}
