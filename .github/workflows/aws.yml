@@ -83,7 +83,7 @@ jobs:
           docker save meduzzen_internship-primary | gzip > meduzzen_internship.tar.gz
       
       - name: Copy Docker image
-        uses: appleboy/ssh-action@master
+        uses: appleboy/scp-action@master
         with:
           host: ${{ secrets.AWS_IP }}
           username: ${{ secrets.AWS_USER }}
