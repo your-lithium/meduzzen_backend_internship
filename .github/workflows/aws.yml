@@ -68,11 +68,20 @@ jobs:
           source: ".env"
           target: "/ubuntu/meduzzen_internship"
       
+      - name: List Files in Root Directory
+        run: |
+          ls -la $GITHUB_WORKSPACE
+          cd ..
+          ls -la
+      
       - name: Checkout code
         uses: actions/checkout@v4
       
       - name: List Files in Root Directory
-        run: ls -la $GITHUB_WORKSPACE
+        run: |
+          ls -la $GITHUB_WORKSPACE
+          cd ..
+          ls -la
       
       - name: Build Docker image
         run:
