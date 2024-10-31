@@ -91,6 +91,17 @@ jobs:
           source: "meduzzen_internship.tar.gz,.env"
           target: "/ubuntu/meduzzen_internship"  
       
+      - name: List Files in Root Directory
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.AWS_IP }}
+          username: ${{ secrets.AWS_USER }}
+          key: ${{ secrets.AWS_SSH }}
+          script: |
+            ls -al
+            cd ..
+            ls -al
+      
       - name: Deploy new Docker image
         uses: appleboy/ssh-action@master
         with:
