@@ -68,8 +68,8 @@ jobs:
           source: ".env"
           target: "/ubuntu/meduzzen_internship"
       
-      - name: Check for Dockerfile
-        run: ls -la
+      - name: List Files in Root Directory
+        run: ls -la $GITHUB_WORKSPACE
       
       - name: Build Docker image
         run:
