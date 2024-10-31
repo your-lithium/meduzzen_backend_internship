@@ -67,15 +67,6 @@ jobs:
             envkey_AWS_SSH: ${{ secrets.AWS_SSH }}
             envkey_AWS_USER: ${{ secrets.AWS_USER }}
             fail_on_empty: true
-
-      - name: Copy .env file to server
-        uses: appleboy/scp-action@master
-        with:
-          host: ${{ secrets.AWS_IP }}
-          username: ${{ secrets.AWS_USER }}
-          key: ${{ secrets.AWS_SSH }}
-          source: ".env"
-          target: "/ubuntu/meduzzen_internship"
       
       - name: List Files in Root Directory
         run: |
@@ -91,14 +82,14 @@ jobs:
         run:
           docker save meduzzen_internship-primary | gzip > meduzzen_internship.tar.gz
       
-      - name: Copy Docker image
+      - name: Copy Docker image and .env file to server
         uses: appleboy/scp-action@master
         with:
           host: ${{ secrets.AWS_IP }}
           username: ${{ secrets.AWS_USER }}
           key: ${{ secrets.AWS_SSH }}
-          source: "meduzzen_internship.tar.gz"
-          target: "/ubuntu/meduzzen_internship"
+          source: "meduzzen_internship.tar.gz,.env"
+          target: "/ubuntu/meduzzen_internship"  
       
       - name: Deploy new Docker image
         uses: appleboy/ssh-action@master
