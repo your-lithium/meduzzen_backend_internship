@@ -66,7 +66,10 @@ jobs:
           target: "/ubuntu/meduzzen_internship"
       
       - name: Check for Dockerfile
-        run: ls -la $GITHUB_WORKSPACE
+        run: |
+          ls -la
+          cd ..
+          ls -la
       
       - name: Build Docker image
         run:
