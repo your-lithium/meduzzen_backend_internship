@@ -33,6 +33,15 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+  
+      - name: List Files in Root Directory
+        run: |
+          ls -la $GITHUB_WORKSPACE
+          cd ..
+          ls -la
+
       - name: Create .env file
         uses: SpicyPizza/create-envfile@v2.0
         with:
@@ -67,15 +76,6 @@ jobs:
           key: ${{ secrets.AWS_SSH }}
           source: ".env"
           target: "/ubuntu/meduzzen_internship"
-      
-      - name: List Files in Root Directory
-        run: |
-          ls -la $GITHUB_WORKSPACE
-          cd ..
-          ls -la
-      
-      - name: Checkout code
-        uses: actions/checkout@v4
       
       - name: List Files in Root Directory
         run: |
