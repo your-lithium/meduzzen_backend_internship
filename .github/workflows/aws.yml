@@ -18,7 +18,7 @@ jobs:
         run: ls -la $GITHUB_WORKSPACE
   
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
@@ -67,6 +67,9 @@ jobs:
           key: ${{ secrets.AWS_SSH }}
           source: ".env"
           target: "/ubuntu/meduzzen_internship"
+      
+      - name: Checkout code
+        uses: actions/checkout@v4
       
       - name: List Files in Root Directory
         run: ls -la $GITHUB_WORKSPACE
