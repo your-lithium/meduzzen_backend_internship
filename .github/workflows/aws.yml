@@ -13,6 +13,9 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+      
+      - name: List Files in Root Directory
+        run: ls -la $GITHUB_WORKSPACE
   
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -66,10 +69,7 @@ jobs:
           target: "/ubuntu/meduzzen_internship"
       
       - name: Check for Dockerfile
-        run: |
-          ls -la
-          cd ..
-          ls -la
+        run: ls -la
       
       - name: Build Docker image
         run:
