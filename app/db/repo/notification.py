@@ -46,6 +46,23 @@ class NotificationRepo(BaseRepo[Notification]):
         return await NotificationRepo.create(entity=new_notification, session=session)
 
     @staticmethod
+    async def bulk_create_notifications(
+        notifications: list[NotificationCreateRequest],
+        session: AsyncSession = Depends(get_session),
+    ) -> list[Notification]:
+        new_notifications = [
+            {
+                "user_id": notification.user_id,
+                "status": NotificationStatusEnum.UNREAD,
+                "text": notification.text,
+            }
+            for notification in notifications
+        ]
+        return await NotificationRepo.bulk_create(
+            entities=new_notifications, session=session
+        )
+
+    @staticmethod
     async def update_notification_status(
         existing_notification: Notification,
         notification_status: NotificationStatusEnum,

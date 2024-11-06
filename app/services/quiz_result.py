@@ -1,9 +1,9 @@
+import csv
 from collections import defaultdict
 from datetime import datetime, timedelta
 from uuid import UUID
 from zoneinfo import ZoneInfo
 
-import pandas as pd
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -188,8 +188,14 @@ class QuizResultService:
         )
         filename = f"{filename_prefix}_{current_time}.csv"
         serialized_results = [result.model_dump() for result in quiz_results]
-        df = pd.DataFrame(serialized_results)
-        df.to_csv(filename, index=False)
+
+        with open(filename, mode="w", newline="", encoding="utf-8") as file:
+            fieldnames = serialized_results[0].keys() if serialized_results else []
+            writer = csv.DictWriter(file, fieldnames=fieldnames)
+
+            writer.writeheader()
+            writer.writerows(serialized_results)
+
         return filename
 
     async def add_result(

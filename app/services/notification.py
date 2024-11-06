@@ -63,6 +63,34 @@ class NotificationService:
         )
         return new_notification
 
+    async def bulk_send_notifications(
+        self,
+        users: list[User],
+        text: str | tuple[str, ...],
+        session: AsyncSession = Depends(get_session),
+    ) -> list[Notification]:
+        """Bulk send some new Notifications.
+
+        Args:
+            users (list[User]): The Users to receive a Notification.
+            text (str | tuple[str, ...]): The text for all Notifications to have.
+            session (AsyncSession):
+                The database session used for querying.
+                Defaults to the session obtained through get_session.
+
+        Returns:
+            list[Notification]: The resulting new Notifications.
+        """
+        notifications = [
+            NotificationCreateRequest(user_id=user.id, text=text) for user in users
+        ]
+        new_notifications: list[Notification] = (
+            await NotificationRepo.bulk_create_notifications(
+                notifications=notifications, session=session
+            )
+        )
+        return new_notifications
+
     async def update_notification_status(
         self,
         notification_id: UUID,
