@@ -58,7 +58,7 @@ class QuizService:
                 Defaults to the session obtained through get_session.
         """
         existing_company = await self._company_service.get_company_by_id(
-            company_id=company_id, session=session
+            company_id=company_id, current_user=current_user, session=session
         )
 
         parties = MembershipActionRequest(

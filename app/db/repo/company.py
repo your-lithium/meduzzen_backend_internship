@@ -17,16 +17,18 @@ class CompanyRepo(BaseRepo[Company]):
         return Company
 
     @staticmethod
-    async def get_all(
+    async def get_all_visible_companies(
+        current_user: User,
         limit: int | None = 10,
         offset: int = 0,
         session: AsyncSession = Depends(get_session),
     ) -> list[Company]:
         return await CompanyRepo.get_all_by_fields(
-            fields=[Company.is_public],
-            values=[True],
+            fields=[Company.is_public, Company.owner_id],
+            values=[True, current_user.id],
             limit=limit,
             offset=offset,
+            or_flag=True,
             session=session,
         )
 
