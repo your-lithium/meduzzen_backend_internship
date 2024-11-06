@@ -16,6 +16,7 @@ from app.services.exceptions import (
     QuizNotFoundError,
     ResultsNotFoundError,
     UnauthorizedError,
+    UnsupportedFileFormatError,
     UsernameAlreadyExistsError,
     UserNotFoundError,
 )
@@ -149,5 +150,15 @@ async def incomplete_quiz_exception_handler(_: Request, exc: IncompleteQuizError
     logger.error(f"IncompleteQuizError error: {exc.errors()}")
     return JSONResponse(
         status_code=422,
+        content={"detail": exc.errors()},
+    )
+
+
+async def unsupported_file_format_exception_handler(
+    _: Request, exc: UnsupportedFileFormatError
+):
+    logger.error(f"UnsupportedFileFormatError error: {exc.errors()}")
+    return JSONResponse(
+        status_code=415,
         content={"detail": exc.errors()},
     )

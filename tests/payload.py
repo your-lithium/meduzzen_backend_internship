@@ -156,17 +156,39 @@ expected_test_quiz_1 = {
     ],
 }
 test_quiz_1_update = QuizUpdateRequest(
-    name="updated test quiz #1", description="this is an updated quiz #1 now"
+    name="updated test quiz #1",
+    questions=QuestionList(
+        [
+            Question(
+                question="what animals are cats?",
+                answers=AnswerList(
+                    [
+                        Answer(
+                            options={
+                                0: "house cat",
+                                1: "dog",
+                                2: "tiger",
+                                3: "parrot",
+                                4: "raccoon",
+                                5: "lion",
+                            },
+                            correct=[0, 2, 5],
+                        )
+                    ]
+                ),
+            ),
+            Question(
+                question="are dogs cats?",
+                answers=AnswerList([Answer(options={0: "yes", 1: "no"}, correct=[1])]),
+            ),
+        ]
+    ),
 )
 expected_test_quiz_1_update = {
     "name": "updated test quiz #1",
-    "description": "this is an updated quiz #1 now",
+    "description": "quiz for testing #1",
     "frequency": 1,
     "questions": [
-        {
-            "question": "is this a question?",
-            "answers": [{"options": {"0": "yes", "1": "no"}, "correct": [0]}],
-        },
         {
             "question": "what animals are cats?",
             "answers": [
@@ -182,6 +204,10 @@ expected_test_quiz_1_update = {
                     "correct": [0, 2, 5],
                 }
             ],
+        },
+        {
+            "question": "are dogs cats?",
+            "answers": [{"options": {"0": "yes", "1": "no"}, "correct": [1]}],
         },
     ],
 }
