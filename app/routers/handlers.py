@@ -17,6 +17,7 @@ from app.services.exceptions import (
     QuizNotFoundError,
     ResultsNotFoundError,
     UnauthorizedError,
+    UnsupportedFileFormatError,
     UsernameAlreadyExistsError,
     UserNotFoundError,
 )
@@ -160,5 +161,15 @@ async def invalid_pagination_parameter_exception_handler(
     logger.error(f"InvalidPaginationParameterError error: {exc.errors()}")
     return JSONResponse(
         status_code=422,
+        content={"detail": exc.errors()},
+    )
+
+
+async def unsupported_file_format_exception_handler(
+    _: Request, exc: UnsupportedFileFormatError
+):
+    logger.error(f"UnsupportedFileFormatError error: {exc.errors()}")
+    return JSONResponse(
+        status_code=415,
         content={"detail": exc.errors()},
     )

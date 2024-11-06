@@ -1,10 +1,10 @@
 from abc import ABC, abstractmethod
 from collections.abc import Sequence
-from typing import Generic, Type, TypeVar
+from typing import Any, Generic, Type, TypeVar
 from uuid import UUID
 
 from fastapi import Depends
-from sqlalchemy import or_
+from sqlalchemy import insert, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm.attributes import InstrumentedAttribute
@@ -184,6 +184,39 @@ class BaseRepo(ABC, Generic[T]):
         await session.refresh(entity)
         logger.info(f"New {entity.__class__.__name__} created successfully")
         return entity
+
+    @classmethod
+    async def bulk_create(
+        cls,
+        entities: list[dict[str, Any]],
+        session: AsyncSession = Depends(get_session),
+    ) -> list[T]:
+        """Bulk create new entities of a model
+
+        Args:
+            entities (list[dict[str, any]]): The info of entities to create.
+            session (AsyncSession, optional):
+                The database session used for querying entities.
+                Defaults to Depends(get_session).
+
+        Returns:
+            list[T]: The newly created entities.
+        """
+        model: Type[T] = cls.get_model()
+        logger.info(
+            f"Received a request to bulk create {len(entities)} "
+            "entities of {model.__name__}"
+        )
+
+        result = await session.execute(insert(model).values(entities).returning(model))
+        await session.commit()
+
+        created_entities = list(result.scalars().all())
+        logger.info(
+            f"{len(created_entities)} {model.__name__} "
+            "entities bulk created successfully"
+        )
+        return created_entities
 
     @staticmethod
     async def update(

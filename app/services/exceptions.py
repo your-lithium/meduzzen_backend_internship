@@ -176,3 +176,17 @@ class InvalidPaginationParameterError(BaseError):
 
     def errors(self):
         return self.message
+
+
+class UnsupportedFileFormatError(BaseError):
+    def __init__(
+        self,
+        message: str | tuple[str, ...] = (
+            "File format not supported. Must be xls, xlsx, xlsm, xlsb, odf, ods or odt"
+        ),
+    ):
+        self.message = message
+        super().__init__(self.message)
+
+    def errors(self):
+        return self.message

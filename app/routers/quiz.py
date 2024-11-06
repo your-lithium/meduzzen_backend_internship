@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, UploadFile, status
 from fastapi.responses import FileResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -210,3 +210,20 @@ async def get_latest_quiz_results_csv(
     )
     results = FileResponse(results)
     return results
+
+
+@router.put("/{company_id}/import", response_model=QuizResponse)
+async def import_quiz(
+    company_id: UUID,
+    quiz_table: UploadFile,
+    current_user: User = Depends(get_current_user),
+    quiz_service: QuizService = Depends(get_quiz_service),
+    session: AsyncSession = Depends(get_session),
+):
+    quiz = await quiz_service.import_quiz(
+        company_id=company_id,
+        quiz_table=quiz_table,
+        current_user=current_user,
+        session=session,
+    )
+    return quiz
