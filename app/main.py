@@ -23,6 +23,7 @@ from app.routers.handlers import (
     inactive_user_exception_handler,
     incomplete_quiz_exception_handler,
     incorrect_password_exception_handler,
+    invalid_pagination_parameter_exception_handler,
     membership_already_exists_exception_handler,
     membership_not_found_exception_handler,
     notification_not_found_exception_handler,
@@ -40,6 +41,7 @@ from app.services.exceptions import (
     InactiveUserError,
     IncompleteQuizError,
     IncorrectPasswordError,
+    InvalidPaginationParameterError,
     MembershipAlreadyExistsError,
     MembershipNotFoundError,
     NotificationNotFoundError,
@@ -112,6 +114,9 @@ app.add_exception_handler(UnauthorizedError, unauthorized_exception_handler)
 app.add_exception_handler(InactiveUserError, inactive_user_exception_handler)
 app.add_exception_handler(AccessDeniedError, access_denied_exception_handler)
 app.add_exception_handler(IncompleteQuizError, incomplete_quiz_exception_handler)
+app.add_exception_handler(
+    InvalidPaginationParameterError, invalid_pagination_parameter_exception_handler
+)
 
 if __name__ == "__main__":
     uvicorn.run("app.main:app", host=config.host, port=config.port, reload=True)

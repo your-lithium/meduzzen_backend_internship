@@ -12,6 +12,7 @@ from sqlalchemy.orm.attributes import InstrumentedAttribute
 from app.core.logger import logger
 from app.db.database import get_session
 from app.db.models import BaseId
+from app.services.exceptions import InvalidPaginationParameterError
 
 T = TypeVar("T", bound="BaseId")
 
@@ -24,6 +25,16 @@ class BaseRepo(ABC, Generic[T]):
     def get_model(cls) -> Type[T]:
         """Get the model to perform CRUD on."""
         pass
+
+    @staticmethod
+    async def check_pagination_parameters(
+        limit: int | None,
+        offset: int,
+    ) -> None:
+        if limit is not None and limit < 0:
+            raise InvalidPaginationParameterError("Limit cannot be negative")
+        if offset < 0:
+            raise InvalidPaginationParameterError("Offset cannot be negative")
 
     @classmethod
     async def get_all(
@@ -48,6 +59,8 @@ class BaseRepo(ABC, Generic[T]):
         Returns:
             list[T]: The list of retrieved entities.
         """
+        await cls.check_pagination_parameters(limit=limit, offset=offset)
+
         model: Type[T] = cls.get_model()
         query = select(model).offset(offset)
 
@@ -88,6 +101,7 @@ class BaseRepo(ABC, Generic[T]):
         Returns:
             list[T]: The list of retrieved entities.
         """
+        await cls.check_pagination_parameters(limit=limit, offset=offset)
         model: Type[T] = cls.get_model()
 
         where_clause = [cond == val for cond, val in zip(fields, values)]

@@ -10,6 +10,7 @@ from app.services.exceptions import (
     InactiveUserError,
     IncompleteQuizError,
     IncorrectPasswordError,
+    InvalidPaginationParameterError,
     MembershipAlreadyExistsError,
     MembershipNotFoundError,
     NotificationNotFoundError,
@@ -147,6 +148,16 @@ async def access_denied_exception_handler(_: Request, exc: AccessDeniedError):
 
 async def incomplete_quiz_exception_handler(_: Request, exc: IncompleteQuizError):
     logger.error(f"IncompleteQuizError error: {exc.errors()}")
+    return JSONResponse(
+        status_code=422,
+        content={"detail": exc.errors()},
+    )
+
+
+async def invalid_pagination_parameter_exception_handler(
+    _: Request, exc: InvalidPaginationParameterError
+):
+    logger.error(f"InvalidPaginationParameterError error: {exc.errors()}")
     return JSONResponse(
         status_code=422,
         content={"detail": exc.errors()},
