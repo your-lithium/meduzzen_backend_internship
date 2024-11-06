@@ -116,6 +116,7 @@ class AuthService:
             User: The authenticated user.
         """
         try:
+            auth_method = "email_password"
             token_data = self.verify_email_password_token(
                 secret_key=oauth2_secret_key, algorithm=oauth2_algorithm, token=token
             )

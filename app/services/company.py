@@ -46,21 +46,56 @@ class CompanyService:
         )
         return companies
 
+    async def get_all_visible_companies(
+        self,
+        current_user: User,
+        limit: int | None = 10,
+        offset: int = 0,
+        session: AsyncSession = Depends(get_session),
+    ) -> list[Company]:
+        """Get a list of companies that are either public or owned by current user.
+
+        Args:
+            current_user (User): The current authenticated user.
+            limit (int | None, optional):
+                How much companies to get. Defaults to 10.
+                If None, retrieve all records.
+            offset (int, optional):
+                Where to start getting companies. Defaults to 0.
+            session (AsyncSession):
+                The database session used for querying companies.
+                Defaults to the session obtained through get_session.
+
+        Returns:
+            list[Company]: The list of companies.
+        """
+        companies: list[Company] = await CompanyRepo.get_all_visible_companies(
+            current_user=current_user,
+            limit=limit,
+            offset=offset,
+            session=session,
+        )
+        return companies
+
     async def get_company_by_id(
         self,
         company_id: UUID,
+        current_user: User,
         session: AsyncSession = Depends(get_session),
     ) -> Company:
         """Get details for one company.
 
         Args:
             company_id (UUID): The company's ID.
+            current_user (User): The current authenticated user.
             session (AsyncSession):
                 The database session used for querying companies.
                 Defaults to the session obtained through get_session.
 
         Raises:
-            CompanyNotFoundError: If the requested company does not exist.
+            CompanyNotFoundError:
+                If the requested company does not exist or is private and not owned
+                by the current user.
 
         Returns:
             Company: Company details.
@@ -69,7 +104,9 @@ class CompanyService:
             record_id=company_id, session=session
         )
 
-        if company is None:
+        if company is None or (
+            company.owner_id != current_user.id and not company.is_public
+        ):
             raise CompanyNotFoundError(company_id)
 
         return company
@@ -132,7 +169,7 @@ class CompanyService:
             Company: Details of the updated company.
         """
         existing_company = await self.get_company_by_id(
-            company_id=company_id, session=session
+            company_id=company_id, current_user=current_user, session=session
         )
 
         PermissionService.grant_owner_permission(
@@ -177,7 +214,7 @@ class CompanyService:
                 If the current authenticated user is not the company's owner.
         """
         company: Company = await self.get_company_by_id(
-            company_id=company_id, session=session
+            company_id=company_id, current_user=current_user, session=session
         )
 
         PermissionService.grant_owner_permission(

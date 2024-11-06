@@ -12,7 +12,9 @@ from typing_extensions import Self
 
 
 class Answer(BaseModel):
-    options: dict[int, str] = Field(..., min_length=2)
+    options: dict[int, str] = Field(
+        ..., min_length=2, examples=[{0: "option 1", 1: "option 2"}]
+    )
     correct: list[int]
 
     @model_validator(mode="after")

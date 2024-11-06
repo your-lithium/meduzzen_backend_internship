@@ -4,7 +4,7 @@ from typing import Any, Generic, Type, TypeVar
 from uuid import UUID
 
 from fastapi import Depends
-from sqlalchemy import insert
+from sqlalchemy import insert, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm.attributes import InstrumentedAttribute
@@ -12,6 +12,7 @@ from sqlalchemy.orm.attributes import InstrumentedAttribute
 from app.core.logger import logger
 from app.db.database import get_session
 from app.db.models import BaseId
+from app.services.exceptions import InvalidPaginationParameterError
 
 T = TypeVar("T", bound="BaseId")
 
@@ -24,6 +25,16 @@ class BaseRepo(ABC, Generic[T]):
     def get_model(cls) -> Type[T]:
         """Get the model to perform CRUD on."""
         pass
+
+    @staticmethod
+    async def check_pagination_parameters(
+        limit: int | None,
+        offset: int,
+    ) -> None:
+        if limit is not None and limit < 0:
+            raise InvalidPaginationParameterError("Limit cannot be negative")
+        if offset < 0:
+            raise InvalidPaginationParameterError("Offset cannot be negative")
 
     @classmethod
     async def get_all(
@@ -48,6 +59,8 @@ class BaseRepo(ABC, Generic[T]):
         Returns:
             list[T]: The list of retrieved entities.
         """
+        await cls.check_pagination_parameters(limit=limit, offset=offset)
+
         model: Type[T] = cls.get_model()
         query = select(model).offset(offset)
 
@@ -64,6 +77,7 @@ class BaseRepo(ABC, Generic[T]):
         values: Sequence[object],
         limit: int | None = 10,
         offset: int = 0,
+        or_flag: bool = False,
         session: AsyncSession = Depends(get_session),
     ) -> list[T]:
         """Get a list of entities of a model via one or more of its fields.
@@ -77,6 +91,9 @@ class BaseRepo(ABC, Generic[T]):
             offset (int, optional):
                 Where to start getting entities.
                 Defaults to 0.
+            or_flag (bool, optional):
+                Whether or not the conditions should be joined by OR.
+                Defaults to False (the conditions joined by AND).
             session (AsyncSession, optional):
                 The database session used for querying entities.
                 Defaults to Depends(get_session).
@@ -84,10 +101,15 @@ class BaseRepo(ABC, Generic[T]):
         Returns:
             list[T]: The list of retrieved entities.
         """
+        await cls.check_pagination_parameters(limit=limit, offset=offset)
         model: Type[T] = cls.get_model()
 
         where_clause = [cond == val for cond, val in zip(fields, values)]
-        query = select(model).where(*where_clause).offset(offset)
+
+        if or_flag:
+            query = select(model).where(or_(*where_clause)).offset(offset)
+        else:
+            query = select(model).where(*where_clause).offset(offset)
 
         if limit is not None:
             query = query.limit(limit)

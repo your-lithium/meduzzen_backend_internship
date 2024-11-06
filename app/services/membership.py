@@ -49,13 +49,13 @@ class MembershipService:
         Returns:
             tuple[Company, User]: The existing company and user.
         """
-        existing_company = await self._company_service.get_company_by_id(
-            company_id=parties.company_id, session=session
-        )
-
         existing_user = await self._user_service.get_user_by_id(
             user_id=parties.user_id,
             session=session,
+        )
+
+        existing_company = await self._company_service.get_company_by_id(
+            company_id=parties.company_id, current_user=existing_user, session=session
         )
 
         return existing_company, existing_user
@@ -76,7 +76,7 @@ class MembershipService:
                 Defaults to the session obtained through get_session.
         """
         existing_company = await self._company_service.get_company_by_id(
-            company_id=company_id, session=session
+            company_id=company_id, current_user=current_user, session=session
         )
 
         PermissionService.grant_owner_permission(

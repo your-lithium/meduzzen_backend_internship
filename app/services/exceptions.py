@@ -164,6 +164,20 @@ class IncompleteQuizError(BaseError):
         return self.message
 
 
+class InvalidPaginationParameterError(BaseError):
+    def __init__(
+        self,
+        message: (
+            str | tuple[str, ...]
+        ) = "Pagination parameters (limit and offset) cannot be negative",
+    ):
+        self.message = message
+        super().__init__(self.message)
+
+    def errors(self):
+        return self.message
+
+
 class UnsupportedFileFormatError(BaseError):
     def __init__(
         self,
